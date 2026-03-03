@@ -171,10 +171,9 @@ export function QuickCaptureBar() {
           className={cn(
             'pointer-events-auto w-full max-w-2xl mx-4',
             'flex flex-col',
-            'rounded-2xl',
-            'backdrop-blur-[12px]',
+            'rounded-lg',
             'transition-all duration-200',
-            dragOver && 'border-indigo-400/40',
+            dragOver && 'border-[var(--accent)]',
           )}
           style={{
             background: (isFocused || dragOver) ? 'var(--capture-bg-focus)' : 'var(--capture-bg)',
@@ -185,7 +184,7 @@ export function QuickCaptureBar() {
           {/* Main input row */}
           <div className="flex items-center gap-3 px-5 py-3">
             {isPending ? (
-              <SpinnerGap size={18} weight="bold" className="text-indigo-400 animate-spin flex-shrink-0" />
+              <SpinnerGap size={18} weight="bold" className="text-[#3ECF8E] animate-spin flex-shrink-0" />
             ) : (
               <Plus
                 size={18}
@@ -284,7 +283,7 @@ export function QuickCaptureBar() {
           {/* Drop hint when dragging */}
           {dragOver && (
             <div className="px-5 pb-3">
-              <p className="text-xs text-indigo-300/60 text-center">Drop files to attach</p>
+              <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>Drop files to attach</p>
             </div>
           )}
         </div>

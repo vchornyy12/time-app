@@ -18,10 +18,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
   return (
     <Link
       href={`/projects/${project.id}`}
-      className="block px-5 py-4 rounded-xl border transition-all duration-150 group"
-      style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-surface-hover)'; e.currentTarget.style.borderColor = 'var(--border-default)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--bg-surface)'; e.currentTarget.style.borderColor = 'var(--border-subtle)' }}
+      className="block px-5 py-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] transition-all duration-150 group"
     >
       {/* Title */}
       <p className="text-sm font-medium transition-colors leading-snug" style={{ color: 'var(--text-primary)' }}>
@@ -38,8 +35,8 @@ export function ProjectCard({ project }: ProjectCardProps) {
       {/* Active step + plan count */}
       <div className="flex items-center gap-3 mt-2.5 flex-wrap">
         {project.first_step_task ? (
-          <span className="inline-flex items-center gap-1.5 text-xs text-indigo-300/70">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 flex-shrink-0" aria-hidden="true" />
+          <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#3ECF8E] flex-shrink-0" aria-hidden="true" />
             {project.first_step_task.title}
           </span>
         ) : (

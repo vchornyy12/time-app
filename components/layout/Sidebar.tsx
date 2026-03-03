@@ -86,7 +86,7 @@ export function Sidebar({ inboxCount, lastReviewDate, userEmail, onOpenSearch }:
 
   return (
     <aside
-      className="w-[248px] flex-shrink-0 flex flex-col h-full backdrop-blur-[20px]"
+      className="w-[248px] flex-shrink-0 flex flex-col h-full"
       style={{
         borderRight: '1px solid var(--sidebar-border)',
         background: 'var(--sidebar-bg)',
@@ -103,7 +103,7 @@ export function Sidebar({ inboxCount, lastReviewDate, userEmail, onOpenSearch }:
         </div>
         <button
           onClick={onOpenSearch}
-          className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
+          className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
           style={{ color: 'var(--text-tertiary)' }}
           aria-label="Search (⌘K)"
           title="Search (⌘K)"
@@ -138,10 +138,10 @@ export function Sidebar({ inboxCount, lastReviewDate, userEmail, onOpenSearch }:
         style={{ borderTop: '1px solid var(--sidebar-border)' }}
       >
         <div
-          className="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0"
+          className="w-7 h-7 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center flex-shrink-0"
           aria-hidden="true"
         >
-          <span className="text-[11px] font-semibold text-indigo-300">{initials}</span>
+          <span className="text-[11px] font-semibold text-black dark:text-white">{initials}</span>
         </div>
         <span
           className="flex-1 text-sm font-medium truncate"
@@ -153,7 +153,7 @@ export function Sidebar({ inboxCount, lastReviewDate, userEmail, onOpenSearch }:
         <ThemeSwitcher />
         <button
           onClick={handleLogoutClick}
-          className="w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
+          className="w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
           style={{ color: 'var(--text-tertiary)' }}
           aria-label="Sign out"
         >
@@ -172,7 +172,7 @@ export function Sidebar({ inboxCount, lastReviewDate, userEmail, onOpenSearch }:
         <div className="flex justify-end gap-3">
           <button
             onClick={() => setShowLogoutConfirm(false)}
-            className="px-4 py-2 text-sm rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
+            className="px-4 py-2 text-sm rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
             style={{ color: 'var(--text-secondary)', background: 'var(--nav-hover-bg)' }}
           >
             Cancel
@@ -198,25 +198,21 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
       href={item.href}
       className={cn(
         'relative flex items-center gap-3 px-3 py-[7px] rounded-lg text-sm transition-all duration-150',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60 focus-visible:ring-offset-1',
-        active ? 'font-semibold' : 'font-normal'
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-1',
+        active
+          ? 'font-semibold'
+          : 'font-normal hover:bg-[var(--nav-hover-bg)]'
       )}
       style={{
         background: active ? 'var(--nav-active-bg)' : undefined,
         color: active ? 'var(--nav-text-active)' : 'var(--nav-text)',
-      }}
-      onMouseEnter={(e) => {
-        if (!active) e.currentTarget.style.background = 'var(--nav-hover-bg)'
-      }}
-      onMouseLeave={(e) => {
-        if (!active) e.currentTarget.style.background = ''
       }}
       aria-current={active ? 'page' : undefined}
     >
       {/* Active accent bar */}
       {active && (
         <span
-          className="absolute left-0 top-[6px] bottom-[6px] w-[3px] rounded-full bg-indigo-400"
+          className="absolute left-0 top-[6px] bottom-[6px] w-[3px] rounded-full bg-[#3ECF8E]"
           aria-hidden="true"
         />
       )}

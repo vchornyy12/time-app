@@ -63,13 +63,13 @@ export function TaskCard({ task, projectTitle, userContexts = [], onComplete, is
         className={cn(
           'mt-0.5 flex-shrink-0 w-[18px] h-[18px] rounded-full border-2 transition-all duration-150',
           'flex items-center justify-center',
-          'border-[var(--text-muted)] hover:border-indigo-400 hover:bg-indigo-400/15',
+          'border-[var(--text-muted)] hover:border-[#3ECF8E] hover:bg-[#3ECF8E]/15',
           'group/check'
         )}
         aria-label={`Mark "${task.title}" as done`}
       >
         <svg
-          className="w-2.5 h-2.5 text-indigo-400 opacity-0 group-hover/check:opacity-100 transition-opacity duration-150"
+          className="w-2.5 h-2.5 text-[#3ECF8E] opacity-0 group-hover/check:opacity-100 transition-opacity duration-150"
           fill="none"
           viewBox="0 0 10 10"
           stroke="currentColor"
@@ -87,7 +87,7 @@ export function TaskCard({ task, projectTitle, userContexts = [], onComplete, is
         <button
           type="button"
           onClick={onTitleClick}
-          className="text-base leading-snug text-left hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors duration-150 cursor-pointer"
+          className="text-base leading-snug text-left hover:text-[var(--accent)] transition-colors duration-150 cursor-pointer"
           style={{ color: 'var(--text-primary)' }}
         >
           {task.title}

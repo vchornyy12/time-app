@@ -9,18 +9,11 @@ interface StatCardProps {
   accent?: 'emerald' | 'indigo' | 'amber' | 'purple'
 }
 
-const ACCENT_CLS: Record<NonNullable<StatCardProps['accent']>, string> = {
-  emerald: 'text-emerald-500',
-  indigo: 'text-indigo-500',
-  amber: 'text-amber-500',
-  purple: 'text-purple-500',
-}
-
-const ACCENT_CLS_DARK: Record<NonNullable<StatCardProps['accent']>, string> = {
-  emerald: 'dark:text-emerald-300',
-  indigo: 'dark:text-indigo-300',
-  amber: 'dark:text-amber-300',
-  purple: 'dark:text-purple-300',
+const ACCENT_CLASSES: Record<NonNullable<StatCardProps['accent']>, string> = {
+  emerald: 'text-emerald-500 dark:text-emerald-300',
+  indigo:  'text-indigo-500 dark:text-indigo-300',
+  amber:   'text-amber-500 dark:text-amber-300',
+  purple:  'text-purple-500 dark:text-purple-300',
 }
 
 export function StatCard({ label, value, sublabel, accent }: StatCardProps) {
@@ -28,7 +21,7 @@ export function StatCard({ label, value, sublabel, accent }: StatCardProps) {
     <div className="glass-card p-4 flex flex-col gap-1">
       <p className="text-xs uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>{label}</p>
       <p
-        className={cn('text-2xl font-semibold', accent ? `${ACCENT_CLS[accent]} ${ACCENT_CLS_DARK[accent]}` : '')}
+        className={cn('text-2xl font-semibold', accent ? ACCENT_CLASSES[accent] : '')}
         style={!accent ? { color: 'var(--text-primary)' } : undefined}
       >
         {value}
