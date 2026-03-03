@@ -79,7 +79,7 @@ export function QuickCaptureBar() {
           if (file) {
             const ext = file.type.split('/')[1] || 'png'
             imageFiles.push(
-              new File([file], `screenshot-${Date.now()}.${ext}`, { type: file.type })
+              new (File as any)([file], `screenshot-${Date.now()}.${ext}`, { type: file.type })
             )
           }
         }
