@@ -73,7 +73,7 @@ export function AttachmentSection({
       const map: Record<string, string> = {}
       for (const u of urls) map[u.name] = u.url
       setSignedUrls(map)
-    }).catch(() => {})
+    }).catch(() => { })
     return () => { mounted = false }
   }, [taskId, attachments])
 
@@ -159,7 +159,7 @@ export function AttachmentSection({
           if (file) {
             // Generate a friendly name for pasted screenshots
             const ext = file.type.split('/')[1] || 'png'
-            const namedFile = new File(
+            const namedFile = new (File as any)(
               [file],
               `screenshot-${Date.now()}.${ext}`,
               { type: file.type }
