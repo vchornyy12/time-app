@@ -24,15 +24,16 @@ function formatDay(isoDay: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
 }
 
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
-  if (!active || !payload?.length) return null
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload || !payload.length) return null;
+
   return (
     <div className="rounded-lg bg-[#0e1322] border border-white/[0.09] px-3 py-2 text-xs shadow-xl">
-      <p className="text-white/50 mb-0.5">{formatDay(label)}</p>
+      <p className="text-white/50 mb-0.5">{label ? formatDay(label) : ''}</p>
       <p className="font-semibold text-indigo-300">{payload[0].value} completed</p>
     </div>
-  )
-}
+  );
+};
 
 export function CompletionChart({ data }: CompletionChartProps) {
   if (data.length === 0) {
