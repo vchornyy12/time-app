@@ -129,9 +129,9 @@ export function ReviewStep6Summary() {
       {/* Celebration header */}
       <div className="text-center py-2">
         <div className="text-5xl mb-3">🎉</div>
-        <h2 className="text-xl font-semibold text-white">Review complete!</h2>
+        <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Review complete!</h2>
         {stats && (
-          <p className="text-sm text-white/40 mt-1">{congratsMessage}</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>{congratsMessage}</p>
         )}
       </div>
 
@@ -178,7 +178,7 @@ export function ReviewStep6Summary() {
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-20 bg-white/[0.04] rounded-xl animate-pulse" />
+            <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: 'var(--bg-surface)' }} />
           ))}
         </div>
       )}
@@ -208,21 +208,25 @@ function StatCard({
   accent?: 'emerald' | 'indigo'
 }) {
   return (
-    <div className="rounded-xl bg-white/[0.04] border border-white/[0.07] px-4 py-3">
+    <div
+      className="rounded-xl px-4 py-3"
+      style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+    >
       <p
         className={cn(
           'text-2xl font-bold leading-none',
           accent === 'emerald'
-            ? 'text-emerald-300'
+            ? 'text-emerald-500 dark:text-emerald-300'
             : accent === 'indigo'
-            ? 'text-indigo-300'
-            : 'text-white'
+            ? 'text-indigo-500 dark:text-indigo-300'
+            : ''
         )}
+        style={!accent ? { color: 'var(--text-primary)' } : undefined}
       >
         {value}
       </p>
-      <p className="text-xs text-white/60 mt-1 leading-tight">{label}</p>
-      <p className="text-xs text-white/30">{sublabel}</p>
+      <p className="text-xs mt-1 leading-tight" style={{ color: 'var(--text-secondary)' }}>{label}</p>
+      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{sublabel}</p>
     </div>
   )
 }

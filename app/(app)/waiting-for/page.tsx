@@ -28,7 +28,7 @@ export default async function WaitingForPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-baseline justify-between mb-6">
-        <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>Waiting For</h1>
+        <h1 className="text-2xl font-semibold gradient-heading">Waiting For</h1>
         {tasks.length > 0 && (
           <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
             {tasks.length} {tasks.length === 1 ? 'item' : 'items'}

@@ -6,7 +6,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { RotateCcw, X } from 'lucide-react'
 import type { Task } from '@/lib/types'
 import { restoreTask, hardDeleteTask, emptyTrash } from '@/lib/actions/tasks'
-import { EmptyState, Button } from '@/components/ui'
+import { EmptyState, Button, ConfirmDeleteModal } from '@/components/ui'
 
 interface TrashListProps {
   tasks: Task[]
@@ -17,6 +17,7 @@ export function TrashList({ tasks }: TrashListProps) {
   const [, startTransition] = useTransition()
   const [confirmEmpty, setConfirmEmpty] = useState(false)
   const [emptyPending, startEmpty] = useTransition()
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null)
 
   const [optimisticTasks, applyOptimistic] = useOptimistic(
     tasks,
@@ -31,10 +32,13 @@ export function TrashList({ tasks }: TrashListProps) {
     })
   }
 
-  function handleHardDelete(taskId: string) {
+  function handleConfirmHardDelete() {
+    if (!pendingDelete) return
+    const { id } = pendingDelete
+    setPendingDelete(null)
     startTransition(async () => {
-      applyOptimistic(taskId)
-      await hardDeleteTask(taskId)
+      applyOptimistic(id)
+      await hardDeleteTask(id)
       router.refresh()
     })
   }
@@ -58,6 +62,7 @@ export function TrashList({ tasks }: TrashListProps) {
   }
 
   return (
+    <>
     <div className="flex flex-col gap-4">
       {/* Empty Trash control */}
       <div className="flex items-center justify-end gap-3">
@@ -120,7 +125,7 @@ export function TrashList({ tasks }: TrashListProps) {
                 <RotateCcw className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => handleHardDelete(task.id)}
+                onClick={() => setPendingDelete({ id: task.id, title: task.title })}
                 className="p-1.5 rounded-lg hover:text-red-300 hover:bg-red-500/10 transition-all duration-150"
                 style={{ color: 'var(--text-muted)' }}
                 aria-label={`Permanently delete "${task.title}"`}
@@ -133,5 +138,14 @@ export function TrashList({ tasks }: TrashListProps) {
         ))}
       </ul>
     </div>
+
+    <ConfirmDeleteModal
+      open={!!pendingDelete}
+      taskTitle={pendingDelete?.title ?? ''}
+      isPermanent
+      onConfirm={handleConfirmHardDelete}
+      onCancel={() => setPendingDelete(null)}
+    />
+    </>
   )
 }

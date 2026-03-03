@@ -7,7 +7,7 @@ import { deleteTask, restoreTask } from '@/lib/actions/tasks'
 import { InboxItem } from './InboxItem'
 import { ProcessingOverlay } from './ProcessingOverlay'
 import { TaskDetailOverlay } from './TaskDetailOverlay'
-import { EmptyState, Toast } from '@/components/ui'
+import { EmptyState, Toast, ConfirmDeleteModal } from '@/components/ui'
 
 interface InboxListProps {
   tasks: Task[]
@@ -36,8 +36,16 @@ export function InboxList({ tasks, userContexts = [] }: InboxListProps) {
   const [toast, setToast] = useState<{ taskId: string; title: string } | null>(null)
   const [processingTask, setProcessingTask] = useState<Task | null>(null)
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<Task | null>(null)
 
   function handleDelete(task: Task) {
+    setPendingDelete(task)
+  }
+
+  function handleConfirmDelete() {
+    if (!pendingDelete) return
+    const task = pendingDelete
+    setPendingDelete(null)
     setToast({ taskId: task.id, title: task.title })
     startTransition(async () => {
       applyOptimistic(task.id)
@@ -100,6 +108,13 @@ export function InboxList({ tasks, userContexts = [] }: InboxListProps) {
       <TaskDetailOverlay
         taskId={detailTaskId}
         onClose={() => setDetailTaskId(null)}
+      />
+
+      <ConfirmDeleteModal
+        open={!!pendingDelete}
+        taskTitle={pendingDelete?.title ?? ''}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setPendingDelete(null)}
       />
     </>
   )

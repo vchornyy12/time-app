@@ -30,7 +30,7 @@ export default async function InboxPage() {
     <div className="max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-baseline justify-between mb-6">
-        <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>Inbox</h1>
+        <h1 className="text-2xl font-semibold gradient-heading">Inbox</h1>
         {list.length > 0 && (
           <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
             {list.length} {list.length === 1 ? 'item' : 'items'}

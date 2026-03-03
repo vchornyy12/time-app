@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -32,9 +33,15 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
   if (!active || !payload?.length) return null
   const entry = payload[0]
   return (
-    <div className="rounded-lg bg-[#0e1322] border border-white/[0.09] px-3 py-2 text-xs shadow-xl">
-      <p className="text-white/70 font-medium">{entry.name}</p>
-      <p className="text-white/40 mt-0.5">{entry.value} tasks</p>
+    <div
+      className="rounded-lg px-3 py-2 text-xs shadow-xl"
+      style={{
+        background: 'var(--tooltip-bg)',
+        border: '1px solid var(--tooltip-border)',
+      }}
+    >
+      <p className="font-medium" style={{ color: 'var(--text-secondary)' }}>{entry.name}</p>
+      <p className="mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{entry.value} tasks</p>
     </div>
   )
 }
@@ -45,12 +52,12 @@ export function StatusDistribution({ counts }: StatusDistributionProps) {
     .map(([key, value]) => ({
       name: STATUS_LABELS[key] ?? key,
       value,
-      color: STATUS_COLORS[key] ?? 'rgba(255,255,255,0.3)',
+      color: STATUS_COLORS[key] ?? 'rgba(128,128,128,0.4)',
     }))
 
   if (data.length === 0) {
     return (
-      <div className="h-48 flex items-center justify-center text-sm text-white/25">
+      <div className="h-48 flex items-center justify-center text-sm" style={{ color: 'var(--text-muted)' }}>
         No tasks yet
       </div>
     )
@@ -86,8 +93,8 @@ export function StatusDistribution({ counts }: StatusDistributionProps) {
               className="w-2 h-2 rounded-full flex-shrink-0"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-white/50 flex-1">{entry.name}</span>
-            <span className="text-white/35 tabular-nums">{entry.value}</span>
+            <span className="flex-1" style={{ color: 'var(--text-secondary)' }}>{entry.name}</span>
+            <span className="tabular-nums" style={{ color: 'var(--text-tertiary)' }}>{entry.value}</span>
           </li>
         ))}
       </ul>

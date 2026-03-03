@@ -17,7 +17,10 @@ interface PeriodSelectorProps {
 
 export function PeriodSelector({ value, onChange }: PeriodSelectorProps) {
   return (
-    <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.07]">
+    <div
+      className="flex items-center gap-1 p-1 rounded-xl"
+      style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+    >
       {PERIODS.map((p) => (
         <button
           key={p.value}
@@ -26,9 +29,16 @@ export function PeriodSelector({ value, onChange }: PeriodSelectorProps) {
             'px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-150',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60',
             value === p.value
-              ? 'bg-indigo-500/20 text-indigo-300'
-              : 'text-white/40 hover:text-white/70 hover:bg-white/[0.05]'
+              ? 'bg-indigo-500/20 text-indigo-500 dark:text-indigo-300'
+              : ''
           )}
+          style={value !== p.value ? { color: 'var(--text-tertiary)' } : undefined}
+          onMouseEnter={(e) => {
+            if (value !== p.value) e.currentTarget.style.background = 'var(--bg-surface-hover)'
+          }}
+          onMouseLeave={(e) => {
+            if (value !== p.value) e.currentTarget.style.background = ''
+          }}
           aria-pressed={value === p.value}
         >
           {p.label}

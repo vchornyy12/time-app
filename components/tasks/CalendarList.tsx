@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Inbox, Trash2, Clock, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import type { Task } from '@/lib/types'
-import { EmptyState } from '@/components/ui'
+import { EmptyState, ConfirmDeleteModal } from '@/components/ui'
 import {
   removeCalendarTaskToTrash,
   moveCalendarTaskToInbox,
@@ -31,16 +31,20 @@ interface DateGroup {
 export function CalendarList({ tasks, isGoogleConnected }: CalendarListProps) {
   const router = useRouter()
   const [, startTransition] = useTransition()
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null)
 
   const [optimisticTasks, applyOptimistic] = useOptimistic(
     tasks,
     (state: Task[], taskId: string) => state.filter((t) => t.id !== taskId)
   )
 
-  function handleDelete(taskId: string) {
+  function handleConfirmDelete() {
+    if (!pendingDelete) return
+    const { id } = pendingDelete
+    setPendingDelete(null)
     startTransition(async () => {
-      applyOptimistic(taskId)
-      await removeCalendarTaskToTrash(taskId)
+      applyOptimistic(id)
+      await removeCalendarTaskToTrash(id)
       router.refresh()
     })
   }
@@ -66,33 +70,42 @@ export function CalendarList({ tasks, isGoogleConnected }: CalendarListProps) {
   const groups = groupByDate(optimisticTasks)
 
   return (
-    <div className="flex flex-col gap-7">
-      {groups.map(({ label, isOverdue, items }) => (
-        <section key={label}>
-          <h2
-            className={cn(
-              'text-xs font-medium uppercase tracking-wide mb-2.5',
-              isOverdue ? 'text-red-400/70' : ''
-            )}
-            style={isOverdue ? undefined : { color: 'var(--text-secondary)' }}
-          >
-            {label}
-          </h2>
-          <ul className="flex flex-col gap-2">
-            {items.map((task) => (
-              <CalendarCard
-                key={task.id}
-                task={task}
-                isGoogleConnected={isGoogleConnected}
-                onDelete={() => handleDelete(task.id)}
-                onMoveToInbox={() => handleMoveToInbox(task.id)}
-                onRefresh={() => router.refresh()}
-              />
-            ))}
-          </ul>
-        </section>
-      ))}
-    </div>
+    <>
+      <div className="flex flex-col gap-7">
+        {groups.map(({ label, isOverdue, items }) => (
+          <section key={label}>
+            <h2
+              className={cn(
+                'text-xs font-medium uppercase tracking-wide mb-2.5',
+                isOverdue ? 'text-red-400/70' : ''
+              )}
+              style={isOverdue ? undefined : { color: 'var(--text-secondary)' }}
+            >
+              {label}
+            </h2>
+            <ul className="flex flex-col gap-2">
+              {items.map((task) => (
+                <CalendarCard
+                  key={task.id}
+                  task={task}
+                  isGoogleConnected={isGoogleConnected}
+                  onDelete={() => setPendingDelete({ id: task.id, title: task.title })}
+                  onMoveToInbox={() => handleMoveToInbox(task.id)}
+                  onRefresh={() => router.refresh()}
+                />
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+
+      <ConfirmDeleteModal
+        open={!!pendingDelete}
+        taskTitle={pendingDelete?.title ?? ''}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+    </>
   )
 }
 

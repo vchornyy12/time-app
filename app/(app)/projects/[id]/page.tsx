@@ -70,7 +70,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-start justify-between gap-4">
-          <h1 className="text-2xl font-semibold leading-snug" style={{ color: 'var(--text-primary)' }}>
+          <h1 className="text-2xl font-semibold leading-snug gradient-heading">
             {project.title}
           </h1>
           <span className="flex-shrink-0 text-xs px-2.5 py-1 rounded-full bg-emerald-500/12 border border-emerald-500/20 text-emerald-400 mt-1">

@@ -27,7 +27,10 @@ export function GoogleCalendarCard({
   }
 
   return (
-    <div className="px-5 py-5 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+    <div
+      className="px-5 py-5 rounded-xl"
+      style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+    >
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -48,21 +51,28 @@ export function GoogleCalendarCard({
                 d="M8.25 11.25h1.5v1.5h-1.5zM11.25 11.25h1.5v1.5h-1.5zM14.25 11.25h1.5v1.5h-1.5zM8.25 14.25h1.5v1.5h-1.5zM11.25 14.25h1.5v1.5h-1.5zM14.25 14.25h1.5v1.5h-1.5z"
               />
             </svg>
-            <h3 className="text-sm font-medium text-white">Google Calendar</h3>
+            <h3 className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Google Calendar</h3>
           </div>
-          <p className="text-xs text-white/35 leading-relaxed">
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
             Sync calendar items to your Google Calendar automatically
           </p>
         </div>
 
         {/* Status badge */}
         {isConnected ? (
-          <span className="flex-shrink-0 flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-500/12 border border-emerald-500/20 text-emerald-400">
+          <span className="flex-shrink-0 flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-500/12 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="w-3 h-3" />
             Connected
           </span>
         ) : (
-          <span className="flex-shrink-0 text-xs px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-white/35">
+          <span
+            className="flex-shrink-0 text-xs px-2.5 py-1 rounded-full"
+            style={{
+              background: 'var(--bg-surface-hover)',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--text-tertiary)',
+            }}
+          >
             Not connected
           </span>
         )}
@@ -70,14 +80,14 @@ export function GoogleCalendarCard({
 
       {/* Success message */}
       {justConnected && (
-        <p className="mt-3 text-xs text-emerald-400 animate-fade-in">
+        <p className="mt-3 text-xs text-emerald-600 dark:text-emerald-400 animate-fade-in">
           ✓ Google Calendar connected — future calendar items will sync automatically
         </p>
       )}
 
       {/* Error message */}
       {errorMessage && (
-        <p className="mt-3 text-xs text-red-400 animate-fade-in">
+        <p className="mt-3 text-xs text-red-500 dark:text-red-400 animate-fade-in">
           {errorMessage}
         </p>
       )}
@@ -88,7 +98,20 @@ export function GoogleCalendarCard({
           <button
             onClick={handleDisconnect}
             disabled={isPending}
-            className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white/45 hover:text-white/70 hover:bg-white/[0.07] hover:border-white/[0.14] transition-all duration-150 disabled:opacity-50"
+            className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg transition-all duration-150 disabled:opacity-50"
+            style={{
+              background: 'var(--bg-surface-hover)',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--text-tertiary)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--text-secondary)'
+              e.currentTarget.style.background = 'var(--bg-surface-hover)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--text-tertiary)'
+              e.currentTarget.style.background = 'var(--bg-surface-hover)'
+            }}
           >
             {isPending ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -100,7 +123,7 @@ export function GoogleCalendarCard({
         ) : (
           <a
             href="/api/google/auth"
-            className="inline-flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/20 text-indigo-300 hover:text-indigo-200 font-medium transition-all duration-150"
+            className="inline-flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/20 text-indigo-600 dark:text-indigo-300 hover:text-indigo-700 dark:hover:text-indigo-200 font-medium transition-all duration-150"
           >
             Connect Google Calendar
           </a>

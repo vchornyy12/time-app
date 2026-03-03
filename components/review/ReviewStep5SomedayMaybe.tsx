@@ -171,7 +171,8 @@ export function ReviewStep5SomedayMaybe({ onNext, onItemSelect }: ReviewStep5Som
                     </button>
                     <button
                       onClick={() => openDateEditor(task)}
-                      className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.08] transition-all duration-150"
+                      className="p-1.5 rounded-lg transition-all duration-150 hover:bg-black/[0.06] dark:hover:bg-white/[0.08] hover:text-indigo-500 dark:hover:text-white"
+                      style={{ color: 'var(--text-muted)' }}
                       title="Update review date"
                       aria-label={`Update review date for "${task.title}"`}
                     >
@@ -179,7 +180,8 @@ export function ReviewStep5SomedayMaybe({ onNext, onItemSelect }: ReviewStep5Som
                     </button>
                     <button
                       onClick={() => handleTrash(task.id)}
-                      className="p-1.5 rounded-lg text-white/30 hover:text-red-300 hover:bg-red-500/10 transition-all duration-150"
+                      className="p-1.5 rounded-lg transition-all duration-150 hover:text-red-500 dark:hover:text-red-300 hover:bg-red-500/10"
+                      style={{ color: 'var(--text-muted)' }}
                       title="Archive to Trash"
                       aria-label={`Archive "${task.title}"`}
                     >
@@ -219,7 +221,7 @@ function StepLoading() {
   return (
     <div className="flex flex-col gap-2">
       {[...Array(3)].map((_, i) => (
-        <div key={i} className="h-14 bg-white/[0.04] rounded-xl animate-pulse" />
+        <div key={i} className="h-14 rounded-xl animate-pulse" style={{ background: 'var(--bg-surface)' }} />
       ))}
     </div>
   )
@@ -227,7 +229,10 @@ function StepLoading() {
 
 function EmptySection({ label }: { label: string }) {
   return (
-    <div className="px-4 py-5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center text-sm text-white/35">
+    <div
+      className="px-4 py-5 rounded-xl text-center text-sm"
+      style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-tertiary)' }}
+    >
       {label} ✓
     </div>
   )

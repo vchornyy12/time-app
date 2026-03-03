@@ -76,7 +76,7 @@ export function ProjectCreationForm({
       {/* Rough plan */}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>
-          Rough plan <span className="normal-case font-normal text-white/30">(optional — one step per line)</span>
+          Rough plan <span className="normal-case font-normal" style={{ color: 'var(--text-muted)' }}>(optional — one step per line)</span>
         </label>
         <textarea
           value={roughPlan}

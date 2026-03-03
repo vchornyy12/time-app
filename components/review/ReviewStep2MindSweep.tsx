@@ -35,19 +35,22 @@ export function ReviewStep2MindSweep({ onNext }: ReviewStep2MindSweepProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      <p className="text-sm text-white/50 leading-relaxed">
+      <p className="text-sm leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
         Before reviewing your lists, empty your head — anything still floating around as
         commitments, ideas, or worries.
       </p>
 
       {/* Calendar reminder box */}
-      <div className="flex gap-3 p-4 rounded-xl bg-white/[0.04] border border-white/[0.07]">
-        <CalendarDays className="w-4 h-4 text-indigo-300 flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-white/40 leading-relaxed">
+      <div
+        className="flex gap-3 p-4 rounded-xl"
+        style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+      >
+        <CalendarDays className="w-4 h-4 text-indigo-500 dark:text-indigo-300 flex-shrink-0 mt-0.5" />
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
           Also glance at{' '}
-          <span className="text-white/60">last week&apos;s calendar</span> for missed
+          <span style={{ color: 'var(--text-secondary)' }}>last week&apos;s calendar</span> for missed
           follow-ups, and your{' '}
-          <span className="text-white/60">upcoming week</span> for anything to prepare for.
+          <span style={{ color: 'var(--text-secondary)' }}>upcoming week</span> for anything to prepare for.
         </p>
       </div>
 

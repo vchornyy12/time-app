@@ -7,7 +7,7 @@ import { Inbox, Trash2, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import type { Task } from '@/lib/types'
 import { moveToInbox, deleteTask, updateSomedayReviewDate } from '@/lib/actions/tasks'
-import { EmptyState } from '@/components/ui'
+import { EmptyState, ConfirmDeleteModal } from '@/components/ui'
 
 // ── List ──────────────────────────────────────────────────────
 
@@ -18,6 +18,7 @@ interface SomedayListProps {
 export function SomedayList({ tasks }: SomedayListProps) {
   const router = useRouter()
   const [, startTransition] = useTransition()
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null)
 
   const [optimisticTasks, applyOptimistic] = useOptimistic(
     tasks,
@@ -32,10 +33,13 @@ export function SomedayList({ tasks }: SomedayListProps) {
     })
   }
 
-  function handleDelete(taskId: string) {
+  function handleConfirmDelete() {
+    if (!pendingDelete) return
+    const { id } = pendingDelete
+    setPendingDelete(null)
     startTransition(async () => {
-      applyOptimistic(taskId)
-      await deleteTask(taskId)
+      applyOptimistic(id)
+      await deleteTask(id)
       router.refresh()
     })
   }
@@ -51,16 +55,25 @@ export function SomedayList({ tasks }: SomedayListProps) {
   }
 
   return (
-    <ul className="flex flex-col gap-2" aria-label="Someday / Maybe tasks">
-      {optimisticTasks.map((task) => (
-        <SomedayCard
-          key={task.id}
-          task={task}
-          onMoveToInbox={() => handleMoveToInbox(task.id)}
-          onDelete={() => handleDelete(task.id)}
-        />
-      ))}
-    </ul>
+    <>
+      <ul className="flex flex-col gap-2" aria-label="Someday / Maybe tasks">
+        {optimisticTasks.map((task) => (
+          <SomedayCard
+            key={task.id}
+            task={task}
+            onMoveToInbox={() => handleMoveToInbox(task.id)}
+            onDelete={() => setPendingDelete({ id: task.id, title: task.title })}
+          />
+        ))}
+      </ul>
+
+      <ConfirmDeleteModal
+        open={!!pendingDelete}
+        taskTitle={pendingDelete?.title ?? ''}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+    </>
   )
 }
 

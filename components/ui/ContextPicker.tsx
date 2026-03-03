@@ -122,7 +122,14 @@ export function ContextPicker({ value, onChange, userContexts = [] }: ContextPic
           type="button"
           onClick={addCustom}
           disabled={!customInput.trim()}
-          className="px-3 py-2 text-xs rounded-lg bg-white/[0.07] border border-white/[0.10] text-white/55 hover:text-white/80 hover:bg-white/[0.10] disabled:opacity-40 transition-all duration-150 flex-shrink-0"
+          className="px-3 py-2 text-xs rounded-lg transition-all duration-150 flex-shrink-0 disabled:opacity-40"
+          style={{
+            background: 'var(--bg-surface-hover)',
+            border: '1px solid var(--border-subtle)',
+            color: 'var(--text-secondary)',
+          }}
+          onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.color = 'var(--text-primary)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)' }}
         >
           Add
         </button>

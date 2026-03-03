@@ -26,7 +26,7 @@ function formatCompletedAt(iso: string): string {
 export function RecentCompletions({ tasks }: RecentCompletionsProps) {
   if (tasks.length === 0) {
     return (
-      <p className="text-sm text-white/25 py-4 text-center">No completed tasks yet</p>
+      <p className="text-sm py-4 text-center" style={{ color: 'var(--text-muted)' }}>No completed tasks yet</p>
     )
   }
 
@@ -35,11 +35,14 @@ export function RecentCompletions({ tasks }: RecentCompletionsProps) {
       {tasks.map((task) => (
         <li
           key={task.id}
-          className="flex items-center gap-3 px-1 py-2.5 rounded-lg hover:bg-white/[0.03] transition-colors"
+          className="flex items-center gap-3 px-1 py-2.5 rounded-lg transition-colors"
+          style={{ background: 'transparent' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-surface)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
         >
           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400/50 flex-shrink-0" />
-          <span className="flex-1 text-sm text-white/60 truncate">{task.title}</span>
-          <span className="text-xs text-white/25 flex-shrink-0 tabular-nums">
+          <span className="flex-1 text-sm truncate" style={{ color: 'var(--text-secondary)' }}>{task.title}</span>
+          <span className="text-xs flex-shrink-0 tabular-nums" style={{ color: 'var(--text-muted)' }}>
             {formatCompletedAt(task.completed_at)}
           </span>
         </li>

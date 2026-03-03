@@ -28,7 +28,7 @@ export default async function ProjectsPage() {
     <div className="max-w-2xl mx-auto">
       <div className="flex items-baseline justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>Projects</h1>
+          <h1 className="text-2xl font-semibold gradient-heading">Projects</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Multi-step outcomes you&apos;re committed to
           </p>

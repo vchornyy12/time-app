@@ -38,7 +38,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>Settings</h1>
+        <h1 className="text-2xl font-semibold gradient-heading">Settings</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Manage your integrations and preferences</p>
       </div>
 

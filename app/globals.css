@@ -4,20 +4,20 @@
 
 :root {
   /* Page */
-  --bg-page: #f5f5f7;
-  --bg-surface: rgba(0, 0, 0, 0.03);
-  --bg-surface-hover: rgba(0, 0, 0, 0.06);
+  --bg-page: #F7F8F0;
+  --bg-surface: rgba(53, 88, 114, 0.04);
+  --bg-surface-hover: rgba(53, 88, 114, 0.07);
 
   /* Glass */
-  --glass-bg: rgba(255, 255, 255, 0.65);
-  --glass-bg-hover: rgba(255, 255, 255, 0.80);
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --glass-border-hover: rgba(0, 0, 0, 0.14);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-bg-hover: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(53, 88, 114, 0.12);
+  --glass-border-hover: rgba(53, 88, 114, 0.20);
+  --glass-shadow: 0 2px 12px rgba(53, 88, 114, 0.08), 0 8px 40px rgba(53, 88, 114, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.70);
   --glass-blur: blur(24px);
 
-  --glass-panel-bg: rgba(255, 255, 255, 0.50);
-  --glass-panel-border: rgba(0, 0, 0, 0.06);
+  --glass-panel-bg: rgba(122, 170, 206, 0.18);
+  --glass-panel-border: rgba(53, 88, 114, 0.10);
   --glass-panel-blur: blur(16px);
 
   /* Input */
@@ -25,57 +25,74 @@
   --input-bg-focus: rgba(0, 0, 0, 0.06);
   --input-border: rgba(0, 0, 0, 0.15);
   --input-border-focus: rgba(0, 0, 0, 0.30);
-  --input-text: #1a1a2e;
+  --input-text: #1F1F1F;
   --input-placeholder: rgba(0, 0, 0, 0.42);
 
   /* Button glass */
   --btn-glass-bg: rgba(0, 0, 0, 0.04);
   --btn-glass-bg-hover: rgba(0, 0, 0, 0.08);
   --btn-glass-border: rgba(0, 0, 0, 0.10);
-  --btn-glass-text: #1a1a2e;
+  --btn-glass-text: #1F1F1F;
 
   /* Text */
-  --text-primary: #111111;
-  --text-secondary: #3d3d4a;
-  --text-tertiary: rgba(0, 0, 0, 0.55);
-  --text-muted: rgba(0, 0, 0, 0.40);
+  --text-primary: #1F1F1F;
+  --text-secondary: #355872;
+  --text-tertiary: rgba(53, 88, 114, 0.65);
+  --text-muted: rgba(53, 88, 114, 0.45);
 
   /* Sidebar */
-  --sidebar-bg: rgba(245, 245, 247, 0.85);
-  --sidebar-border: rgba(0, 0, 0, 0.08);
+  --sidebar-bg: rgba(247, 248, 240, 0.92);
+  --sidebar-border: rgba(53, 88, 114, 0.10);
 
   /* Capture bar */
   --capture-bg: rgba(255, 255, 255, 0.75);
   --capture-bg-focus: rgba(255, 255, 255, 0.90);
-  --capture-border: rgba(0, 0, 0, 0.08);
-  --capture-border-focus: rgba(0, 0, 0, 0.14);
-  --capture-shadow: 0 8px 32px rgba(0, 0, 0, 0.10);
-  --capture-shadow-focus: 0 8px 40px rgba(0, 0, 0, 0.16);
+  --capture-border: rgba(53, 88, 114, 0.12);
+  --capture-border-focus: rgba(53, 88, 114, 0.22);
+  --capture-shadow: 0 8px 32px rgba(53, 88, 114, 0.10);
+  --capture-shadow-focus: 0 8px 40px rgba(53, 88, 114, 0.16);
 
   /* Nav */
-  --nav-active-bg: rgba(0, 0, 0, 0.06);
-  --nav-hover-bg: rgba(0, 0, 0, 0.04);
-  --nav-text: #4a4a5a;
-  --nav-text-active: #1a1a2e;
-  --nav-icon: rgba(0, 0, 0, 0.50);
-  --nav-icon-active: var(--color-indigo-500);
-  --nav-divider: rgba(0, 0, 0, 0.06);
+  --nav-active-bg: rgba(53, 88, 114, 0.10);
+  --nav-hover-bg: rgba(53, 88, 114, 0.06);
+  --nav-text: rgba(53, 88, 114, 0.75);
+  --nav-text-active: #1F1F1F;
+  --nav-icon: rgba(53, 88, 114, 0.55);
+  --nav-icon-active: #355872;
+  --nav-divider: rgba(53, 88, 114, 0.08);
 
   /* Misc */
-  --backdrop-bg: rgba(0, 0, 0, 0.30);
+  --backdrop-bg: rgba(31, 31, 31, 0.35);
   --skeleton-from: rgba(0, 0, 0, 0.04);
   --skeleton-mid: rgba(0, 0, 0, 0.07);
   --skeleton-to: rgba(0, 0, 0, 0.04);
-  --kbd-bg: rgba(0, 0, 0, 0.06);
-  --kbd-text: rgba(0, 0, 0, 0.45);
-  --chip-bg: rgba(0, 0, 0, 0.05);
-  --chip-border: rgba(0, 0, 0, 0.08);
+  --kbd-bg: rgba(53, 88, 114, 0.07);
+  --kbd-text: rgba(53, 88, 114, 0.60);
+  --chip-bg: rgba(53, 88, 114, 0.06);
+  --chip-border: rgba(53, 88, 114, 0.10);
+  --border-subtle: rgba(53, 88, 114, 0.10);
+  --tooltip-bg: #F7F8F0;
+  --tooltip-border: rgba(53, 88, 114, 0.14);
 
   /* Mobile nav */
-  --mobile-nav-bg: rgba(245, 245, 247, 0.92);
+  --mobile-nav-bg: rgba(247, 248, 240, 0.95);
 
   /* Calendar icon */
   --calendar-icon-invert: invert(0);
+
+  /* Accent palette */
+  --accent:          #355872;
+  --accent-hover:    #2a4560;
+  --accent-mid:      #5a88aa;
+  --accent-light:    #7AAACE;
+  --accent-light-2:  #9CD5FF;
+  --accent-muted:    rgba(53, 88, 114, 0.12);
+  --accent-border:   rgba(53, 88, 114, 0.22);
+  --focus-ring:      rgba(53, 88, 114, 0.55);
+  --glass-gradient-start: rgba(255, 255, 255, 0.75);
+  --glass-gradient-end:   rgba(122, 170, 206, 0.18);
+  --lavender:        #C4B5D8;
+  --mint:            #A8D5B5;
 
   /* Legacy */
   --background: var(--bg-page);
@@ -84,20 +101,20 @@
 
 .dark {
   /* Page */
-  --bg-page: #080b14;
+  --bg-page: #1F1F1F;
   --bg-surface: rgba(255, 255, 255, 0.04);
   --bg-surface-hover: rgba(255, 255, 255, 0.06);
 
   /* Glass */
-  --glass-bg: rgba(255, 255, 255, 0.08);
-  --glass-bg-hover: rgba(255, 255, 255, 0.12);
-  --glass-border: rgba(255, 255, 255, 0.10);
-  --glass-border-hover: rgba(255, 255, 255, 0.16);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(122, 170, 206, 0.08);
+  --glass-bg-hover: rgba(122, 170, 206, 0.13);
+  --glass-border: rgba(156, 213, 255, 0.12);
+  --glass-border-hover: rgba(156, 213, 255, 0.20);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(156, 213, 255, 0.06);
   --glass-blur: blur(24px);
 
-  --glass-panel-bg: rgba(255, 255, 255, 0.06);
-  --glass-panel-border: rgba(255, 255, 255, 0.09);
+  --glass-panel-bg: rgba(122, 170, 206, 0.06);
+  --glass-panel-border: rgba(156, 213, 255, 0.09);
   --glass-panel-blur: blur(16px);
 
   /* Input */
@@ -105,41 +122,41 @@
   --input-bg-focus: rgba(255, 255, 255, 0.09);
   --input-border: rgba(255, 255, 255, 0.10);
   --input-border-focus: rgba(255, 255, 255, 0.22);
-  --input-text: #f0f0f2;
+  --input-text: #E8EEF2;
   --input-placeholder: rgba(255, 255, 255, 0.28);
 
   /* Button glass */
   --btn-glass-bg: rgba(255, 255, 255, 0.06);
   --btn-glass-bg-hover: rgba(255, 255, 255, 0.10);
   --btn-glass-border: rgba(255, 255, 255, 0.10);
-  --btn-glass-text: #f0f0f2;
+  --btn-glass-text: #E8EEF2;
 
   /* Text */
-  --text-primary: #f0f0f2;
-  --text-secondary: rgba(255, 255, 255, 0.60);
-  --text-tertiary: rgba(255, 255, 255, 0.40);
-  --text-muted: rgba(255, 255, 255, 0.20);
+  --text-primary: #E8EEF2;
+  --text-secondary: rgba(156, 213, 255, 0.75);
+  --text-tertiary: rgba(156, 213, 255, 0.50);
+  --text-muted: rgba(156, 213, 255, 0.28);
 
   /* Sidebar */
-  --sidebar-bg: rgba(28, 28, 30, 0.8);
-  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --sidebar-bg: rgba(32, 37, 44, 0.85);
+  --sidebar-border: rgba(156, 213, 255, 0.08);
 
   /* Capture bar */
-  --capture-bg: rgba(28, 28, 30, 0.75);
-  --capture-bg-focus: rgba(38, 38, 40, 0.85);
+  --capture-bg: rgba(32, 37, 44, 0.80);
+  --capture-bg-focus: rgba(40, 46, 54, 0.88);
   --capture-border: rgba(255, 255, 255, 0.08);
   --capture-border-focus: rgba(255, 255, 255, 0.14);
   --capture-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   --capture-shadow-focus: 0 8px 40px rgba(0, 0, 0, 0.55);
 
   /* Nav */
-  --nav-active-bg: rgba(255, 255, 255, 0.08);
-  --nav-hover-bg: rgba(255, 255, 255, 0.04);
-  --nav-text: rgba(255, 255, 255, 0.60);
-  --nav-text-active: #ffffff;
-  --nav-icon: rgba(255, 255, 255, 0.50);
-  --nav-icon-active: var(--color-indigo-300);
-  --nav-divider: rgba(255, 255, 255, 0.06);
+  --nav-active-bg: rgba(122, 170, 206, 0.14);
+  --nav-hover-bg: rgba(122, 170, 206, 0.07);
+  --nav-text: rgba(156, 213, 255, 0.65);
+  --nav-text-active: #E8EEF2;
+  --nav-icon: rgba(122, 170, 206, 0.60);
+  --nav-icon-active: #7AAACE;
+  --nav-divider: rgba(156, 213, 255, 0.08);
 
   /* Misc */
   --backdrop-bg: rgba(0, 0, 0, 0.60);
@@ -150,12 +167,29 @@
   --kbd-text: rgba(255, 255, 255, 0.20);
   --chip-bg: rgba(255, 255, 255, 0.05);
   --chip-border: rgba(255, 255, 255, 0.07);
+  --border-subtle: rgba(156, 213, 255, 0.10);
+  --tooltip-bg: #252a30;
+  --tooltip-border: rgba(156, 213, 255, 0.12);
 
   /* Mobile nav */
-  --mobile-nav-bg: rgba(28, 28, 30, 0.92);
+  --mobile-nav-bg: rgba(32, 37, 44, 0.94);
 
   /* Calendar icon */
   --calendar-icon-invert: invert(0.6);
+
+  /* Accent palette */
+  --accent:          #7AAACE;
+  --accent-hover:    #9CD5FF;
+  --accent-mid:      #7AAACE;
+  --accent-light:    #9CD5FF;
+  --accent-light-2:  rgba(156, 213, 255, 0.90);
+  --accent-muted:    rgba(122, 170, 206, 0.15);
+  --accent-border:   rgba(122, 170, 206, 0.25);
+  --focus-ring:      rgba(122, 170, 206, 0.55);
+  --glass-gradient-start: rgba(122, 170, 206, 0.07);
+  --glass-gradient-end:   rgba(156, 213, 255, 0.04);
+  --lavender:        #9D88BE;
+  --mint:            #7AB589;
 
   /* Legacy */
   --background: var(--bg-page);
@@ -169,6 +203,22 @@
   --font-mono: var(--font-geist-mono);
   --tracking-tight-apple: -0.022em;
   --tracking-body-apple: -0.011em;
+
+  /* Remap indigo → new accent palette (affects all text-indigo-*, bg-indigo-*, ring-indigo-*) */
+  --color-indigo-200: var(--accent-light-2);
+  --color-indigo-300: var(--accent-light);
+  --color-indigo-400: var(--accent-mid);
+  --color-indigo-500: var(--accent);
+  --color-indigo-600: var(--accent-hover);
+
+  /* New semantic tokens */
+  --color-accent:      var(--accent);
+  --color-soft-blue:   #7AAACE;
+  --color-sky-blue:    #9CD5FF;
+  --color-slate-blue:  #355872;
+  --color-cream:       #F7F8F0;
+  --color-lavender:    var(--lavender);
+  --color-mint:        var(--mint);
 }
 
 body {
@@ -186,7 +236,7 @@ a:focus-visible,
 [role="button"]:focus-visible,
 [role="tab"]:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid rgba(99, 102, 241, 0.75);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -197,7 +247,7 @@ a:focus-visible,
   top: 1rem;
   z-index: 9999;
   padding: 0.5rem 1rem;
-  background: #6366f1;
+  background: var(--accent);
   color: #fff;
   font-size: 0.875rem;
   font-weight: 600;
@@ -270,7 +320,11 @@ a:focus-visible,
 @layer utilities {
   /* --- Panels --- */
   .glass-card {
-    background: var(--glass-bg);
+    background: linear-gradient(
+      135deg,
+      var(--glass-gradient-start) 0%,
+      var(--glass-gradient-end) 100%
+    );
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--glass-border);
@@ -309,7 +363,7 @@ a:focus-visible,
   }
 
   .glass-input:focus-visible {
-    outline: 2px solid rgba(99, 102, 241, 0.75);
+    outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
   }
 
@@ -325,7 +379,7 @@ a:focus-visible,
   .btn-primary {
     width: 100%;
     padding: 0.75rem 1rem;
-    background: #6366f1;
+    background: var(--accent);
     color: white;
     font-weight: 500;
     font-size: 0.9375rem;
@@ -339,7 +393,7 @@ a:focus-visible,
   }
 
   .btn-primary:hover:not(:disabled) {
-    background: #818cf8;
+    background: var(--accent-hover);
   }
 
   .btn-primary:disabled {
@@ -348,7 +402,7 @@ a:focus-visible,
   }
 
   .btn-primary:focus-visible {
-    outline: 2px solid rgba(99, 102, 241, 0.75);
+    outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
   }
 
@@ -379,8 +433,16 @@ a:focus-visible,
   }
 
   .btn-glass:focus-visible {
-    outline: 2px solid rgba(99, 102, 241, 0.75);
+    outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
+  }
+
+  /* --- Gradient heading --- */
+  .gradient-heading {
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   /* --- Skeleton shimmer --- */

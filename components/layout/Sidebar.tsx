@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -19,7 +20,7 @@ import {
 } from '@phosphor-icons/react'
 import type { IconWeight } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils/cn'
-import { Badge, ThemeSwitcher } from '@/components/ui'
+import { Badge, ThemeSwitcher, Modal } from '@/components/ui'
 import { createClient } from '@/lib/supabase/client'
 
 // ── Icon mapping ────────────────────────────────────────────
@@ -46,6 +47,7 @@ const ICON_SIZE = 20
 export function Sidebar({ inboxCount, lastReviewDate, userEmail, onOpenSearch }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const primaryNav: NavItem[] = [
     { href: '/inbox', label: 'Inbox', Icon: Tray, badge: inboxCount },
@@ -74,6 +76,10 @@ export function Sidebar({ inboxCount, lastReviewDate, userEmail, onOpenSearch }:
     await supabase.auth.signOut()
     router.push('/login')
     router.refresh()
+  }
+
+  function handleLogoutClick() {
+    setShowLogoutConfirm(true)
   }
 
   const initials = userEmail.slice(0, 2).toUpperCase()
@@ -146,7 +152,7 @@ export function Sidebar({ inboxCount, lastReviewDate, userEmail, onOpenSearch }:
         </span>
         <ThemeSwitcher />
         <button
-          onClick={handleLogout}
+          onClick={handleLogoutClick}
           className="w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
           style={{ color: 'var(--text-tertiary)' }}
           aria-label="Sign out"
@@ -154,6 +160,31 @@ export function Sidebar({ inboxCount, lastReviewDate, userEmail, onOpenSearch }:
           <SignOut size={16} weight="light" />
         </button>
       </div>
+
+      <Modal
+        open={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        title="Sign out"
+      >
+        <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+          Are you sure you want to sign out?
+        </p>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => setShowLogoutConfirm(false)}
+            className="px-4 py-2 text-sm rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
+            style={{ color: 'var(--text-secondary)', background: 'var(--nav-hover-bg)' }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => { setShowLogoutConfirm(false); handleLogout() }}
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-red-500 hover:bg-red-600 text-white transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60"
+          >
+            Sign out
+          </button>
+        </div>
+      </Modal>
     </aside>
   )
 }

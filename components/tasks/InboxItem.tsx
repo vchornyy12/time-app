@@ -45,7 +45,7 @@ export function InboxItem({ task, onDelete, onProcess, onTitleClick, isNew }: In
 
         <button
           onClick={onProcess}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 transition-all duration-150"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-indigo-600 dark:text-indigo-300 hover:text-indigo-700 dark:hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 transition-all duration-150"
           aria-label={`Process "${task.title}"`}
         >
           Process

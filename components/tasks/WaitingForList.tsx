@@ -11,7 +11,7 @@ import {
   toggleDelegationCommunicated,
   updateWaitingForDueDate,
 } from '@/lib/actions/tasks'
-import { EmptyState } from '@/components/ui'
+import { EmptyState, ConfirmDeleteModal } from '@/components/ui'
 
 // ── List ──────────────────────────────────────────────────────
 
@@ -22,6 +22,7 @@ interface WaitingForListProps {
 export function WaitingForList({ tasks }: WaitingForListProps) {
   const router = useRouter()
   const [, startTransition] = useTransition()
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null)
 
   const [optimisticTasks, applyOptimistic] = useOptimistic(
     tasks,
@@ -36,10 +37,13 @@ export function WaitingForList({ tasks }: WaitingForListProps) {
     })
   }
 
-  function handleDelete(taskId: string) {
+  function handleConfirmDelete() {
+    if (!pendingDelete) return
+    const { id } = pendingDelete
+    setPendingDelete(null)
     startTransition(async () => {
-      applyOptimistic(taskId)
-      await deleteTask(taskId)
+      applyOptimistic(id)
+      await deleteTask(id)
       router.refresh()
     })
   }
@@ -55,16 +59,25 @@ export function WaitingForList({ tasks }: WaitingForListProps) {
   }
 
   return (
-    <ul className="flex flex-col gap-2" aria-label="Waiting for tasks">
-      {optimisticTasks.map((task) => (
-        <WaitingForCard
-          key={task.id}
-          task={task}
-          onMoveToInbox={() => handleMoveToInbox(task.id)}
-          onDelete={() => handleDelete(task.id)}
-        />
-      ))}
-    </ul>
+    <>
+      <ul className="flex flex-col gap-2" aria-label="Waiting for tasks">
+        {optimisticTasks.map((task) => (
+          <WaitingForCard
+            key={task.id}
+            task={task}
+            onMoveToInbox={() => handleMoveToInbox(task.id)}
+            onDelete={() => setPendingDelete({ id: task.id, title: task.title })}
+          />
+        ))}
+      </ul>
+
+      <ConfirmDeleteModal
+        open={!!pendingDelete}
+        taskTitle={pendingDelete?.title ?? ''}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+    </>
   )
 }
 
