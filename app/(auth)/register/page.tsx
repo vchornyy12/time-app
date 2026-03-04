@@ -61,7 +61,7 @@ export default function RegisterPage() {
     <div className="glass-card w-full max-w-md p-8 flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>Create account</h1>
-        <p className="mt-1 text-sm" style={{ color: 'var(--text-tertiary)' }}>Start your GTD journey</p>
+        <p className="mt-1 text-sm" style={{ color: 'var(--text-tertiary)' }}>Start your time24 journey</p>
       </div>
 
       {error && (

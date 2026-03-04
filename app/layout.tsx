@@ -14,11 +14,11 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | GTD App',
-    default: 'GTD App',
+    template: '%s | time24',
+    default: 'time24',
   },
   description:
-    'A minimalist Getting Things Done workspace. Clear your mind, capture everything, and act with confidence.',
+    'A minimalist productivity workspace. Clear your mind, capture everything, and act with confidence.',
 };
 
 export default function RootLayout({

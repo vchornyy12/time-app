@@ -54,7 +54,7 @@ export default function LoginPage() {
     <div className="glass-card w-full max-w-md p-8 flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>Welcome back</h1>
-        <p className="mt-1 text-sm" style={{ color: 'var(--text-tertiary)' }}>Sign in to your GTD workspace</p>
+        <p className="mt-1 text-sm" style={{ color: 'var(--text-tertiary)' }}>Sign in to your workspace</p>
       </div>
 
       {error && (

@@ -20,7 +20,7 @@ import {
 } from '@phosphor-icons/react'
 import type { IconWeight } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils/cn'
-import { Badge, ThemeSwitcher, Modal } from '@/components/ui'
+import { Badge, ThemeSwitcher, Modal, Logo } from '@/components/ui'
 import { createClient } from '@/lib/supabase/client'
 
 // ── Icon mapping ────────────────────────────────────────────
@@ -98,8 +98,7 @@ export function Sidebar({ inboxCount, lastReviewDate, userEmail, onOpenSearch }:
         style={{ borderBottom: '1px solid var(--sidebar-border)' }}
       >
         <div className="flex-1">
-          <span className="text-lg font-semibold tracking-tight-apple" style={{ color: 'var(--text-primary)' }}>GTD</span>
-          <span className="ml-1 text-lg font-light" style={{ color: 'var(--text-muted)' }}>App</span>
+          <Logo size="md" />
         </div>
         <button
           onClick={onOpenSearch}
@@ -131,6 +130,22 @@ export function Sidebar({ inboxCount, lastReviewDate, userEmail, onOpenSearch }:
           <NavLink key={item.href} item={item} active={pathname === item.href} />
         ))}
       </nav>
+
+      {/* Buy me a coffee */}
+      <div className="px-4 pb-2">
+        <a
+          href="https://buymeacoffee.com/vchornyy12"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors duration-150 w-full"
+          style={{ color: 'var(--text-tertiary)' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-tertiary)')}
+        >
+          <span>☕</span>
+          <span>Buy me a coffee</span>
+        </a>
+      </div>
 
       {/* User area */}
       <div
