@@ -1,6 +1,6 @@
 'use client'
 
-import { useOptimistic, useTransition, useState, useRef } from 'react'
+import { useOptimistic, useTransition, useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Task } from '@/lib/types'
 import { deleteTask, restoreTask } from '@/lib/actions/tasks'
@@ -18,15 +18,21 @@ export function InboxList({ tasks, userContexts = [] }: InboxListProps) {
   const router = useRouter()
   const [, startTransition] = useTransition()
 
-  // Track which task IDs have already been rendered so we can identify new arrivals
+  // Track which task IDs have already been rendered so we can identify new arrivals.
+  // seenIds is only mutated inside the effect (never during render) — concurrent-mode safe.
   const seenIds = useRef(new Set(tasks.map((t) => t.id)))
-  const newIds = new Set<string>()
-  for (const task of tasks) {
-    if (!seenIds.current.has(task.id)) {
-      newIds.add(task.id)
-      seenIds.current.add(task.id)
+  const [newIds, setNewIds] = useState(new Set<string>())
+
+  useEffect(() => {
+    const discovered = new Set<string>()
+    for (const task of tasks) {
+      if (!seenIds.current.has(task.id)) {
+        discovered.add(task.id)
+        seenIds.current.add(task.id)
+      }
     }
-  }
+    if (discovered.size > 0) setNewIds(discovered)
+  }, [tasks])
 
   const [optimisticTasks, applyOptimistic] = useOptimistic(
     tasks,

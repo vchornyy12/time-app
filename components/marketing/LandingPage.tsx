@@ -61,9 +61,8 @@ function AppMockup() {
           {navItems.map((item) => (
             <div
               key={item.label}
-              className={`flex items-center justify-between px-2 py-1.5 rounded-md ${
-                item.label === 'Inbox' ? 'bg-white/8 text-zinc-100' : 'text-zinc-500'
-              }`}
+              className={`flex items-center justify-between px-2 py-1.5 rounded-md ${item.label === 'Inbox' ? 'bg-white/8 text-zinc-100' : 'text-zinc-400'
+                }`}
             >
               <span className="text-xs">{item.label}</span>
               {item.count !== null && (
@@ -95,8 +94,8 @@ function AppMockup() {
 
       {/* Capture bar */}
       <div className="border-t border-white/10 px-4 py-2.5 flex items-center gap-2">
-        <span className="text-xs text-zinc-600 flex-1">Quick capture…</span>
-        <span className="text-xs text-zinc-700 border border-white/10 rounded px-1 py-0.5">⌘K</span>
+        <span className="text-xs text-zinc-400 flex-1">Quick capture…</span>
+        <span className="text-xs text-zinc-400 border border-white/10 rounded px-1 py-0.5">⌘K</span>
       </div>
     </div>
   )
@@ -112,7 +111,7 @@ function HeroSection() {
         <div className="flex flex-col gap-6">
           <div>
             <span className="inline-flex items-center text-xs border border-white/10 text-zinc-400 rounded-full px-3 py-1">
-              🚀 Public Beta — 100% Free to use
+              Public Beta — 100% Free to use
             </span>
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold leading-tight text-zinc-100">
@@ -230,11 +229,11 @@ function RoadmapSection() {
   return (
     <section className="max-w-6xl mx-auto px-6 py-20 border-t border-white/10">
       <div className="flex flex-col items-center gap-4 mb-12 text-center">
-        <span className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+        <span className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
           Coming soon
         </span>
         <h2 className="text-3xl font-bold text-zinc-100">What&apos;s on the roadmap</h2>
-        <p className="text-zinc-500 max-w-xl">
+        <p className="text-zinc-400 max-w-xl">
           Built by one developer, shaped by real GTD practice. Here&apos;s what&apos;s coming next.
         </p>
       </div>
@@ -247,14 +246,14 @@ function RoadmapSection() {
           >
             <div className="flex items-center justify-between">
               <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
-                <Icon size={20} className="text-zinc-500" />
+                <Icon size={20} className="text-zinc-400" />
               </div>
-              <span className="text-[10px] font-medium uppercase tracking-widest text-zinc-600 border border-white/[0.06] rounded-full px-2.5 py-1">
+              <span className="text-[10px] font-medium uppercase tracking-widest text-zinc-400 border border-white/[0.06] rounded-full px-2.5 py-1">
                 Planned
               </span>
             </div>
             <h3 className="font-semibold text-zinc-300">{title}</h3>
-            <p className="text-sm text-zinc-500 leading-relaxed">{description}</p>
+            <p className="text-sm text-zinc-400 leading-relaxed">{description}</p>
           </div>
         ))}
       </div>
@@ -297,7 +296,7 @@ function TrustBanner() {
               <Icon size={16} className="text-[#3ECF8E]" />
             </div>
             <p className="text-sm font-semibold text-zinc-100">{label}</p>
-            <p className="text-xs text-zinc-500 leading-relaxed">{description}</p>
+            <p className="text-xs text-zinc-400 leading-relaxed">{description}</p>
           </div>
         ))}
       </div>
@@ -313,13 +312,13 @@ function LandingFooter() {
       <div className="max-w-6xl mx-auto px-6 py-8 flex flex-wrap items-center justify-between gap-4">
         <Logo size="sm" />
         <div className="flex items-center gap-6">
-          <Link href="/privacy" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+          <Link href="/privacy" className="text-xs text-zinc-400 hover:text-zinc-200 transition-colors">
             Privacy Policy
           </Link>
-          <Link href="/terms" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+          <Link href="/terms" className="text-xs text-zinc-400 hover:text-zinc-200 transition-colors">
             Terms of Service
           </Link>
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs text-zinc-400">
             &copy; {new Date().getFullYear()} time24. All rights reserved.
           </p>
         </div>

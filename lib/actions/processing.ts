@@ -150,4 +150,5 @@ export async function processAsDone(taskId: string) {
     .eq('user_id', user.id)
   if (error) throw error
   revalidateInbox()
+  revalidatePath('/analytics')
 }

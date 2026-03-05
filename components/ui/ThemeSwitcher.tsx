@@ -17,6 +17,8 @@ export function ThemeSwitcher() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
+  // Standard SSR hydration guard — setState in effect is intentional here
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), [])
 
   if (!mounted) {

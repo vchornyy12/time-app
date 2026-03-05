@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Loader2, Tag, UserPlus } from 'lucide-react'
+import { Tag, UserPlus } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { ContextPicker } from '@/components/ui/ContextPicker'
 import { DelegatePopover } from '@/components/tasks/DelegatePopover'

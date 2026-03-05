@@ -1,5 +1,6 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { authedClient } from '@/lib/actions/authed-action'
 import {
   taskId as taskIdSchema,
@@ -63,6 +64,7 @@ export async function updateTaskAttachments(
     .eq('user_id', user.id)
 
   if (error) throw error
+  revalidatePath('/inbox')
 }
 
 // ── Delete a file from storage and remove from task metadata ──

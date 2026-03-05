@@ -78,6 +78,8 @@ export async function markTaskDone(taskId: string) {
   revalidatePath('/next-actions')
   revalidatePath('/waiting-for')
   revalidatePath('/projects')
+  revalidatePath('/analytics')
+  revalidatePath('/calendar')
 }
 
 // ── restore from trash (undo delete) ────────────────────────

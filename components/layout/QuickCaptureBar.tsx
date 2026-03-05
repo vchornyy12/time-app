@@ -16,12 +16,12 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024
 
 function getFileIcon(type: string) {
   const cls = 'w-3.5 h-3.5'
-  if (type.startsWith('image/')) return <Image className={cls} />
-  if (type.startsWith('video/')) return <Film className={cls} />
-  if (type.startsWith('audio/')) return <Music className={cls} />
+  if (type.startsWith('image/')) return <Image className={cls} aria-hidden="true" />
+  if (type.startsWith('video/')) return <Film className={cls} aria-hidden="true" />
+  if (type.startsWith('audio/')) return <Music className={cls} aria-hidden="true" />
   if (type.includes('pdf') || type.includes('document') || type.includes('text'))
-    return <FileText className={cls} />
-  return <File className={cls} />
+    return <FileText className={cls} aria-hidden="true" />
+  return <File className={cls} aria-hidden="true" />
 }
 
 function formatFileSize(bytes: number): string {
@@ -79,7 +79,7 @@ export function QuickCaptureBar() {
           if (file) {
             const ext = file.type.split('/')[1] || 'png'
             imageFiles.push(
-              new (File as any)([file], `screenshot-${Date.now()}.${ext}`, { type: file.type })
+              new File([file], `screenshot-${Date.now()}.${ext}`, { type: file.type })
             )
           }
         }

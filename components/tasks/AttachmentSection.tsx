@@ -33,12 +33,12 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_ATTACHMENTS = 20
 
 function getFileIcon(type: string) {
-  if (type.startsWith('image/')) return <Image className="w-4 h-4" />
-  if (type.startsWith('video/')) return <Film className="w-4 h-4" />
-  if (type.startsWith('audio/')) return <Music className="w-4 h-4" />
+  if (type.startsWith('image/')) return <Image className="w-4 h-4" aria-hidden="true" />
+  if (type.startsWith('video/')) return <Film className="w-4 h-4" aria-hidden="true" />
+  if (type.startsWith('audio/')) return <Music className="w-4 h-4" aria-hidden="true" />
   if (type.includes('pdf') || type.includes('document') || type.includes('text'))
-    return <FileText className="w-4 h-4" />
-  return <File className="w-4 h-4" />
+    return <FileText className="w-4 h-4" aria-hidden="true" />
+  return <File className="w-4 h-4" aria-hidden="true" />
 }
 
 function formatFileSize(bytes: number): string {
@@ -77,15 +77,16 @@ export function AttachmentSection({
     return () => { mounted = false }
   }, [taskId, attachments])
 
+  // Accepts the running accumulated list so sequential uploads don't clobber each other.
   const uploadFile = useCallback(
-    async (file: File) => {
+    async (file: File, currentAttachments: Attachment[]): Promise<Attachment[]> => {
       if (file.size > MAX_FILE_SIZE) {
         setError(`File "${file.name}" exceeds 10 MB limit`)
-        return
+        return currentAttachments
       }
-      if (attachments.length >= MAX_ATTACHMENTS) {
+      if (currentAttachments.length >= MAX_ATTACHMENTS) {
         setError(`Maximum ${MAX_ATTACHMENTS} attachments reached`)
-        return
+        return currentAttachments
       }
 
       setError(null)
@@ -109,31 +110,33 @@ export function AttachmentSection({
           size: file.size,
         }
 
-        const updated = [...attachments, newAttachment]
+        const updated = [...currentAttachments, newAttachment]
         await updateTaskAttachments(taskId, updated)
         onAttachmentsChange(updated)
+        return updated
       } catch (err) {
         setError(
           err instanceof Error ? err.message : 'Upload failed'
         )
+        return currentAttachments
       } finally {
         setUploading(false)
         setUploadProgress(null)
       }
     },
-    [taskId, userId, attachments, onAttachmentsChange]
+    [taskId, userId, onAttachmentsChange]
   )
 
   const handleFiles = useCallback(
     (files: FileList | File[]) => {
       const fileArray = Array.from(files)
-      // Upload sequentially to avoid race conditions on the attachments array
-      fileArray.reduce(
-        (chain, file) => chain.then(() => uploadFile(file)),
-        Promise.resolve()
+      // Thread accumulated list through the chain so each upload sees the running total.
+      fileArray.reduce<Promise<Attachment[]>>(
+        (chain, file) => chain.then((acc) => uploadFile(file, acc)),
+        Promise.resolve(attachments)
       )
     },
-    [uploadFile]
+    [uploadFile, attachments]
   )
 
   const handleDrop = useCallback(
@@ -159,11 +162,7 @@ export function AttachmentSection({
           if (file) {
             // Generate a friendly name for pasted screenshots
             const ext = file.type.split('/')[1] || 'png'
-            const namedFile = new (File as any)(
-              [file],
-              `screenshot-${Date.now()}.${ext}`,
-              { type: file.type }
-            )
+            const namedFile = new File([file], `screenshot-${Date.now()}.${ext}`, { type: file.type })
             imageFiles.push(namedFile)
           }
         }

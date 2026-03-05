@@ -4,26 +4,30 @@
 - **Product**: GTD App
 - **Version**: 2.0 (Post-MVP Enhancements)
 - **Date**: 2026-02-26
+- **Last Updated**: 2026-03-05
 - **Predecessor**: `UserStories_GTD_App_MVP.md` v1.0
-- **Source Notes**: `New_User_Stories.md` + GTD methodology gaps analysis
-- **Status**: Draft — Backlog
+- **Source Notes**: `New_User_Stories.md` + GTD methodology gaps analysis + QA audit + undocumented features audit
+- **Status**: In Progress — US-101..US-111 Done; US-112..US-116 Done (added retroactively)
 
 ---
 
 ## Epic Index
 
-| Epic | ID | Stories | Phase | Story Points |
-|------|----|---------|-------|-------------|
-| Processing Undo | EPIC-BACK | US-101 | Phase 11 | 2 |
-| Context Tags | EPIC-CONTEXT | US-102, US-103 | Phase 11 | 6 |
-| Daily Focus View | EPIC-TODAY | US-104 | Phase 11 | 5 |
-| Delegation Enhancements | EPIC-DELEGATE2 | US-105, US-106 | Phase 12 | 8 |
-| Someday/Maybe Tickler | EPIC-TICKLER | US-107 | Phase 12 | 3 |
-| Weekly Review | EPIC-REVIEW | US-108, US-109 | Phase 13 | 13 |
-| Full-text Search | EPIC-SEARCH | US-110 | Phase 14 | 5 |
-| Analytics Dashboard | EPIC-ANALYTICS | US-111 | Phase 14 | 8 |
+| Epic | ID | Stories | Phase | Story Points | Status |
+|------|----|---------|-------|-------------|--------|
+| Processing Undo | EPIC-BACK | US-101 | Phase 11 | 2 | ✅ Done |
+| Context Tags | EPIC-CONTEXT | US-102, US-103 | Phase 11 | 6 | ✅ Done |
+| Daily Focus View | EPIC-TODAY | US-104 | Phase 11 | 5 | Backlog |
+| Delegation Enhancements | EPIC-DELEGATE2 | US-105, US-106 | Phase 12 | 8 | ✅ Done |
+| Someday/Maybe Tickler | EPIC-TICKLER | US-107 | Phase 12 | 3 | ✅ Done |
+| Weekly Review | EPIC-REVIEW | US-108, US-109 | Phase 13 | 13 | ✅ Done |
+| Full-text Search | EPIC-SEARCH | US-110 | Phase 14 | 5 | ✅ Done |
+| Analytics Dashboard | EPIC-ANALYTICS | US-111 | Phase 14 | 8 | ✅ Done |
+| Task Detail & Attachments | EPIC-DETAIL | US-112, US-113 | Phase 14 | 8 | ✅ Done |
+| Public Pages | EPIC-PUBLIC | US-114, US-115 | Phase 14 | 3 | ✅ Done |
+| UX Safety | EPIC-UX | US-116 | Phase 11 | 1 | ✅ Done |
 
-**Total Story Points (estimate)**: 50
+**Total Story Points**: 62 (50 planned + 12 unplanned/retroactive)
 
 ---
 
@@ -58,7 +62,7 @@ All features in this document are grounded in David Allen's *Getting Things Done
 - **Epic**: EPIC-BACK — Processing Undo
 - **Sprint**: [TBD — Phase 11]
 - **Assignee**: [TBD]
-- **Status**: Backlog
+- **Status**: ✅ Done
 - **Story Points**: 2
 - **Priority**: P2-Medium
 
@@ -145,7 +149,7 @@ Blocks: nothing
 - **Epic**: EPIC-CONTEXT — Context Tags
 - **Sprint**: [TBD — Phase 11]
 - **Assignee**: [TBD]
-- **Status**: Backlog
+- **Status**: ✅ Done
 - **Story Points**: 3
 - **Priority**: P2-Medium
 
@@ -229,7 +233,7 @@ Blocks: US-103 (context filter depends on tags existing)
 - **Epic**: EPIC-CONTEXT — Context Tags
 - **Sprint**: [TBD — Phase 11]
 - **Assignee**: [TBD]
-- **Status**: Backlog
+- **Status**: ✅ Done
 - **Story Points**: 3
 - **Priority**: P2-Medium
 
@@ -423,7 +427,7 @@ Blocks: nothing
 - **Epic**: EPIC-DELEGATE2 — Delegation Enhancements
 - **Sprint**: [TBD — Phase 12]
 - **Assignee**: [TBD]
-- **Status**: Backlog
+- **Status**: ✅ Done
 - **Story Points**: 3
 - **Priority**: P2-Medium
 
@@ -506,7 +510,7 @@ Blocks: US-106 (reminder requires a due_date to exist)
 - **Epic**: EPIC-DELEGATE2 — Delegation Enhancements
 - **Sprint**: [TBD — Phase 12]
 - **Assignee**: [TBD]
-- **Status**: Backlog
+- **Status**: ✅ Done
 - **Story Points**: 5
 - **Priority**: P3-Low
 
@@ -601,7 +605,7 @@ Blocks: nothing
 - **Epic**: EPIC-TICKLER — Someday/Maybe Tickler
 - **Sprint**: [TBD — Phase 12]
 - **Assignee**: [TBD]
-- **Status**: Backlog
+- **Status**: ✅ Done
 - **Story Points**: 3
 - **Priority**: P3-Low
 
@@ -690,7 +694,7 @@ Blocks: US-108 (Weekly Review step for Someday/Maybe)
 - **Epic**: EPIC-REVIEW — Weekly Review
 - **Sprint**: [TBD — Phase 13]
 - **Assignee**: [TBD]
-- **Status**: Backlog
+- **Status**: ✅ Done
 - **Story Points**: 8
 - **Priority**: P1-High
 
@@ -715,12 +719,14 @@ Blocks: US-108 (Weekly Review step for Someday/Maybe)
 - Current system state: No review workflow exists. All lists are independent pages.
 - What changes: New `/weekly-review` route with a multi-step guided flow (similar to `ProcessingOverlay` in spirit). Steps:
   1. **Get Clear** — Process everything in Inbox to zero
-  2. **Review Waiting For** — Check delegated tasks, note overdue items
-  3. **Review Projects** — Confirm each project has a first-step task
-  4. **Review Next Actions** — Prune stale items, check contexts
-  5. **Review Someday/Maybe** — Act on review-date items, archive or activate
-  6. **Done** — Summary screen
+  2. **Mind Sweep** *(added during implementation)* — Bulk brain-dump textarea; each line captured as a new Inbox task
+  3. **Review Waiting For** — Check delegated tasks, note overdue items
+  4. **Review Projects** — Confirm each project has a first-step task
+  5. **Review Next Actions** — Prune stale items, check contexts
+  6. **Review Someday/Maybe** — Act on review-date items, archive or activate
+  7. **Summary** — Week in review stats + last-reviewed date saved
 - Related features: All EPIC-LISTS views, EPIC-PROJECT, EPIC-TICKLER, EPIC-DELEGATE2.
+- **Implementation note**: 7 steps were built (not 6 as originally planned). The Mind Sweep step was inserted as Step 2 to surface uncaptured commitments before reviewing existing lists — a core GTD practice.
 
 **Dependencies**
 
@@ -743,34 +749,40 @@ Blocks: US-109 (summary depends on review session data)
 - **And** a "Open Inbox" shortcut that opens the inbox in a side panel or new tab
 - **And** a "Mark inbox as cleared" confirmation to proceed
 
-**AC-108-03 — Step 2: Review Waiting For**
+**AC-108-02b — Step 2: Mind Sweep** *(implemented, not in original spec)*
+- **Given** I complete Step 1
+- **Then** a free-form textarea appears with the prompt to capture anything still floating in mind
+- **And** each non-empty line is captured as a new Inbox task when I press "Next"
+- **And** the step is skippable (no content → pressing Next just advances)
+
+**AC-108-03 — Step 3: Review Waiting For** *(was Step 2)*
 - **Given** I am on Step 2
 - **Then** my Waiting For list is displayed in full within the review panel
 - **And** for each item I can mark as done, move to Next Actions, or leave as-is
 - **And** overdue delegations are highlighted
 - **And** a "Looks good" button advances to Step 3
 
-**AC-108-04 — Step 3: Review Projects**
-- **Given** I am on Step 3
+**AC-108-04 — Step 4: Review Projects** *(was Step 3)*
+- **Given** I am on Step 4
 - **Then** all active projects are listed
 - **And** projects without a first-step task are flagged with a warning: "No active next action"
 - **And** I can promote a rough-plan item to create a first step without leaving the review
-- **And** a "Projects reviewed" button advances to Step 4
+- **And** a "Projects reviewed" button advances to Step 5
 
-**AC-108-05 — Step 4: Review Next Actions**
-- **Given** I am on Step 4
+**AC-108-05 — Step 5: Review Next Actions** *(was Step 4)*
+- **Given** I am on Step 5
 - **Then** my Next Actions list is shown grouped by context (if contexts exist)
 - **And** I can mark tasks as done or move to Someday/Maybe or Trash
-- **And** a "Next Actions reviewed" button advances to Step 5
+- **And** a "Next Actions reviewed" button advances to Step 6
 
-**AC-108-06 — Step 5: Review Someday/Maybe**
-- **Given** I am on Step 5
+**AC-108-06 — Step 6: Review Someday/Maybe** *(was Step 5)*
+- **Given** I am on Step 6
 - **Then** Someday/Maybe items are shown, with review-date-overdue items highlighted first
 - **And** I can activate an item (move to Next Actions), archive to Trash, or update the review date
-- **And** a "Someday reviewed" button advances to Step 6
+- **And** a "Someday reviewed" button advances to Step 7
 
-**AC-108-07 — Step 6: Done / Summary**
-- **Given** I complete all review steps
+**AC-108-07 — Step 7: Done / Summary** *(was Step 6)*
+- **Given** I complete all 7 review steps
 - **Then** a congratulations screen is shown (see US-109 for summary content)
 - **And** the last review date is saved to the user's profile/settings
 
@@ -806,7 +818,7 @@ Blocks: US-109 (summary depends on review session data)
 - **Epic**: EPIC-REVIEW — Weekly Review
 - **Sprint**: [TBD — Phase 13]
 - **Assignee**: [TBD]
-- **Status**: Backlog
+- **Status**: ✅ Done
 - **Story Points**: 5
 - **Priority**: P2-Medium
 
@@ -893,7 +905,7 @@ Blocks: nothing
 - **Epic**: EPIC-SEARCH — Full-text Search
 - **Sprint**: [TBD — Phase 14]
 - **Assignee**: [TBD]
-- **Status**: Backlog
+- **Status**: ✅ Done
 - **Story Points**: 5
 - **Priority**: P2-Medium
 
@@ -993,7 +1005,7 @@ Blocks: nothing
 - **Epic**: EPIC-ANALYTICS — Analytics Dashboard
 - **Sprint**: [TBD — Phase 14]
 - **Assignee**: [TBD]
-- **Status**: Backlog
+- **Status**: ✅ Done
 - **Story Points**: 8
 - **Priority**: P3-Low
 
@@ -1084,21 +1096,323 @@ Blocks: nothing
 
 ---
 
+# EPIC-DETAIL: Task Detail & Attachments
+
+---
+
+## US-112 — Task Detail Panel
+
+### Story Information
+- **Story ID**: US-112
+- **Epic**: EPIC-DETAIL — Task Detail & Attachments
+- **Sprint**: Phase 14 (implemented retroactively)
+- **Assignee**: [TBD]
+- **Status**: ✅ Done
+- **Story Points**: 3
+- **Priority**: P2-Medium
+
+---
+
+### User Story
+
+**As a** user viewing any GTD list
+**I want to** click a task title to open a detail panel showing all task metadata
+**So that** I can review context, due dates, attachments, and project links without leaving my current view
+
+---
+
+### Context and Background
+
+**Business Context**
+- Business problem: Task cards show minimal info. Users needed a way to see full task details (due date, contexts, delegated_to, project association, attachments) without navigating away.
+- Expected impact: Reduces context-switching; keeps focus on the current list while allowing depth when needed.
+
+**Technical Context**
+- Implementation: `TaskDetailPanel` (client component, fetches task + project title via Supabase client) rendered inside `TaskDetailOverlay` (a `ResponsiveOverlay` that adapts to sheet on mobile / side panel on desktop).
+- Available on: Inbox, Next Actions, Waiting For, Calendar, Someday, Notes, Trash views.
+
+---
+
+### Acceptance Criteria
+
+**AC-112-01 — Entry point**
+- **Given** I am viewing any task list
+- **When** I click a task's title
+- **Then** a detail panel slides in (side panel on desktop, bottom sheet on mobile)
+
+**AC-112-02 — Content displayed**
+- **Given** the panel is open
+- **Then** I can see: task title, status badge, due date (if set), context tags (if any), delegated-to (if Waiting For), linked project (if any), and attachments section
+
+**AC-112-03 — Attachments section**
+- **Given** the task has attachments
+- **Then** they are listed with name, size, and download link
+- **And** I can upload new attachments or delete existing ones from the panel
+
+**AC-112-04 — Close**
+- **Given** the panel is open
+- **When** I press Escape or click the backdrop
+- **Then** the panel closes and I return to the list
+
+---
+
+### Technical Notes
+- `components/tasks/TaskDetailPanel.tsx` — client component
+- `components/tasks/TaskDetailOverlay.tsx` — wraps in `ResponsiveOverlay`
+- `components/ui/ResponsiveOverlay.tsx` — shared drawer/sheet primitive
+- Data fetched client-side via `createClient()` on panel open
+
+---
+
+## US-113 — File Attachments on Tasks
+
+### Story Information
+- **Story ID**: US-113
+- **Epic**: EPIC-DETAIL — Task Detail & Attachments
+- **Sprint**: Phase 14 (implemented retroactively)
+- **Assignee**: [TBD]
+- **Status**: ✅ Done
+- **Story Points**: 5
+- **Priority**: P2-Medium
+
+---
+
+### User Story
+
+**As a** user managing a task
+**I want to** attach files (documents, images, screenshots) to any task
+**So that** all relevant reference material lives alongside the task in my GTD system
+
+---
+
+### Context and Background
+
+**Business Context**
+- Business problem: Reference material for a task (screenshots, PDFs, images) lived in a separate app, forcing context-switching. GTD's "Reference" principle says relevant material should be immediately retrievable with the task.
+- Expected impact: Reduces friction for knowledge-work tasks; strengthens the app as a complete capture system.
+
+**Technical Context**
+- Storage: Supabase Storage bucket `attachments`, path `{userId}/{taskId}/{timestamp}-{filename}`
+- Metadata: stored as `jsonb` in `tasks.attachments` column: `{ name, path, type, size }[]`
+- Server action: `updateTaskAttachments(taskId, attachments[])` in `lib/actions/attachments.ts`
+- Max: 20 attachments per task, 10 MB per file
+
+---
+
+### Acceptance Criteria
+
+**AC-113-01 — Upload via click**
+- **Given** I am in the Task Detail Panel
+- **Then** an attachment dropzone is visible
+- **When** I click it
+- **Then** a file browser opens and I can select one or more files
+
+**AC-113-02 — Upload via drag & drop**
+- **Given** I am in the Task Detail Panel
+- **When** I drag files onto the dropzone
+- **Then** files are uploaded sequentially (no race condition)
+
+**AC-113-03 — Upload via paste**
+- **Given** my clipboard contains a screenshot
+- **When** I paste while the Task Detail Panel is in focus
+- **Then** the image is uploaded with a generated name `screenshot-{timestamp}.{ext}`
+
+**AC-113-04 — Multi-file correctness**
+- **Given** I select 3 files at once
+- **Then** all 3 are uploaded and persisted in order (each sees the running accumulated list, preventing clobber)
+
+**AC-113-05 — File size limit**
+- **Given** I try to upload a file larger than 10 MB
+- **Then** an error is shown and the file is not uploaded
+
+**AC-113-06 — Download**
+- **Given** a task has attachments
+- **Then** each attachment shows a download link (signed URL, valid 1 hour)
+
+**AC-113-07 — Delete**
+- **Given** a task has attachments
+- **When** I click the remove button on an attachment
+- **Then** it is deleted from Supabase Storage and removed from the task's metadata
+
+---
+
+### Technical Notes
+- `components/tasks/AttachmentSection.tsx`
+- `lib/actions/attachments.ts` — `updateTaskAttachments`, `deleteAttachment`, `getAttachmentUrls`
+- Sequential upload via `Promise.reduce` with accumulated list (race-condition-safe)
+- Signed URLs via `supabase.storage.createSignedUrl(path, 3600)`
+
+---
+
+---
+
+# EPIC-PUBLIC: Public Pages
+
+---
+
+## US-114 — Public Landing Page
+
+### Story Information
+- **Story ID**: US-114
+- **Epic**: EPIC-PUBLIC — Public Pages
+- **Sprint**: Phase 14 (implemented retroactively)
+- **Assignee**: [TBD]
+- **Status**: ✅ Done
+- **Story Points**: 2
+- **Priority**: P2-Medium
+
+---
+
+### User Story
+
+**As a** visitor who hasn't signed up yet
+**I want to** see a compelling landing page explaining what the GTD app does
+**So that** I can decide whether to create an account
+
+---
+
+### Acceptance Criteria
+
+**AC-114-01 — Public access**
+- **Given** I visit `/`
+- **Then** the landing page is shown without requiring authentication
+
+**AC-114-02 — Content**
+- **Then** the page shows: app name/logo, hero section, feature highlights (Quick Capture, Full GTD Flow, Analytics, Weekly Review, Search, Privacy), and call-to-action buttons (Get Started, Sign In)
+
+**AC-114-03 — Navigation to auth**
+- **When** I click "Get Started"
+- **Then** I am taken to `/register`
+- **When** I click "Sign in"
+- **Then** I am taken to `/login`
+
+**AC-114-04 — Authenticated redirect**
+- **Given** I am already logged in
+- **When** I visit `/`
+- **Then** I am redirected to `/inbox`
+
+---
+
+### Technical Notes
+- `app/page.tsx` — root page (redirects authenticated users)
+- `components/marketing/LandingPage.tsx` — static marketing component
+
+---
+
+## US-115 — Privacy Policy & Terms of Service Pages
+
+### Story Information
+- **Story ID**: US-115
+- **Epic**: EPIC-PUBLIC — Public Pages
+- **Sprint**: Phase 14 (implemented retroactively)
+- **Assignee**: [TBD]
+- **Status**: ✅ Done
+- **Story Points**: 1
+- **Priority**: P3-Low
+
+---
+
+### User Story
+
+**As a** user or visitor
+**I want to** be able to read the app's Privacy Policy and Terms of Service
+**So that** I understand how my data is handled before creating an account
+
+---
+
+### Acceptance Criteria
+
+**AC-115-01 — Public routes**
+- **Given** I visit `/privacy` or `/terms`
+- **Then** the respective page is shown without requiring authentication
+
+**AC-115-02 — Links from landing page**
+- **Given** I am on the landing page
+- **Then** footer links to `/privacy` and `/terms` are visible
+
+---
+
+### Technical Notes
+- `app/privacy/page.tsx`
+- `app/terms/page.tsx`
+
+---
+
+---
+
+# EPIC-UX: UX Safety
+
+---
+
+## US-116 — Confirm Delete Modal
+
+### Story Information
+- **Story ID**: US-116
+- **Epic**: EPIC-UX — UX Safety
+- **Sprint**: Phase 11 (from `New_User_Stories.md` item 6)
+- **Assignee**: [TBD]
+- **Status**: ✅ Done
+- **Story Points**: 1
+- **Priority**: P2-Medium
+
+---
+
+### User Story
+
+**As a** user managing tasks
+**I want to** see a confirmation dialog before a task is permanently actioned (deleted, moved to trash)
+**So that** I don't accidentally lose tasks due to a misclick
+
+---
+
+### Acceptance Criteria
+
+**AC-116-01 — Confirmation on delete**
+- **Given** I click the trash/delete action on an Inbox task
+- **Then** a modal appears: "[Task title] will be moved to Trash. This can be undone."
+- **And** I must click "Confirm" to proceed or "Cancel" to abort
+
+**AC-116-02 — Cancel aborts the action**
+- **Given** the confirmation modal is shown
+- **When** I click "Cancel" or press Escape
+- **Then** the task is not deleted and the modal closes
+
+**AC-116-03 — Undo toast after confirm**
+- **Given** I confirm the deletion
+- **Then** the task is moved to Trash
+- **And** a toast appears with an "Undo" button (restores the task to Inbox)
+
+---
+
+### Technical Notes
+- `components/ui/ConfirmDeleteModal.tsx`
+- Used in `InboxList.tsx` — `pendingDelete` state + `handleConfirmDelete` + undo toast pattern
+
+---
+
+---
+
 ## Document Summary
 
-| Story ID | Title | Epic | Points | Priority |
-|----------|-------|------|--------|----------|
-| US-101 | Go Back in Processing | EPIC-BACK | 2 | P2 |
-| US-102 | Assign Context Tags | EPIC-CONTEXT | 3 | P2 |
-| US-103 | Filter by Context | EPIC-CONTEXT | 3 | P2 |
-| US-104 | Today Focus View | EPIC-TODAY | 5 | P2 |
-| US-105 | Due Date for Delegated Tasks | EPIC-DELEGATE2 | 3 | P2 |
-| US-106 | GCal Reminder for Waiting For | EPIC-DELEGATE2 | 5 | P3 |
-| US-107 | Someday/Maybe Tickler Date | EPIC-TICKLER | 3 | P3 |
-| US-108 | Weekly Review Workflow | EPIC-REVIEW | 8 | P1 |
-| US-109 | Weekly Review Summary | EPIC-REVIEW | 5 | P2 |
-| US-110 | Full-text Search | EPIC-SEARCH | 5 | P2 |
-| US-111 | Analytics Dashboard | EPIC-ANALYTICS | 8 | P3 |
+| Story ID | Title | Epic | Points | Priority | Status |
+|----------|-------|------|--------|----------|--------|
+| US-101 | Go Back in Processing | EPIC-BACK | 2 | P2 | ✅ Done |
+| US-102 | Assign Context Tags | EPIC-CONTEXT | 3 | P2 | ✅ Done |
+| US-103 | Filter by Context | EPIC-CONTEXT | 3 | P2 | ✅ Done |
+| US-104 | Today Focus View | EPIC-TODAY | 5 | P2 | Backlog |
+| US-105 | Due Date for Delegated Tasks | EPIC-DELEGATE2 | 3 | P2 | ✅ Done |
+| US-106 | GCal Reminder for Waiting For | EPIC-DELEGATE2 | 5 | P3 | ✅ Done |
+| US-107 | Someday/Maybe Tickler Date | EPIC-TICKLER | 3 | P3 | ✅ Done |
+| US-108 | Weekly Review Workflow (7 steps) | EPIC-REVIEW | 8 | P1 | ✅ Done |
+| US-109 | Weekly Review Summary | EPIC-REVIEW | 5 | P2 | ✅ Done |
+| US-110 | Full-text Search | EPIC-SEARCH | 5 | P2 | ✅ Done |
+| US-111 | Analytics Dashboard | EPIC-ANALYTICS | 8 | P3 | ✅ Done |
+| US-112 | Task Detail Panel | EPIC-DETAIL | 3 | P2 | ✅ Done |
+| US-113 | File Attachments on Tasks | EPIC-DETAIL | 5 | P2 | ✅ Done |
+| US-114 | Public Landing Page | EPIC-PUBLIC | 2 | P2 | ✅ Done |
+| US-115 | Privacy Policy & Terms | EPIC-PUBLIC | 1 | P3 | ✅ Done |
+| US-116 | Confirm Delete Modal | EPIC-UX | 1 | P2 | ✅ Done |
 
-**Total Story Points**: 50
-**Recommended Build Order**: US-101 → US-102 → US-103 → US-104 → US-105 → US-107 → US-108 → US-109 → US-110 → US-106 → US-111
+**Total Story Points**: 62 (50 planned + 12 retroactive)
+**Remaining**: US-104 Today Focus View (5 pts)
+**Build Order for remaining**: US-104 (standalone, no dependencies)

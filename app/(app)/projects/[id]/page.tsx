@@ -53,7 +53,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   > | null) ?? null
 
   // Strip the join from the project object so types stay clean
-  const { first_step_task: _, ...projectData } = project
+  const { first_step_task: _first_step_task, ...projectData } = project
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -73,9 +73,16 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           <h1 className="text-2xl font-semibold leading-snug gradient-heading">
             {project.title}
           </h1>
-          <span className="flex-shrink-0 text-xs px-2.5 py-1 rounded-full bg-emerald-500/12 border border-emerald-500/20 text-emerald-400 mt-1">
-            Active
-          </span>
+          {project.status === 'active' && (
+            <span className="flex-shrink-0 text-xs px-2.5 py-1 rounded-full bg-emerald-500/12 border border-emerald-500/20 text-emerald-400 mt-1">
+              Active
+            </span>
+          )}
+          {project.status === 'completed' && (
+            <span className="flex-shrink-0 text-xs px-2.5 py-1 rounded-full bg-[var(--chip-bg)] border border-[var(--border-subtle)] mt-1" style={{ color: 'var(--text-tertiary)' }}>
+              Completed
+            </span>
+          )}
         </div>
       </div>
 

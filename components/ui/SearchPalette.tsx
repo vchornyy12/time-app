@@ -69,7 +69,8 @@ export function SearchPalette({ open, onClose }: SearchPaletteProps) {
 
   useFocusTrap(containerRef, open)
 
-  // Reset and focus on open
+  // Reset and focus on open — setState calls in effect are intentional here (reset on prop change)
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (open) {
       setTerm('')
@@ -79,7 +80,8 @@ export function SearchPalette({ open, onClose }: SearchPaletteProps) {
     }
   }, [open])
 
-  // Debounced search
+  // Debounced search — early-return setState calls are correct: clear stale results synchronously
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (!open) return
     if (!term.trim()) { setResults([]); setLoading(false); return }
@@ -207,6 +209,7 @@ export function SearchPalette({ open, onClose }: SearchPaletteProps) {
             role="combobox"
             aria-expanded={results.length > 0}
             aria-autocomplete="list"
+            aria-controls="search-results"
           />
           {term && (
             <button
@@ -228,7 +231,7 @@ export function SearchPalette({ open, onClose }: SearchPaletteProps) {
 
         {/* Results */}
         {term.trim() && (
-          <div className="max-h-[55vh] overflow-y-auto">
+          <div id="search-results" className="max-h-[55vh] overflow-y-auto">
             {loading && (
               <div className="flex flex-col gap-2 p-3">
                 {[...Array(3)].map((_, i) => (
