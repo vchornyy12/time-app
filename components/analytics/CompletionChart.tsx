@@ -10,7 +10,6 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts'
-import type { TooltipProps } from 'recharts'
 
 interface DataPoint {
   day: string
@@ -38,7 +37,14 @@ function useIsDark() {
   return isDark
 }
 
-const CustomTooltip = ({ active, payload, label, isDark }: TooltipProps<number, string> & { isDark: boolean }) => {
+interface CustomTooltipProps {
+  active?: boolean
+  payload?: Array<{ value: number }>
+  label?: string
+  isDark: boolean
+}
+
+const CustomTooltip = ({ active, payload, label, isDark }: CustomTooltipProps) => {
   if (!active || !payload || !payload.length) return null
   return (
     <div
