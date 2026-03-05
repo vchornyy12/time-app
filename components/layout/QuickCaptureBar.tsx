@@ -78,8 +78,9 @@ export function QuickCaptureBar() {
           const file = item.getAsFile()
           if (file) {
             const ext = file.type.split('/')[1] || 'png'
+            const FileConstructor = File as unknown as new (parts: BlobPart[], name: string, options?: FilePropertyBag) => File
             imageFiles.push(
-              new File([file], `screenshot-${Date.now()}.${ext}`, { type: file.type })
+              new FileConstructor([file], `screenshot-${Date.now()}.${ext}`, { type: file.type })
             )
           }
         }

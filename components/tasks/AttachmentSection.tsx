@@ -162,7 +162,8 @@ export function AttachmentSection({
           if (file) {
             // Generate a friendly name for pasted screenshots
             const ext = file.type.split('/')[1] || 'png'
-            const namedFile = new File([file], `screenshot-${Date.now()}.${ext}`, { type: file.type })
+            const FileConstructor = File as unknown as new (parts: BlobPart[], name: string, options?: FilePropertyBag) => File
+            const namedFile = new FileConstructor([file], `screenshot-${Date.now()}.${ext}`, { type: file.type })
             imageFiles.push(namedFile)
           }
         }
