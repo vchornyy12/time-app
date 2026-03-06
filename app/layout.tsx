@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   },
   description:
     'A minimalist productivity workspace. Clear your mind, capture everything, and act with confidence.',
+  verification: {
+    google: '-ykNtkGbgrLvXlLyhT5I2IF-s511J4Ju1L9LMxDpHZ4',
+  },
 };
 
 export default function RootLayout({
