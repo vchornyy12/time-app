@@ -13,8 +13,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  const origin = new URL(request.url).origin
+  const { origin, searchParams } = new URL(request.url)
   const redirectUri = `${origin}/api/google/callback`
+  const next = searchParams.get('next') ?? '/settings'
+
+  // Encode userId + post-OAuth destination in state for CSRF check + redirect
+  const state = `${user.id}|${encodeURIComponent(next)}`
 
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID!,
@@ -23,7 +27,7 @@ export async function GET(request: NextRequest) {
     scope: SCOPES.join(' '),
     access_type: 'offline',  // ensures a refresh_token is returned
     prompt: 'consent',       // force consent screen so refresh_token is always present
-    state: user.id,          // basic CSRF: verified in the callback
+    state,
   })
 
   return NextResponse.redirect(

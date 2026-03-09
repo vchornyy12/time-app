@@ -62,5 +62,6 @@ export interface UserIntegration {
   user_id: string
   google_refresh_token: string | null
   google_calendar_id: string | null
+  calendar_connected: boolean
   created_at: string
 }

@@ -30,11 +30,12 @@ export default async function SettingsPage({ searchParams }: PageProps) {
 
   const { data: integration } = await supabase
     .from('user_integrations')
-    .select('google_refresh_token')
+    .select('google_refresh_token, calendar_connected')
     .eq('user_id', user.id)
     .maybeSingle()
 
   const isConnected = !!integration?.google_refresh_token
+  const calendarConnected = integration?.calendar_connected ?? false
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -49,6 +50,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
         </h2>
         <GoogleCalendarCard
           isConnected={isConnected}
+          calendarConnected={calendarConnected}
           errorMessage={error ? (ERROR_MESSAGES[error] ?? 'Something went wrong.') : undefined}
           justConnected={connected === '1'}
         />

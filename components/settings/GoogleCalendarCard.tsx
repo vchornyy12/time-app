@@ -7,12 +7,14 @@ import { disconnectGoogleCalendar } from '@/lib/actions/calendar'
 
 interface GoogleCalendarCardProps {
   isConnected: boolean
+  calendarConnected: boolean
   errorMessage?: string
   justConnected?: boolean
 }
 
 export function GoogleCalendarCard({
   isConnected,
+  calendarConnected,
   errorMessage,
   justConnected,
 }: GoogleCalendarCardProps) {
@@ -26,6 +28,9 @@ export function GoogleCalendarCard({
     })
   }
 
+  // True connected state: has a refresh token AND calendar scope was granted
+  const fullyConnected = isConnected && calendarConnected
+
   return (
     <div
       className="px-5 py-5 rounded-xl"
@@ -35,7 +40,6 @@ export function GoogleCalendarCard({
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
-            {/* Google Calendar icon */}
             <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 fill="#4285F4"
@@ -59,7 +63,7 @@ export function GoogleCalendarCard({
         </div>
 
         {/* Status badge */}
-        {isConnected ? (
+        {fullyConnected ? (
           <span className="flex-shrink-0 flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-500/12 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="w-3 h-3" />
             Connected
@@ -94,7 +98,7 @@ export function GoogleCalendarCard({
 
       {/* Actions */}
       <div className="mt-4">
-        {isConnected ? (
+        {fullyConnected ? (
           <button
             onClick={handleDisconnect}
             disabled={isPending}
@@ -106,11 +110,9 @@ export function GoogleCalendarCard({
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = 'var(--text-secondary)'
-              e.currentTarget.style.background = 'var(--bg-surface-hover)'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.color = 'var(--text-tertiary)'
-              e.currentTarget.style.background = 'var(--bg-surface-hover)'
             }}
           >
             {isPending ? (

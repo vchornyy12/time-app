@@ -381,7 +381,7 @@ export async function disconnectGoogleCalendar() {
 
   await supabase
     .from('user_integrations')
-    .update({ google_refresh_token: null, google_calendar_id: null })
+    .update({ google_refresh_token: null, google_calendar_id: null, calendar_connected: false })
     .eq('user_id', user.id)
 
   revalidatePath('/settings')
