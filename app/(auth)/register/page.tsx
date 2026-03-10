@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [agreed, setAgreed] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -88,7 +89,27 @@ export default function RegisterPage() {
         </div>
       )}
 
-      <button onClick={handleGoogle} disabled={googleLoading} className="btn-glass">
+      <label className="flex items-start gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+          className="mt-0.5 h-4 w-4 rounded border accent-[#3ECF8E] cursor-pointer shrink-0"
+          aria-label="Agree to Terms of Service and Privacy Policy"
+        />
+        <span className="text-sm leading-snug" style={{ color: 'var(--text-tertiary)' }}>
+          I agree to the{' '}
+          <Link href="/terms" className="underline transition-colors" style={{ color: 'var(--text-secondary)' }}>
+            Terms of Service
+          </Link>{' '}
+          and{' '}
+          <Link href="/privacy" className="underline transition-colors" style={{ color: 'var(--text-secondary)' }}>
+            Privacy Policy
+          </Link>
+        </span>
+      </label>
+
+      <button onClick={handleGoogle} disabled={googleLoading || !agreed} className="btn-glass">
         {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleIcon />}
         Continue with Google
       </button>
@@ -121,7 +142,7 @@ export default function RegisterPage() {
           aria-label="Password"
           className="glass-input"
         />
-        <button type="submit" disabled={loading} className="btn-primary mt-1">
+        <button type="submit" disabled={loading || !agreed} className="btn-primary mt-1">
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           Create account
         </button>
