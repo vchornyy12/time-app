@@ -28,7 +28,8 @@
       "mcp__playwright__browser_fill_form",
       "Bash(cd \"C:/Users/vchornyi/Documents/GTDApp/gtdapp\" && npx playwright test tests/e2e/inbox/inbox.spec.ts --project=chromium --reporter=list 2>&1; echo \"EXIT: $?\")",
       "Bash(echo \"exit=$?\")",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(grep -r \"console\\\\.\" /c/Users/vchornyi/Documents/GTDApp/gtdapp --include=\"*.ts\" --include=\"*.tsx\" 2>/dev/null | grep -v \".test.\" | grep -v \"playwright\" | head -5)"
     ]
   }
 }

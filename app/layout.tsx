@@ -14,6 +14,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://time24.pro'),
   title: {
     template: '%s | time24',
     default: 'time24',
@@ -22,6 +23,22 @@ export const metadata: Metadata = {
     'A minimalist productivity workspace. Clear your mind, capture everything, and act with confidence.',
   verification: {
     google: '-ykNtkGbgrLvXlLyhT5I2IF-s511J4Ju1L9LMxDpHZ4',
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'time24',
+    url: 'https://time24.pro',
+    title: 'time24 — Your mind is for having ideas, not holding them.',
+    description:
+      'A minimalist productivity workspace. Clear your mind, capture everything, and act with confidence.',
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'time24' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'time24 — Your mind is for having ideas, not holding them.',
+    description:
+      'A minimalist productivity workspace. Clear your mind, capture everything, and act with confidence.',
+    images: ['/og.png'],
   },
 };
 
