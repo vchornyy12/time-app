@@ -21,7 +21,14 @@
       "Bash(cmd:*)",
       "Bash(powershell:*)",
       "Bash(node_modules/.bin/next lint:*)",
-      "Bash(node_modules/.bin/vitest run:*)"
+      "Bash(node_modules/.bin/vitest run:*)",
+      "Bash(claude mcp:*)",
+      "Bash(npx playwright:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_fill_form",
+      "Bash(cd \"C:/Users/vchornyi/Documents/GTDApp/gtdapp\" && npx playwright test tests/e2e/inbox/inbox.spec.ts --project=chromium --reporter=list 2>&1; echo \"EXIT: $?\")",
+      "Bash(echo \"exit=$?\")",
+      "Read(//tmp/**)"
     ]
   }
 }

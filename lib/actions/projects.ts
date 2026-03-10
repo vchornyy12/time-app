@@ -57,12 +57,12 @@ export async function createProject(input: {
     .eq('id', parsed.originTaskId)
     .eq('user_id', user.id)
     .select()
-    .single()
+    .maybeSingle()
 
   if (taskError || !firstTask) {
     // Roll back project if task update fails
     await supabase.from('projects').delete().eq('id', project.id)
-    throw new Error(taskError?.message ?? 'Failed to update task')
+    throw new Error(taskError?.message ?? 'Origin task not found — it may have already been processed')
   }
 
   // 3. Link first_step_task_id on the project
