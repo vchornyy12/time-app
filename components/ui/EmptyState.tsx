@@ -16,7 +16,7 @@ export function EmptyState({ icon, title, description, action, className }: Empt
         className
       )}
     >
-      {icon && <div className="text-5xl opacity-30 select-none">{icon}</div>}
+      {icon && <div className="text-5xl opacity-50 select-none">{icon}</div>}
       <div className="flex flex-col gap-1">
         <p className="font-medium" style={{ color: 'var(--text-tertiary)' }}>{title}</p>
         {description && (

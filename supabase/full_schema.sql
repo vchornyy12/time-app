@@ -64,7 +64,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     contexts                    text[] NOT NULL DEFAULT '{}',
     attachments                 jsonb NOT NULL DEFAULT '[]'::jsonb,
     created_at                  timestamptz NOT NULL DEFAULT now(),
-    updated_at                  timestamptz NOT NULL DEFAULT now()
+    updated_at                  timestamptz NOT NULL DEFAULT now(),
+    completed_at                timestamptz
 );
 
 -- Circular reference handling
@@ -120,14 +121,91 @@ CREATE TRIGGER projects_updated_at
     BEFORE UPDATE ON projects
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+CREATE OR REPLACE FUNCTION set_completed_at()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.status = 'done' AND (OLD.status IS DISTINCT FROM 'done') THEN
+    NEW.completed_at = NOW();
+  ELSIF NEW.status != 'done' AND OLD.status = 'done' THEN
+    NEW.completed_at = NULL;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trigger_completed_at ON tasks;
+CREATE TRIGGER trigger_completed_at
+  BEFORE UPDATE ON tasks
+  FOR EACH ROW EXECUTE FUNCTION set_completed_at();
+
+CREATE OR REPLACE FUNCTION get_analytics(
+  p_user_id uuid,
+  p_from    timestamptz
+)
+RETURNS jsonb
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT jsonb_build_object(
+    'completed_by_day',
+    COALESCE(
+      (
+        SELECT jsonb_agg(jsonb_build_object('day', day, 'count', cnt) ORDER BY day)
+        FROM (
+          SELECT (completed_at AT TIME ZONE 'UTC')::date::text AS day,
+                 COUNT(*)::int AS cnt
+          FROM   tasks
+          WHERE  user_id      = p_user_id
+            AND  status       = 'done'
+            AND  completed_at >= p_from
+          GROUP BY 1
+        ) sub
+      ),
+      '[]'::jsonb
+    ),
+    'avg_cycle_days',
+    (
+      SELECT ROUND(AVG(EXTRACT(EPOCH FROM (completed_at - created_at)) / 86400.0))::int
+      FROM   tasks
+      WHERE  user_id      = p_user_id
+        AND  status       = 'done'
+        AND  completed_at >= p_from
+        AND  completed_at IS NOT NULL
+    ),
+    'tasks_captured',
+    (
+      SELECT COUNT(*)::int
+      FROM   tasks
+      WHERE  user_id    = p_user_id
+        AND  created_at >= p_from
+    ),
+    'status_counts',
+    COALESCE(
+      (
+        SELECT jsonb_object_agg(status::text, cnt)
+        FROM (
+          SELECT status, COUNT(*)::int AS cnt
+          FROM   tasks
+          WHERE  user_id = p_user_id
+          GROUP BY status
+        ) sub
+      ),
+      '{}'::jsonb
+    )
+  );
+$$;
+
 -- ────────────────────────────────────────────────────────────
 -- 4. INDEXES
 -- ────────────────────────────────────────────────────────────
 
-CREATE INDEX IF NOT EXISTS idx_tasks_user_status   ON tasks(user_id, status);
-CREATE INDEX IF NOT EXISTS idx_tasks_project_id    ON tasks(project_id);
-CREATE INDEX IF NOT EXISTS idx_projects_user_id    ON projects(user_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_user_status     ON tasks(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_tasks_project_id      ON tasks(project_id);
+CREATE INDEX IF NOT EXISTS idx_projects_user_id      ON projects(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_contexts_user_id ON user_contexts(user_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_completed_at
+  ON tasks(user_id, completed_at DESC)
+  WHERE completed_at IS NOT NULL;
 
 -- ────────────────────────────────────────────────────────────
 -- 5. STORAGE
@@ -210,3 +288,5 @@ CREATE POLICY "user_contexts_delete_own" ON user_contexts FOR DELETE USING (user
 
 REVOKE ALL ON user_integrations FROM anon;
 REVOKE ALL ON user_integrations FROM public;
+
+GRANT EXECUTE ON FUNCTION get_analytics(uuid, timestamptz) TO authenticated;

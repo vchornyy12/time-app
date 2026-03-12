@@ -30,7 +30,7 @@
   --input-border: rgba(0, 0, 0, 0.15);
   --input-border-focus: rgba(62, 207, 142, 0.55);
   --input-text: #000000;
-  --input-placeholder: rgba(0, 0, 0, 0.35);
+  --input-placeholder: rgba(0, 0, 0, 0.55);
 
   /* Button secondary */
   --btn-glass-bg: #f4f4f5;
@@ -40,9 +40,9 @@
 
   /* Text */
   --text-primary: #000000;
-  --text-secondary: rgba(0, 0, 0, 0.60);
-  --text-tertiary: rgba(0, 0, 0, 0.40);
-  --text-muted: rgba(0, 0, 0, 0.25);
+  --text-secondary: rgba(0, 0, 0, 0.75);
+  --text-tertiary: rgba(0, 0, 0, 0.60);
+  --text-muted: rgba(0, 0, 0, 0.50);
 
   /* Sidebar */
   --sidebar-bg: #f9fafb;
@@ -59,9 +59,9 @@
   /* Nav */
   --nav-active-bg: rgba(62, 207, 142, 0.08);
   --nav-hover-bg: rgba(0, 0, 0, 0.04);
-  --nav-text: rgba(0, 0, 0, 0.55);
+  --nav-text: rgba(0, 0, 0, 0.75);
   --nav-text-active: #000000;
-  --nav-icon: rgba(0, 0, 0, 0.40);
+  --nav-icon: rgba(0, 0, 0, 0.60);
   --nav-icon-active: #3ECF8E;
   --nav-divider: rgba(0, 0, 0, 0.06);
 
@@ -123,7 +123,7 @@
   --input-border: rgba(255, 255, 255, 0.10);
   --input-border-focus: rgba(62, 207, 142, 0.55);
   --input-text: #ffffff;
-  --input-placeholder: rgba(255, 255, 255, 0.28);
+  --input-placeholder: rgba(255, 255, 255, 0.50);
 
   /* Button secondary */
   --btn-glass-bg: #242424;
@@ -131,11 +131,11 @@
   --btn-glass-border: rgba(255, 255, 255, 0.10);
   --btn-glass-text: #ffffff;
 
-  /* Text — values chosen to meet WCAG AA 4.5:1 on #181818 / #1c1c1c */
+  /* Text — values boosted for better project-wide accessibility */
   --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.65); /* ~6.5:1 ✓ */
-  --text-tertiary: rgba(255, 255, 255, 0.55);  /* ~5.7:1 ✓  (was 0.40 → ~3.9:1 ✗) */
-  --text-muted: rgba(255, 255, 255, 0.45);     /* ~4.6:1 ✓  (was 0.25 → ~2.1:1 ✗) */
+  --text-secondary: rgba(255, 255, 255, 0.80);
+  --text-tertiary: rgba(255, 255, 255, 0.70);
+  --text-muted: rgba(255, 255, 255, 0.60);
 
   /* Sidebar */
   --sidebar-bg: #1c1c1c;
