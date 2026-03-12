@@ -73,6 +73,15 @@ export interface LogbookDay {
   reflection: DailyReflection | null
 }
 
+export interface ClaritySession {
+  id: string
+  user_id: string
+  worry_description: string
+  worst_case_scenario: string
+  resulting_task_id: string | null
+  created_at: string
+}
+
 export interface UserIntegration {
   id: string
   user_id: string

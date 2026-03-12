@@ -18,6 +18,7 @@ import {
   MagnifyingGlass,
   ChartBar,
   BookOpenText,
+  Wind,
 } from '@phosphor-icons/react'
 import type { IconWeight } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils/cn'
@@ -69,6 +70,7 @@ export function Sidebar({ inboxCount, lastReviewDate, userEmail, onOpenSearch }:
     },
     { href: '/analytics', label: 'Analytics', Icon: ChartBar },
     { href: '/logbook', label: 'Success Diary', Icon: BookOpenText },
+    { href: '/clarity', label: 'Clarity Protocol', Icon: Wind },
     { href: '/trash', label: 'Trash', Icon: Trash },
     { href: '/settings', label: 'Settings', Icon: Gear },
   ]

@@ -99,6 +99,14 @@ export const upsertReflectionSchema = z.object({
   content: z.string().max(5000).default(''),
 })
 
+// ── Clarity Protocol schemas ─────────────────────────────────
+
+export const claritySessionSchema = z.object({
+  worryDescription:  z.string().trim().min(1, 'Please describe your worry').max(2000),
+  worstCaseScenario: z.string().trim().min(1, 'Please describe the worst case').max(2000),
+  actionTitle:       z.string().trim().min(1, 'Please enter one concrete action').max(500),
+})
+
 // ── Attachment schemas ──────────────────────────────────────
 
 export const attachmentSchema = z.object({
