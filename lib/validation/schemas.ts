@@ -92,6 +92,13 @@ export const delegateTaskSchema = z.object({
   isCommunicated: z.boolean().default(false),
 })
 
+// ── Logbook schemas ──────────────────────────────────────────
+
+export const upsertReflectionSchema = z.object({
+  date:    dateString,
+  content: z.string().max(5000).default(''),
+})
+
 // ── Attachment schemas ──────────────────────────────────────
 
 export const attachmentSchema = z.object({

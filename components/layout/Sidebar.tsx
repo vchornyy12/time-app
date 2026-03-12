@@ -17,6 +17,7 @@ import {
   SignOut,
   MagnifyingGlass,
   ChartBar,
+  BookOpenText,
 } from '@phosphor-icons/react'
 import type { IconWeight } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils/cn'
@@ -67,6 +68,7 @@ export function Sidebar({ inboxCount, lastReviewDate, userEmail, onOpenSearch }:
       sublabel: lastReviewDate ? formatLastReview(lastReviewDate) : 'Never',
     },
     { href: '/analytics', label: 'Analytics', Icon: ChartBar },
+    { href: '/logbook', label: 'Success Diary', Icon: BookOpenText },
     { href: '/trash', label: 'Trash', Icon: Trash },
     { href: '/settings', label: 'Settings', Icon: Gear },
   ]

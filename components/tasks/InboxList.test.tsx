@@ -11,7 +11,7 @@
  *  - Process overlay open/close
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react'
 import React from 'react'
 
 // ── Module mocks ──────────────────────────────────────────────
@@ -211,8 +211,9 @@ describe('InboxList', () => {
       render(<InboxList tasks={[task]} />)
 
       fireEvent.click(screen.getByTestId('delete-del-task'))
-      expect(screen.getByTestId('confirm-modal')).toBeInTheDocument()
-      expect(screen.getByText('Delete me')).toBeInTheDocument()
+      const modal = screen.getByTestId('confirm-modal')
+      expect(modal).toBeInTheDocument()
+      expect(within(modal).getByText('Delete me')).toBeInTheDocument()
     })
 
     it('closes the confirm modal on cancel', () => {

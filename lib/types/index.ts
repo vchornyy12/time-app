@@ -57,6 +57,22 @@ export type ReviewItemSelection =
   | { type: 'task'; id: string }
   | { type: 'project'; id: string }
 
+export interface DailyReflection {
+  id: string
+  user_id: string
+  date: string          // 'YYYY-MM-DD'
+  content: string
+  created_at: string
+  updated_at: string
+}
+
+/** One calendar day's entry in the Logbook */
+export interface LogbookDay {
+  date: string          // 'YYYY-MM-DD' — local date derived from completed_at
+  tasks: Task[]
+  reflection: DailyReflection | null
+}
+
 export interface UserIntegration {
   id: string
   user_id: string
