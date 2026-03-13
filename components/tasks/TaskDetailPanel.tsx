@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { Calendar, Clock, Tag, User, FolderOpen } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { createClient } from '@/lib/supabase/client'
 import { Spinner } from '@/components/ui'
 import { AttachmentSection } from '@/components/tasks/AttachmentSection'
+import { updateTaskTitle } from '@/lib/actions/tasks'
 import type { Task, Attachment } from '@/lib/types'
 
 interface TaskDetailPanelProps {
@@ -44,6 +45,33 @@ export function TaskDetailPanel({ taskId }: TaskDetailPanelProps) {
   const [projectTitle, setProjectTitle] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
+  const [isEditingTitle, setIsEditingTitle] = useState(false)
+  const [editTitle, setEditTitle] = useState('')
+  const [, startTransition] = useTransition()
+
+  function startTitleEdit() {
+    if (!task) return
+    setEditTitle(task.title)
+    setIsEditingTitle(true)
+  }
+
+  function cancelTitleEdit() {
+    setIsEditingTitle(false)
+  }
+
+  function commitTitleEdit() {
+    if (!task) return
+    const trimmed = editTitle.trim()
+    setIsEditingTitle(false)
+    if (!trimmed || trimmed === task.title) return
+    setTask((prev) => prev ? { ...prev, title: trimmed } : prev)
+    startTransition(() => updateTaskTitle(task.id, trimmed))
+  }
+
+  function handleTitleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') { e.preventDefault(); commitTitleEdit() }
+    else if (e.key === 'Escape') { cancelTitleEdit() }
+  }
 
   useEffect(() => {
     let mounted = true
@@ -93,9 +121,27 @@ export function TaskDetailPanel({ taskId }: TaskDetailPanelProps) {
   return (
     <div className="flex flex-col gap-5">
       {/* Title */}
-      <h3 className="text-base font-medium leading-snug" style={{ color: 'var(--text-primary)' }}>
-        {task.title}
-      </h3>
+      {isEditingTitle ? (
+        <input
+          autoFocus
+          value={editTitle}
+          onChange={(e) => setEditTitle(e.target.value)}
+          onKeyDown={handleTitleKeyDown}
+          onBlur={commitTitleEdit}
+          aria-label="Edit task title"
+          className="bg-transparent border-b border-zinc-500 focus:border-[#3ECF8E] outline-none w-full text-base font-medium leading-snug transition-colors duration-150"
+          style={{ color: 'var(--text-primary)' }}
+        />
+      ) : (
+        <h3
+          className="text-base font-medium leading-snug cursor-text hover:opacity-80 transition-opacity"
+          style={{ color: 'var(--text-primary)' }}
+          onClick={startTitleEdit}
+          title="Click to edit"
+        >
+          {task.title}
+        </h3>
+      )}
 
       {/* Status badge */}
       <div className="flex items-center gap-2 flex-wrap">

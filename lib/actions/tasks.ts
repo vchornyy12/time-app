@@ -6,6 +6,7 @@ import { cleanupWFReminderIfNeeded, syncWaitingForReminder } from '@/lib/actions
 import {
   captureTaskSchema,
   taskId as taskIdSchema,
+  updateTaskTitleSchema,
   updateWaitingForDueDateSchema,
   updateSomedayReviewDateSchema,
   contexts as contextsSchema,
@@ -33,6 +34,23 @@ export async function captureTask(title: string): Promise<{ id: string }> {
   if (error) throw error
   revalidateAll()
   return { id: data.id }
+}
+
+// ── update title ─────────────────────────────────────────────
+
+export async function updateTaskTitle(taskId: string, title: string) {
+  const parsed = updateTaskTitleSchema.parse({ taskId, title })
+  const { supabase, user } = await authedClient()
+
+  const { error } = await supabase
+    .from('tasks')
+    .update({ title: parsed.title })
+    .eq('id', parsed.taskId)
+    .eq('user_id', user.id)
+
+  if (error) throw error
+  revalidatePath('/inbox')
+  revalidatePath('/', 'layout')
 }
 
 // ── delete (soft) → trash ────────────────────────────────────

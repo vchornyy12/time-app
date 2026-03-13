@@ -92,6 +92,11 @@ export const delegateTaskSchema = z.object({
   isCommunicated: z.boolean().default(false),
 })
 
+export const updateTaskTitleSchema = z.object({
+  taskId,
+  title,
+})
+
 // ── Logbook schemas ──────────────────────────────────────────
 
 export const upsertReflectionSchema = z.object({
