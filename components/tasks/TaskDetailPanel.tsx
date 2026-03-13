@@ -90,11 +90,12 @@ export function TaskDetailPanel({ taskId }: TaskDetailPanelProps) {
       if (!mounted) return
       setTask(data as Task | null)
 
-      if (data?.project_id) {
+      if (data?.project_id && user) {
         const { data: project } = await supabase
           .from('projects')
           .select('title')
           .eq('id', data.project_id)
+          .eq('user_id', user.id)
           .single()
         if (mounted) setProjectTitle(project?.title ?? null)
       }
@@ -129,7 +130,7 @@ export function TaskDetailPanel({ taskId }: TaskDetailPanelProps) {
           onKeyDown={handleTitleKeyDown}
           onBlur={commitTitleEdit}
           aria-label="Edit task title"
-          className="bg-transparent border-b border-zinc-500 focus:border-[#3ECF8E] outline-none w-full text-base font-medium leading-snug transition-colors duration-150"
+          className="bg-transparent border-b border-zinc-500 focus:border-[var(--accent)] outline-none w-full text-base font-medium leading-snug transition-colors duration-150"
           style={{ color: 'var(--text-primary)' }}
         />
       ) : (

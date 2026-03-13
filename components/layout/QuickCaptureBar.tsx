@@ -3,32 +3,17 @@
 import { useState, useRef, useTransition, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, SpinnerGap } from '@phosphor-icons/react'
-import { Paperclip, X, Image, FileText, Film, Music, File } from 'lucide-react'
+import { Paperclip, X } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { captureTask } from '@/lib/actions/tasks'
 import { updateTaskAttachments } from '@/lib/actions/attachments'
 import { createClient } from '@/lib/supabase/client'
 import { Toast } from '@/components/ui'
+import { getFileIcon, formatFileSize } from '@/lib/utils/attachment-utils'
 import type { Attachment } from '@/lib/types'
 
 const MAX_CHARS = 500
 const MAX_FILE_SIZE = 10 * 1024 * 1024
-
-function getFileIcon(type: string) {
-  const cls = 'w-3.5 h-3.5'
-  if (type.startsWith('image/')) return <Image className={cls} aria-hidden="true" />
-  if (type.startsWith('video/')) return <Film className={cls} aria-hidden="true" />
-  if (type.startsWith('audio/')) return <Music className={cls} aria-hidden="true" />
-  if (type.includes('pdf') || type.includes('document') || type.includes('text'))
-    return <FileText className={cls} aria-hidden="true" />
-  return <File className={cls} aria-hidden="true" />
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
 
 export function QuickCaptureBar() {
   const router = useRouter()

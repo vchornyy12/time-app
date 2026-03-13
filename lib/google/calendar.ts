@@ -48,7 +48,10 @@ export async function createGCalEvent(
       end: { date: input.date },
     }
   } else {
-    const start = new Date(input.scheduledAt!)
+    if (!input.scheduledAt) {
+      throw new Error('scheduledAt is required for timed calendar events')
+    }
+    const start = new Date(input.scheduledAt)
     const end = addHours(start, 1) // +1 hour
     eventBody = {
       summary: input.summary,

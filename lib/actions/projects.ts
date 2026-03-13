@@ -233,11 +233,13 @@ export async function completeProject(projectId: string) {
   const pId = projectIdSchema.parse(projectId)
   const { supabase, user } = await authedClient()
 
-  await supabase
+  const { error } = await supabase
     .from('projects')
     .update({ status: 'completed' })
     .eq('id', pId)
     .eq('user_id', user.id)
+
+  if (error) throw new Error(error.message)
 
   revalidatePath('/projects')
 }

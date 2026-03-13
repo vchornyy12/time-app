@@ -46,7 +46,7 @@ const USER_ID = 'user-uuid-abc'
  */
 function buildQueryChain(result: { data: unknown; error: null | { message: string } }) {
   const chain: Record<string, unknown> = {}
-  const chainMethods = ['select', 'eq', 'neq', 'in', 'order', 'limit', 'not', 'is'] as const
+  const chainMethods = ['select', 'eq', 'neq', 'in', 'order', 'limit', 'not', 'is', 'gte', 'lt'] as const
   chainMethods.forEach((m) => {
     chain[m] = vi.fn().mockReturnValue(chain)
   })

@@ -24,18 +24,22 @@ export async function getLogbookDays(
   const { supabase, user } = await authedClient()
 
   // Build the base query, optionally scoped to tasks older than the cursor
+  const windowStart = new Date()
+  windowStart.setDate(windowStart.getDate() - limit * 14)
+
   const baseQuery = supabase
     .from('tasks')
     .select('*')
     .eq('user_id', user.id)
     .eq('status', 'done')
     .not('completed_at', 'is', null)
+    .gte('completed_at', windowStart.toISOString())
 
   const { data: rawTasks, error: tasksError } = await (
     beforeTimestamp ? baseQuery.lt('completed_at', beforeTimestamp) : baseQuery
   )
     .order('completed_at', { ascending: false })
-    .limit(limit * 30)
+    .limit(500)
 
   if (tasksError) throw tasksError
   if (!rawTasks || rawTasks.length === 0) return []

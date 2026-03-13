@@ -1,0 +1,1 @@
+{"reviewId":"CR-20260313-001","timestamp":"2026-03-13T00:00:00.000Z","scope":"codebase","reviewMode":"standard","verdict":"APPROVED WITH COMMENTS","score":8.1,"riskLevel":"LOW","findings":{"critical":0,"high":2,"medium":5,"low":5,"info":2},"filesReviewed":30,"linesChanged":0,"reportPath":".claude/deep-review/reports/CR-20260313-001.md"}

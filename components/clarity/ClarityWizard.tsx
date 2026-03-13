@@ -33,10 +33,10 @@ const INITIAL: WizardState = {
 
 // Shared base for both textarea and text input
 const FIELD_BASE =
-  'w-full rounded-lg bg-black/20 border border-white/10 text-zinc-100 placeholder-zinc-600 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ECF8E]/40 focus:border-[#3ECF8E]/40 transition-colors duration-150'
+  'w-full rounded-lg bg-black/20 border border-white/10 text-zinc-100 placeholder-zinc-600 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:border-[var(--accent)]/40 transition-colors duration-150'
 
 const PRIMARY_BTN =
-  'inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold bg-[#3ECF8E] text-black transition-opacity duration-150 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3ECF8E]/60'
+  'inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold bg-[var(--accent)] text-black transition-opacity duration-150 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/60'
 
 const SECONDARY_BTN =
   'inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-medium border border-white/10 text-zinc-300 hover:text-zinc-100 hover:border-white/20 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20'
@@ -52,7 +52,7 @@ function StepIndicator({ step }: { step: 1 | 2 | 3 | 4 }) {
           className="h-1 rounded-full transition-all duration-200"
           style={{
             width: n === step ? '24px' : '8px',
-            background: n <= step ? '#3ECF8E' : 'rgba(255,255,255,0.12)',
+            background: n <= step ? 'var(--accent)' : 'rgba(255,255,255,0.12)',
           }}
         />
       ))}
@@ -105,7 +105,7 @@ export function ClarityWizard() {
   if (state.step === 'success') {
     return (
       <div className="flex flex-col items-center text-center py-12 gap-6">
-        <CheckCircle size={52} color="#3ECF8E" weight="fill" aria-hidden="true" />
+        <CheckCircle size={52} weight="fill" aria-hidden="true" style={{ color: 'var(--accent)' }} />
         <div>
           <h2 className="text-2xl font-semibold text-zinc-100">Mind cleared.</h2>
           <p className="mt-2 text-sm text-zinc-400">Your action has been added to Inbox.</p>
@@ -203,7 +203,7 @@ export function ClarityWizard() {
           <label className="flex items-start gap-3 cursor-pointer group">
             <input
               type="checkbox"
-              className="mt-0.5 h-4 w-4 rounded border-white/20 bg-black/20 accent-[#3ECF8E] cursor-pointer focus:ring-[#3ECF8E]/40"
+              className="mt-0.5 h-4 w-4 rounded border-white/20 bg-black/20 accent-[var(--accent)] cursor-pointer focus:ring-[var(--accent)]/40"
               checked={state.accepted}
               onChange={() => patch({ accepted: !state.accepted })}
             />

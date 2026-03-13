@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
   Tray,
@@ -23,7 +23,7 @@ import {
 import type { IconWeight } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils/cn'
 import { Badge, ThemeSwitcher, Modal, Logo } from '@/components/ui'
-import { createClient } from '@/lib/supabase/client'
+import { signOut } from '@/lib/actions/account'
 
 // ── Icon mapping ────────────────────────────────────────────
 
@@ -48,7 +48,6 @@ const ICON_SIZE = 20
 
 export function Sidebar({ inboxCount, lastReviewDate, userEmail, onOpenSearch }: SidebarProps) {
   const pathname = usePathname()
-  const router = useRouter()
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const primaryNav: NavItem[] = [
@@ -76,10 +75,7 @@ export function Sidebar({ inboxCount, lastReviewDate, userEmail, onOpenSearch }:
   ]
 
   async function handleLogout() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/login')
-    router.refresh()
+    await signOut()
   }
 
   function handleLogoutClick() {

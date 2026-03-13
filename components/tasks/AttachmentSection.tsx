@@ -5,11 +5,6 @@ import {
   Paperclip,
   Upload,
   X,
-  FileText,
-  Image,
-  Film,
-  Music,
-  File,
   Download,
   Loader2,
 } from 'lucide-react'
@@ -20,6 +15,7 @@ import {
   deleteAttachment,
   getAttachmentUrls,
 } from '@/lib/actions/attachments'
+import { getFileIcon, formatFileSize } from '@/lib/utils/attachment-utils'
 import type { Attachment } from '@/lib/types'
 
 interface AttachmentSectionProps {
@@ -31,21 +27,6 @@ interface AttachmentSectionProps {
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_ATTACHMENTS = 20
-
-function getFileIcon(type: string) {
-  if (type.startsWith('image/')) return <Image className="w-4 h-4" aria-hidden="true" />
-  if (type.startsWith('video/')) return <Film className="w-4 h-4" aria-hidden="true" />
-  if (type.startsWith('audio/')) return <Music className="w-4 h-4" aria-hidden="true" />
-  if (type.includes('pdf') || type.includes('document') || type.includes('text'))
-    return <FileText className="w-4 h-4" aria-hidden="true" />
-  return <File className="w-4 h-4" aria-hidden="true" />
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
 
 export function AttachmentSection({
   taskId,
@@ -60,6 +41,7 @@ export function AttachmentSection({
   const [dragOver, setDragOver] = useState(false)
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const sectionRef = useRef<HTMLDivElement>(null)
 
   // Fetch signed URLs when attachments change
   useEffect(() => {
@@ -152,6 +134,7 @@ export function AttachmentSection({
 
   const handlePaste = useCallback(
     (e: ClipboardEvent) => {
+      if (!sectionRef.current?.contains(document.activeElement)) return
       const items = e.clipboardData?.items
       if (!items) return
 
@@ -203,7 +186,7 @@ export function AttachmentSection({
   )
 
   return (
-    <div className="flex flex-col gap-3">
+    <div ref={sectionRef} className="flex flex-col gap-3">
       {/* Section header */}
       <div className="flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
         <Paperclip className="w-3.5 h-3.5" />
