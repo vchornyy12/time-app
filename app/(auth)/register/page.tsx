@@ -1,22 +1,51 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Loader2, Eye, EyeOff } from 'lucide-react'
+import { Loader2, Eye, EyeOff, Check, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
+const PASSWORD_RULES = [
+  { id: 'length',  label: 'At least 8 characters',          test: (p: string) => p.length >= 8 },
+  { id: 'upper',   label: 'One uppercase letter',            test: (p: string) => /[A-Z]/.test(p) },
+  { id: 'lower',   label: 'One lowercase letter',            test: (p: string) => /[a-z]/.test(p) },
+  { id: 'number',  label: 'One number',                      test: (p: string) => /\d/.test(p) },
+  { id: 'special', label: 'One special character (!@#$…)',   test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+]
+
 export default function RegisterPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [agreed, setAgreed] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail]               = useState('')
+  const [password, setPassword]         = useState('')
+  const [confirm, setConfirm]           = useState('')
+  const [agreed, setAgreed]             = useState(false)
+  const [error, setError]               = useState<string | null>(null)
+  const [loading, setLoading]           = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
+  const [success, setSuccess]           = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm]   = useState(false)
+  const [passwordTouched, setPasswordTouched] = useState(false)
+  const [confirmTouched, setConfirmTouched]   = useState(false)
+
+  const rules = useMemo(() => PASSWORD_RULES.map(r => ({ ...r, passed: r.test(password) })), [password])
+  const allRulesPassed = rules.every(r => r.passed)
+  const passwordsMatch = password === confirm
+  const confirmError   = confirmTouched && confirm.length > 0 && !passwordsMatch
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setPasswordTouched(true)
+    setConfirmTouched(true)
+
+    if (!allRulesPassed) {
+      setError('Please meet all password requirements.')
+      return
+    }
+    if (!passwordsMatch) {
+      setError('Passwords do not match.')
+      return
+    }
+
     setLoading(true)
     setError(null)
 
@@ -61,16 +90,12 @@ export default function RegisterPage() {
     return (
       <div className="glass-card w-full max-w-md p-8 flex flex-col gap-4 text-center">
         <div className="text-4xl">📬</div>
-        <h1 className="text-xl font-semibold " style={{ color: 'var(--text-primary)' }}>Check your email</h1>
+        <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Check your email</h1>
         <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
           We sent a confirmation link to <span style={{ color: 'var(--text-secondary)' }}>{email}</span>. Click it
           to activate your account.
         </p>
-        <Link
-          href="/login"
-          className="mt-2 text-sm transition-colors"
-          style={{ color: 'var(--text-tertiary)' }}
-        >
+        <Link href="/login" className="mt-2 text-sm transition-colors" style={{ color: 'var(--text-tertiary)' }}>
           Back to sign in
         </Link>
       </div>
@@ -132,14 +157,16 @@ export default function RegisterPage() {
           aria-label="Email address"
           className="glass-input"
         />
+
+        {/* Password */}
         <div className="relative">
           <input
             type={showPassword ? 'text' : 'password'}
-            placeholder="Password (min. 8 characters)"
+            placeholder="Password"
             autoComplete="new-password"
-            minLength={8}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => { setPassword(e.target.value); setPasswordTouched(true) }}
+            onBlur={() => setPasswordTouched(true)}
             required
             aria-label="Password"
             className="glass-input w-full pr-10"
@@ -153,7 +180,55 @@ export default function RegisterPage() {
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
-        <button type="submit" disabled={loading || !agreed} className="btn-primary mt-1">
+
+        {/* Strength checklist — shown once user starts typing */}
+        {passwordTouched && password.length > 0 && (
+          <ul className="flex flex-col gap-1 px-1">
+            {rules.map(r => (
+              <li key={r.id} className="flex items-center gap-2 text-xs">
+                {r.passed
+                  ? <Check className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent)' }} />
+                  : <X     className="w-3.5 h-3.5 shrink-0" style={{ color: 'rgba(239,68,68,0.7)' }} />
+                }
+                <span style={{ color: r.passed ? 'var(--text-tertiary)' : 'rgba(239,68,68,0.85)' }}>
+                  {r.label}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Confirm password */}
+        <div className="relative">
+          <input
+            type={showConfirm ? 'text' : 'password'}
+            placeholder="Confirm password"
+            autoComplete="new-password"
+            value={confirm}
+            onChange={(e) => { setConfirm(e.target.value); setConfirmTouched(true) }}
+            onBlur={() => setConfirmTouched(true)}
+            required
+            aria-label="Confirm password"
+            className={`glass-input w-full pr-10 ${confirmError ? 'glass-input-error' : ''}`}
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirm((v) => !v)}
+            aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+          >
+            {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
+        {confirmError && (
+          <p className="text-xs" style={{ color: 'rgba(239,68,68,0.85)' }}>Passwords do not match.</p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading || !agreed}
+          className="btn-primary mt-1"
+        >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           Create account
         </button>
