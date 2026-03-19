@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar'
 import { MobileNav } from './MobileNav'
 import { QuickCaptureBar } from './QuickCaptureBar'
 import { SearchPalette } from '@/components/ui'
+import { WelcomeModal } from '@/components/onboarding/WelcomeModal'
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -61,6 +62,9 @@ export function AppLayout({ children, inboxCount, lastReviewDate, userEmail }: A
 
       {/* Search palette */}
       <SearchPalette open={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+
+      {/* First-time onboarding */}
+      <WelcomeModal />
     </div>
   )
 }
