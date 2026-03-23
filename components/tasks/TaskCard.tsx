@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils/cn'
 import { ContextPicker } from '@/components/ui/ContextPicker'
 import { DelegatePopover } from '@/components/tasks/DelegatePopover'
 import { updateTaskContexts } from '@/lib/actions/tasks'
+import { useOverflowing } from '@/lib/hooks/useOverflowing'
 import type { Task } from '@/lib/types'
 
 interface TaskCardProps {
@@ -24,6 +25,7 @@ export function TaskCard({ task, projectTitle, userContexts = [], onComplete, is
   const [isDelegating, setIsDelegating] = useState(false)
   const [editContexts, setEditContexts] = useState<string[]>(task.contexts)
   const [, startTransition] = useTransition()
+  const { ref: titleRef, isOverflowing } = useOverflowing<HTMLButtonElement>()
 
   function handleSaveContexts() {
     startTransition(async () => {
@@ -85,10 +87,12 @@ export function TaskCard({ task, projectTitle, userContexts = [], onComplete, is
       {/* Content */}
       <div className="flex-1 min-w-0">
         <button
+          ref={titleRef}
           type="button"
           onClick={onTitleClick}
-          className="text-base leading-snug text-left hover:text-[var(--accent)] transition-colors duration-150 cursor-pointer"
+          className="text-base leading-snug text-left hover:text-[var(--accent)] transition-colors duration-150 cursor-pointer w-full truncate"
           style={{ color: 'var(--text-primary)' }}
+          title={isOverflowing ? task.title : undefined}
         >
           {task.title}
         </button>

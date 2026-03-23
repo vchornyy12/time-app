@@ -16,6 +16,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, inboxCount, lastReviewDate, userEmail }: AppLayoutProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isCaptureFocused, setIsCaptureFocused] = useState(false)
 
   // Global Cmd/Ctrl+K to open search
   useEffect(() => {
@@ -51,7 +52,13 @@ export function AppLayout({ children, inboxCount, lastReviewDate, userEmail }: A
         <main className="flex-1 overflow-y-auto p-6 pb-36 md:pb-28" id="main-content" tabIndex={-1}>
           {children}
         </main>
-        <QuickCaptureBar />
+        {/* Dim overlay — fades in while capture bar is focused */}
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 md:left-[248px] pointer-events-none z-10 transition-opacity duration-300"
+          style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(1px)', opacity: isCaptureFocused ? 1 : 0 }}
+        />
+        <QuickCaptureBar onFocusChange={setIsCaptureFocused} />
       </div>
 
       {/* Mobile bottom navigation */}

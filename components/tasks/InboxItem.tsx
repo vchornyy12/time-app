@@ -5,6 +5,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { Trash2, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { updateTaskTitle } from '@/lib/actions/tasks'
+import { useOverflowing } from '@/lib/hooks/useOverflowing'
 import type { Task } from '@/lib/types'
 
 const DBLCLICK_DELAY = 220 // ms
@@ -23,6 +24,7 @@ export function InboxItem({ task, onDelete, onProcess, onTitleClick, isNew }: In
   const [editTitle, setEditTitle] = useState(task.title)
   const [isPending, startTransition] = useTransition()
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { ref: titleRef, isOverflowing } = useOverflowing<HTMLButtonElement>()
 
   function startEdit() {
     setEditTitle(task.title)
@@ -91,11 +93,12 @@ export function InboxItem({ task, onDelete, onProcess, onTitleClick, isNew }: In
           />
         ) : (
           <button
+            ref={titleRef}
             type="button"
             onClick={handleTitleClick}
             className="text-base leading-snug text-left hover:text-indigo-300 transition-colors duration-150 cursor-pointer w-full truncate"
             style={{ color: 'var(--text-primary)' }}
-            title="Double-click to edit"
+            title={isOverflowing ? task.title : undefined}
           >
             {task.title}
           </button>

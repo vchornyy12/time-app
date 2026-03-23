@@ -15,7 +15,11 @@ import type { Attachment } from '@/lib/types'
 const MAX_CHARS = 500
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 
-export function QuickCaptureBar() {
+interface QuickCaptureBarProps {
+  onFocusChange?: (focused: boolean) => void
+}
+
+export function QuickCaptureBar({ onFocusChange }: QuickCaptureBarProps) {
   const router = useRouter()
   const [value, setValue] = useState('')
   const [isPending, startTransition] = useTransition()
@@ -23,13 +27,25 @@ export function QuickCaptureBar() {
   const [isFocused, setIsFocused] = useState(false)
   const [stagedFiles, setStagedFiles] = useState<File[]>([])
   const [dragOver, setDragOver] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const barRef = useRef<HTMLDivElement>(null)
 
   const charsLeft = MAX_CHARS - value.length
   const nearLimit = charsLeft <= 50
   const hasFiles = stagedFiles.length > 0
+
+  function autoResize(el: HTMLTextAreaElement) {
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }
+
+  // Reset height when value is cleared
+  useEffect(() => {
+    if (value === '' && inputRef.current) {
+      inputRef.current.style.height = 'auto'
+    }
+  }, [value])
 
   const addFiles = useCallback((files: FileList | File[]) => {
     const valid = Array.from(files).filter((f) => {
@@ -81,8 +97,8 @@ export function QuickCaptureBar() {
     return () => document.removeEventListener('paste', handlePaste)
   }, [addFiles])
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') {
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleCapture()
     }
@@ -95,19 +111,27 @@ export function QuickCaptureBar() {
 
   function handleCapture() {
     const trimmed = value.trim()
-    if (!trimmed || isPending) return
+    if (!trimmed) return
+
+    // Snapshot files before clearing so async upload uses the right list
+    const filesToUpload = [...stagedFiles]
+
+    // Clear and refocus immediately — don't wait for the server (Any.do style)
+    setValue('')
+    setStagedFiles([])
+    requestAnimationFrame(() => inputRef.current?.focus())
 
     startTransition(async () => {
       try {
         const { id: taskId } = await captureTask(trimmed)
 
-        if (stagedFiles.length > 0) {
+        if (filesToUpload.length > 0) {
           const supabase = createClient()
           const { data: { user } } = await supabase.auth.getUser()
           if (user) {
             const attachments: Attachment[] = []
 
-            for (const file of stagedFiles) {
+            for (const file of filesToUpload) {
               const filePath = `${user.id}/${taskId}/${Date.now()}-${file.name}`
               const { error: uploadError } = await supabase.storage
                 .from('attachments')
@@ -129,15 +153,14 @@ export function QuickCaptureBar() {
           }
         }
 
-        setValue('')
-        setStagedFiles([])
         router.refresh()
-        inputRef.current?.focus()
       } catch {
         setErrorMessage('Failed to capture task. Please try again.')
       }
     })
   }
+
+  const active = isFocused || dragOver
 
   return (
     <>
@@ -155,51 +178,52 @@ export function QuickCaptureBar() {
             if (e.dataTransfer.files.length > 0) addFiles(e.dataTransfer.files)
           }}
           className={cn(
-            'pointer-events-auto w-full max-w-2xl mx-4',
+            'relative pointer-events-auto w-full max-w-2xl mx-4',
             'flex flex-col',
             'rounded-lg',
             'transition-all duration-200',
-            dragOver && 'border-[var(--accent)]',
           )}
           style={{
-            background: (isFocused || dragOver) ? 'var(--capture-bg-focus)' : 'var(--capture-bg)',
-            border: `1px solid ${(isFocused || dragOver) ? 'var(--capture-border-focus)' : 'var(--capture-border)'}`,
-            boxShadow: (isFocused || dragOver) ? 'var(--capture-shadow-focus)' : 'var(--capture-shadow)',
+            background: active ? 'var(--capture-bg-focus)' : 'var(--capture-bg)',
+            border: `1px solid ${active ? 'var(--capture-border-focus)' : 'var(--capture-border)'}`,
+            boxShadow: active ? 'var(--capture-shadow-focus)' : 'var(--capture-shadow)',
           }}
         >
           {/* Main input row */}
-          <div className="flex items-center gap-3 px-5 py-3">
+          <div className="flex items-start gap-3 px-5 py-3">
             {isPending ? (
-              <SpinnerGap size={18} weight="bold" className="text-[#3ECF8E] animate-spin flex-shrink-0" />
+              <SpinnerGap size={18} weight="bold" className="text-[#3ECF8E] animate-spin flex-shrink-0 mt-0.5" />
             ) : (
               <Plus
                 size={18}
                 weight="light"
-                className="flex-shrink-0 transition-colors duration-150"
-                style={{ color: isFocused ? 'var(--text-secondary)' : 'var(--text-muted)' }}
+                className="flex-shrink-0 transition-colors duration-150 mt-0.5"
+                style={{ color: active ? 'var(--text-secondary)' : 'var(--text-muted)' }}
               />
             )}
 
-            <input
+            <textarea
               ref={inputRef}
-              type="text"
+              rows={1}
               value={value}
-              onChange={(e) => setValue(e.target.value.slice(0, MAX_CHARS))}
+              onChange={(e) => {
+                setValue(e.target.value.slice(0, MAX_CHARS))
+                autoResize(e.target)
+              }}
               onKeyDown={handleKeyDown}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
+              onFocus={() => { setIsFocused(true); onFocusChange?.(true) }}
+              onBlur={() => { setIsFocused(false); onFocusChange?.(false) }}
               placeholder="Capture anything…"
-              className="flex-1 bg-transparent outline-none text-sm min-w-0"
+              className="flex-1 bg-transparent outline-none text-sm min-w-0 resize-none overflow-hidden leading-snug placeholder:text-zinc-500"
               style={{ color: 'var(--text-primary)', '--tw-placeholder-opacity': '1' } as React.CSSProperties}
-              aria-label="Quick capture — press Enter to add"
-              disabled={isPending}
+              aria-label="Quick capture — press Enter to add, Shift+Enter for new line"
             />
 
             {/* Attach button */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="p-1.5 rounded-lg transition-all duration-150 flex-shrink-0"
+              className="p-1.5 rounded-lg transition-all duration-150 flex-shrink-0 mt-0.5"
               style={{ color: 'var(--text-muted)' }}
               aria-label="Attach files"
               title="Attach files"
@@ -220,7 +244,7 @@ export function QuickCaptureBar() {
             {value.length > 0 && (
               <span
                 className={cn(
-                  'text-xs flex-shrink-0 tabular-nums transition-colors duration-150',
+                  'text-xs flex-shrink-0 tabular-nums transition-colors duration-150 mt-0.5',
                   nearLimit ? 'text-yellow-400' : ''
                 )}
                 style={!nearLimit ? { color: 'var(--text-muted)' } : undefined}
@@ -272,6 +296,15 @@ export function QuickCaptureBar() {
               <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>Drop files to attach</p>
             </div>
           )}
+
+          {/* Green underline accent */}
+          <div
+            aria-hidden="true"
+            className="absolute bottom-0 left-0 right-0 h-[2px] rounded-b-lg transition-all duration-200"
+            style={{
+              background: active ? 'var(--accent)' : 'rgba(62, 207, 142, 0.35)',
+            }}
+          />
         </div>
       </div>
 

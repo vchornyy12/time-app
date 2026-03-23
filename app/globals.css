@@ -48,13 +48,13 @@
   --sidebar-bg: #f9fafb;
   --sidebar-border: rgba(0, 0, 0, 0.08);
 
-  /* Capture bar */
-  --capture-bg: #ffffff;
-  --capture-bg-focus: #ffffff;
+  /* Capture bar — recessed below task cards (#fff) */
+  --capture-bg: #e8e8eb;
+  --capture-bg-focus: #e4e4e7;
   --capture-border: rgba(0, 0, 0, 0.12);
-  --capture-border-focus: rgba(0, 0, 0, 0.20);
-  --capture-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --capture-shadow-focus: 0 1px 6px rgba(0, 0, 0, 0.12);
+  --capture-border-focus: #3ECF8E;
+  --capture-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  --capture-shadow-focus: inset 0 2px 4px rgba(0, 0, 0, 0.06), 0 0 0 1px #3ECF8E;
 
   /* Nav */
   --nav-active-bg: rgba(62, 207, 142, 0.08);
@@ -141,13 +141,13 @@
   --sidebar-bg: #1c1c1c;
   --sidebar-border: rgba(255, 255, 255, 0.08);
 
-  /* Capture bar */
-  --capture-bg: #242424;
-  --capture-bg-focus: #2a2a2a;
-  --capture-border: rgba(255, 255, 255, 0.08);
-  --capture-border-focus: rgba(255, 255, 255, 0.14);
-  --capture-shadow: 0 1px 3px rgba(0, 0, 0, 0.40);
-  --capture-shadow-focus: 0 1px 6px rgba(0, 0, 0, 0.55);
+  /* Capture bar — recessed below task cards (#1c1c1c) */
+  --capture-bg: #0d0d0d;
+  --capture-bg-focus: #111111;
+  --capture-border: rgba(255, 255, 255, 0.10);
+  --capture-border-focus: #3ECF8E;
+  --capture-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.50);
+  --capture-shadow-focus: inset 0 2px 4px rgba(0, 0, 0, 0.50), 0 0 0 1px #3ECF8E;
 
   /* Nav */
   --nav-active-bg: rgba(62, 207, 142, 0.08);
