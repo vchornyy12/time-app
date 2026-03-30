@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import Script from "next/script";
+import ClarityAnalytics from "@/components/analytics/ClarityAnalytics";
 import "./globals.css";
 
 const geistMono = Geist_Mono({
@@ -74,6 +75,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           {children}
         </ThemeProvider>
+        <ClarityAnalytics />
       </body>
     </html>
   );
