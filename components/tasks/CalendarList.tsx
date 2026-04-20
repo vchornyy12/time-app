@@ -144,7 +144,7 @@ function CalendarCard({
     if (!newDate) return
     setIsRescheduling(false)
     startRescheduleTransition(async () => {
-      await rescheduleCalendarTask(task.id, newDate)
+      await rescheduleCalendarTask(task.id, new Date(newDate).toISOString())
       onRefresh()
     })
   }

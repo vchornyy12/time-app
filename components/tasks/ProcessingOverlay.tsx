@@ -289,7 +289,7 @@ export function ProcessingOverlay({ task, userContexts = [], onClose }: Processi
                 disabled={isPending}
               />
               <ActionButton
-                onClick={() => finish(() => processToCalendar(task.id, scheduledAt))}
+                onClick={() => finish(() => processToCalendar(task.id, new Date(scheduledAt).toISOString()))}
                 disabled={!scheduledAt || isPending}
                 loading={isPending}
               >
