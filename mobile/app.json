@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "GTD Companion",
+    "slug": "gtd-companion",
+    "version": "1.0.0",
+    "scheme": "timeapp",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0f0f13"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#0f0f13"
+      },
+      "package": "com.gtdcompanion.app"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
