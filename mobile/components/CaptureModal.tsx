@@ -50,6 +50,7 @@ export function CaptureModal({ visible, onClose, userId }: CaptureModalProps) {
 
   function handleClose() {
     setTitle('')
+    setLoading(false)
     setError(null)
     setConfirmed(false)
     onClose()
