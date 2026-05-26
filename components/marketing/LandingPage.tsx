@@ -943,12 +943,14 @@ function TestimonialsSection() {
       </FadeUp>
 
       {/* Mobile: horizontal scroll; md+: 3-column grid */}
-      <div className="md:hidden flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 snap-x snap-mandatory">
+      <div className="md:hidden overflow-x-hidden -mx-6">
+      <div className="flex gap-4 overflow-x-auto pb-4 px-6 snap-x snap-mandatory">
         {testimonials.map((t) => (
           <div key={t.name} className="shrink-0 w-72 snap-start">
             <TestimonialCard testimonial={t} />
           </div>
         ))}
+      </div>
       </div>
 
       <StaggerChildren className="hidden md:grid md:grid-cols-3 gap-6" stagger={0.12}>
@@ -1207,7 +1209,7 @@ function LandingFooter() {
 export function LandingPage({ stats }: { stats: LandingStats }) {
   return (
     <div
-      className="min-h-screen bg-[#181818] text-zinc-100"
+      className="min-h-screen bg-[#181818] text-zinc-100 overflow-x-clip"
       style={{ '--text-primary': '#f4f4f5' } as React.CSSProperties}
     >
       <LandingHeader />
