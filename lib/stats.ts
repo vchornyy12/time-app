@@ -1,5 +1,5 @@
 import { unstable_cache } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 
 export type LandingStats = { userCount: number; taskCount: number }
 
@@ -7,7 +7,10 @@ const FALLBACK: LandingStats = { userCount: 120, taskCount: 4800 }
 
 async function fetchStats(): Promise<LandingStats> {
   try {
-    const supabase = await createClient()
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
     const { data, error } = await supabase.rpc('get_public_stats')
     if (error || !data) return FALLBACK
     return {
