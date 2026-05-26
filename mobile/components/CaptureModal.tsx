@@ -83,7 +83,7 @@ export function CaptureModal({ visible, onClose, userId }: CaptureModalProps) {
             <TextInput
               style={styles.input}
               placeholder="What's on your mind?"
-              placeholderTextColor="#555"
+              placeholderTextColor="rgba(255,255,255,0.40)"
               value={title}
               onChangeText={setTitle}
               autoFocus
@@ -99,7 +99,7 @@ export function CaptureModal({ visible, onClose, userId }: CaptureModalProps) {
               disabled={!title.trim() || loading}
             >
               {loading ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color="#000" />
               ) : (
                 <Text style={styles.buttonText}>Add to Inbox</Text>
               )}
@@ -112,7 +112,7 @@ export function CaptureModal({ visible, onClose, userId }: CaptureModalProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f0f13' },
+  container: { flex: 1, backgroundColor: '#181818' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -120,17 +120,17 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 28,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e1e2e',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
-  heading: { fontSize: 18, fontWeight: '600', color: '#fff' },
-  cancel: { fontSize: 16, color: '#6366f1' },
+  heading: { fontSize: 18, fontWeight: '600', color: '#ffffff' },
+  cancel: { fontSize: 16, color: '#3ECF8E' },
   body: { padding: 20, gap: 12 },
   input: {
-    backgroundColor: '#1a1a24',
+    backgroundColor: '#1c1c1c',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2a2a3a',
-    color: '#fff',
+    borderColor: 'rgba(255,255,255,0.08)',
+    color: '#ffffff',
     fontSize: 16,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -139,13 +139,13 @@ const styles = StyleSheet.create({
   },
   error: { color: '#f87171', fontSize: 14 },
   button: {
-    backgroundColor: '#6366f1',
+    backgroundColor: '#3ECF8E',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   buttonDisabled: { opacity: 0.5 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  buttonText: { color: '#000', fontSize: 16, fontWeight: '600' },
   confirmed: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  confirmedText: { color: '#34d399', fontSize: 20, fontWeight: '600' },
+  confirmedText: { color: '#3ECF8E', fontSize: 20, fontWeight: '600' },
 })

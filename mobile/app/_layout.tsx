@@ -46,12 +46,14 @@ export default function RootLayout() {
   useEffect(() => {
     if (session === undefined) return // still loading
 
-    const inAuthGroup = segments[0] === '(auth)'
+    const inTabsGroup = segments[0] === '(tabs)'
 
-    if (!session && !inAuthGroup) {
-      router.replace('/(auth)/login')
-    } else if (session && inAuthGroup) {
+    if (session && !inTabsGroup) {
+      // Якщо юзер залогінився, але він не в головному меню (наприклад, висить на екрані auth) -> пускаємо в додаток
       router.replace('/(tabs)/')
+    } else if (!session && segments[0] !== '(auth)') {
+      // Якщо сесії немає і він не на екрані логіну -> кидаємо на логін
+      router.replace('/(auth)/login')
     }
   }, [session, segments])
 

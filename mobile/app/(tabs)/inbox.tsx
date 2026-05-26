@@ -72,7 +72,7 @@ export default function InboxScreen() {
         data={tasks}
         keyExtractor={(t) => t.id}
         contentContainerStyle={styles.list}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#555" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3ECF8E" />}
         ListEmptyComponent={<EmptyState message="Inbox clear." />}
         renderItem={({ item }) => (
           <TaskRow title={item.title} />
@@ -94,7 +94,7 @@ export default function InboxScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f0f13' },
+  container: { flex: 1, backgroundColor: '#181818' },
   list: { padding: 16, paddingBottom: 80, flexGrow: 1 },
   separator: { height: 8 },
   errorBanner: {
@@ -111,14 +111,14 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#6366f1',
+    backgroundColor: '#3ECF8E',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 6,
-    shadowColor: '#6366f1',
+    shadowColor: '#3ECF8E',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
   },
-  fabText: { color: '#fff', fontSize: 28, lineHeight: 32 },
+  fabText: { color: '#000', fontSize: 28, lineHeight: 32 },
 })

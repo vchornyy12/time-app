@@ -54,7 +54,7 @@ export default function LoginScreen() {
             <TextInput
               style={styles.input}
               placeholder="you@example.com"
-              placeholderTextColor="#666"
+              placeholderTextColor="rgba(255,255,255,0.40)"
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -71,7 +71,7 @@ export default function LoginScreen() {
               disabled={!email.trim() || loading}
             >
               {loading ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color="#000" />
               ) : (
                 <Text style={styles.buttonText}>Send magic link</Text>
               )}
@@ -84,16 +84,16 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f0f13' },
+  container: { flex: 1, backgroundColor: '#181818' },
   inner: { flex: 1, justifyContent: 'center', padding: 28 },
-  title: { fontSize: 28, fontWeight: '700', color: '#fff', marginBottom: 6 },
-  subtitle: { fontSize: 16, color: '#888', marginBottom: 32 },
+  title: { fontSize: 28, fontWeight: '700', color: '#ffffff', marginBottom: 6 },
+  subtitle: { fontSize: 16, color: 'rgba(255,255,255,0.60)', marginBottom: 32 },
   input: {
-    backgroundColor: '#1a1a24',
+    backgroundColor: '#1c1c1c',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2a2a3a',
-    color: '#fff',
+    borderColor: 'rgba(255,255,255,0.08)',
+    color: '#ffffff',
     fontSize: 16,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -101,15 +101,15 @@ const styles = StyleSheet.create({
   },
   error: { color: '#f87171', fontSize: 14, marginBottom: 12 },
   button: {
-    backgroundColor: '#6366f1',
+    backgroundColor: '#3ECF8E',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   buttonDisabled: { opacity: 0.5 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  buttonText: { color: '#000', fontSize: 16, fontWeight: '600' },
   sentBox: { gap: 16 },
-  sentText: { color: '#aaa', fontSize: 15, lineHeight: 22 },
-  sentEmail: { color: '#fff', fontWeight: '600' },
-  link: { color: '#6366f1', fontSize: 15 },
+  sentText: { color: 'rgba(255,255,255,0.60)', fontSize: 15, lineHeight: 22 },
+  sentEmail: { color: '#ffffff', fontWeight: '600' },
+  link: { color: '#3ECF8E', fontSize: 15 },
 })
