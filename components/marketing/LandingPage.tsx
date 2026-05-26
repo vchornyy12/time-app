@@ -1185,7 +1185,7 @@ function LandingFooter() {
     <footer className="border-t border-white/10">
       <div className="max-w-6xl mx-auto px-6 py-8 flex flex-wrap items-center justify-between gap-4">
         <Logo size="sm" />
-        <div className="flex items-center gap-6">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <Link href="/privacy" className="text-xs text-zinc-300 hover:text-zinc-100 transition-colors">
             Privacy Policy
           </Link>
