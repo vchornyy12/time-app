@@ -645,7 +645,7 @@ function DifferentiatorsSection() {
           <motion.div
             whileHover={{ y: -8, scale: 1.02 }}
             transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-            className="relative p-8 rounded-xl border border-[#3ECF8E]/20 bg-[#1c1c1c] flex flex-col gap-5 h-full group overflow-hidden"
+            className="relative p-5 sm:p-8 rounded-xl border border-[#3ECF8E]/20 bg-[#1c1c1c] flex flex-col gap-5 h-full group overflow-hidden"
           >
             <motion.div
               className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
@@ -685,7 +685,7 @@ function DifferentiatorsSection() {
           <motion.div
             whileHover={{ y: -8, scale: 1.02 }}
             transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-            className="relative p-8 rounded-xl border border-[#3ECF8E]/20 bg-[#1c1c1c] flex flex-col gap-5 h-full group overflow-hidden"
+            className="relative p-5 sm:p-8 rounded-xl border border-[#3ECF8E]/20 bg-[#1c1c1c] flex flex-col gap-5 h-full group overflow-hidden"
           >
             <motion.div
               className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
