@@ -1123,7 +1123,7 @@ function FinalCTASection() {
   return (
     <section className="max-w-6xl mx-auto px-6 py-12 sm:py-20 border-t border-white/10">
       <FadeUp>
-        <div className="relative rounded-2xl bg-[#1c1c1c] border border-white/10 px-8 py-14 flex flex-col items-center gap-6 text-center overflow-hidden">
+        <div className="relative rounded-2xl bg-[#1c1c1c] border border-white/10 px-5 py-10 sm:px-8 sm:py-14 flex flex-col items-center gap-6 text-center overflow-hidden">
           {/* Animated background glow */}
           <motion.div
             className="absolute inset-0 pointer-events-none"
