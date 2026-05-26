@@ -349,8 +349,8 @@ function HeroSection() {
           </motion.p>
         </div>
 
-        {/* Right - mockup */}
-        <div>
+        {/* Right - mockup (hidden on mobile, shown when 2-col grid has room) */}
+        <div className="hidden lg:block">
           <AppMockup />
         </div>
       </div>
