@@ -763,6 +763,7 @@ function ComparisonTable() {
       <FadeUp delay={0.1}>
         {/* Mobile: card list (time24 column only) */}
         <div className="sm:hidden flex flex-col divide-y divide-white/10 rounded-xl border border-white/10 overflow-hidden">
+          <div className="px-4 py-2 bg-[#3ECF8E]/10 text-xs font-bold text-[#3ECF8E]">time24</div>
           {comparisonRows.map((row) => (
             <div key={row.feature} className="flex items-start justify-between gap-3 px-4 py-3 bg-[#1c1c1c]">
               <span className="text-xs text-zinc-300 leading-snug flex-1">{row.feature}</span>
