@@ -242,7 +242,7 @@ function HeroSection() {
   ]
 
   return (
-    <section className="max-w-6xl mx-auto px-6 py-20 lg:py-28">
+    <section className="max-w-6xl mx-auto px-6 py-12 sm:py-20 lg:py-28">
       <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
         {/* Left */}
         <div className="flex flex-col gap-6">
@@ -413,7 +413,7 @@ const painPoints = [
 
 function PainPointSection() {
   return (
-    <section className="max-w-6xl mx-auto px-6 py-20 border-t border-white/10">
+    <section className="max-w-6xl mx-auto px-6 py-12 sm:py-20 border-t border-white/10">
       <FadeUp className="flex flex-col items-center gap-4 mb-12 text-center">
         <span className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
           Sound familiar?
@@ -488,7 +488,7 @@ const workflowSteps: WorkflowStep[] = [
 
 function GTDWorkflowSection() {
   return (
-    <section className="max-w-6xl mx-auto px-6 py-20 border-t border-white/10">
+    <section className="max-w-6xl mx-auto px-6 py-12 sm:py-20 border-t border-white/10">
       <FadeUp className="flex flex-col items-center gap-4 mb-12 text-center">
         <span className="text-xs font-semibold uppercase tracking-widest text-[#3ECF8E]">
           The GTD loop
@@ -590,7 +590,7 @@ function FeatureCard({ icon: Icon, title, description }: { icon: ElementType; ti
 
 function FeaturesSection() {
   return (
-    <section className="max-w-6xl mx-auto px-6 py-20 border-t border-white/10">
+    <section className="max-w-6xl mx-auto px-6 py-12 sm:py-20 border-t border-white/10">
       <FadeUp className="flex flex-col items-center gap-4 mb-12 text-center">
         <span className="text-xs font-semibold uppercase tracking-widest text-[#3ECF8E]">
           How it works
@@ -626,7 +626,7 @@ function FeaturesSection() {
 
 function DifferentiatorsSection() {
   return (
-    <section className="max-w-6xl mx-auto px-6 py-20 border-t border-white/10">
+    <section className="max-w-6xl mx-auto px-6 py-12 sm:py-20 border-t border-white/10">
       <FadeUp className="flex flex-col items-center gap-4 mb-12 text-center">
         <span className="text-xs font-semibold uppercase tracking-widest text-[#3ECF8E]">
           Only in time24
@@ -752,7 +752,7 @@ function CellValue({ value }: { value: boolean | string }) {
 
 function ComparisonTable() {
   return (
-    <section className="max-w-6xl mx-auto px-6 py-20 border-t border-white/10">
+    <section className="max-w-6xl mx-auto px-6 py-12 sm:py-20 border-t border-white/10">
       <FadeUp className="flex flex-col items-center gap-4 mb-12 text-center">
         <span className="text-xs font-semibold uppercase tracking-widest text-[#3ECF8E]">
           How we compare
@@ -820,7 +820,7 @@ function FeatureChecklistSection() {
   const col2 = featureChecklist.slice(half)
 
   return (
-    <section className="max-w-6xl mx-auto px-6 py-20 border-t border-white/10">
+    <section className="max-w-6xl mx-auto px-6 py-12 sm:py-20 border-t border-white/10">
       <FadeUp className="flex flex-col items-center gap-4 mb-12 text-center">
         <span className="text-xs font-semibold uppercase tracking-widest text-[#3ECF8E]">
           Everything included
@@ -920,7 +920,7 @@ const testimonials: Testimonial[] = [
 
 function TestimonialsSection() {
   return (
-    <section className="max-w-6xl mx-auto px-6 py-20 border-t border-white/10">
+    <section className="max-w-6xl mx-auto px-6 py-12 sm:py-20 border-t border-white/10">
       <FadeUp className="flex flex-col items-center gap-4 mb-12 text-center">
         <span className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
           From our beta users
@@ -1004,7 +1004,7 @@ const trustItems = [
 
 function TrustBanner() {
   return (
-    <section className="max-w-6xl mx-auto px-6 py-20 border-t border-white/10">
+    <section className="max-w-6xl mx-auto px-6 py-12 sm:py-20 border-t border-white/10">
       <StaggerChildren className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6" stagger={0.1}>
         {trustItems.map(({ icon: Icon, label, description }) => (
           <StaggerItem key={label}>
@@ -1057,7 +1057,7 @@ function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   return (
-    <section className="max-w-6xl mx-auto px-6 py-20 border-t border-white/10">
+    <section className="max-w-6xl mx-auto px-6 py-12 sm:py-20 border-t border-white/10">
       <FadeUp className="flex flex-col items-center gap-4 mb-12 text-center">
         <span className="text-xs font-semibold uppercase tracking-widest text-[#3ECF8E]">FAQ</span>
         <h2 className="text-3xl font-bold text-zinc-100">Common questions</h2>
@@ -1108,7 +1108,7 @@ function FAQSection() {
 
 function FinalCTASection() {
   return (
-    <section className="max-w-6xl mx-auto px-6 py-20 border-t border-white/10">
+    <section className="max-w-6xl mx-auto px-6 py-12 sm:py-20 border-t border-white/10">
       <FadeUp>
         <div className="relative rounded-2xl bg-[#1c1c1c] border border-white/10 px-8 py-14 flex flex-col items-center gap-6 text-center overflow-hidden">
           {/* Animated background glow */}
