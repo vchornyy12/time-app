@@ -39,6 +39,7 @@ export interface Task {
   contexts: string[]
   completed_at: string | null
   attachments: Attachment[]
+  recurrence_rule: string | null
 }
 
 export interface Project {

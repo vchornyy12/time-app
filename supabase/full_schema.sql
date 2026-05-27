@@ -65,7 +65,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     attachments                 jsonb NOT NULL DEFAULT '[]'::jsonb,
     created_at                  timestamptz NOT NULL DEFAULT now(),
     updated_at                  timestamptz NOT NULL DEFAULT now(),
-    completed_at                timestamptz
+    completed_at                timestamptz,
+    recurrence_rule             text
 );
 
 -- Circular reference handling

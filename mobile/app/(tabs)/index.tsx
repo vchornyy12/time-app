@@ -40,7 +40,7 @@ export default function TodayScreen() {
     const [calendarResult, nextActionsResult] = await Promise.all([
       supabase
         .from('tasks')
-        .select('id, title, scheduled_at, google_calendar_event_id')
+        .select('id, title, scheduled_at, google_calendar_event_id, contexts, recurrence_rule')
         .eq('user_id', uid)
         .eq('status', 'calendar')
         .gte('scheduled_at', startOfToday.toISOString())
@@ -48,7 +48,7 @@ export default function TodayScreen() {
         .order('scheduled_at', { ascending: true }),
       supabase
         .from('tasks')
-        .select('id, title, contexts, created_at')
+        .select('id, title, contexts, recurrence_rule, created_at')
         .eq('user_id', uid)
         .eq('status', 'next_actions')
         .order('created_at', { ascending: false }),
@@ -129,6 +129,7 @@ export default function TodayScreen() {
               time={isCalendar && item.scheduled_at ? formatTime(item.scheduled_at) : undefined}
               synced={isCalendar ? !!item.google_calendar_event_id : undefined}
               context={item.contexts?.[0] ?? null}
+              isRecurring={!!item.recurrence_rule}
               onComplete={() => handleCompleteTask(item.id)}
             />
           )
@@ -145,7 +146,7 @@ export default function TodayScreen() {
 
       <CaptureModal
         visible={captureOpen}
-        onClose={() => setCaptureOpen(false)}
+        onClose={() => { setCaptureOpen(false); fetchTasks() }}
         userId={userId}
       />
     </SafeAreaView>

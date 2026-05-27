@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { Repeat } from 'lucide-react-native'
 
 interface TaskRowProps {
   title: string
   time?: string | null
   synced?: boolean
   context?: string | null
+  isRecurring?: boolean
   onComplete?: () => void
 }
 
-export function TaskRow({ title, time, synced, context, onComplete }: TaskRowProps) {
+export function TaskRow({ title, time, synced, context, isRecurring, onComplete }: TaskRowProps) {
   const [checked, setChecked] = useState(false)
 
   function handlePress() {
@@ -22,6 +24,7 @@ export function TaskRow({ title, time, synced, context, onComplete }: TaskRowPro
       {onComplete !== undefined && (
         <TouchableOpacity
           onPress={handlePress}
+          disabled={checked}
           style={[styles.checkbox, checked && styles.checkboxChecked]}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -32,8 +35,11 @@ export function TaskRow({ title, time, synced, context, onComplete }: TaskRowPro
       )}
       <View style={styles.content}>
         <Text style={styles.title} numberOfLines={2}>{title}</Text>
-        {context ? (
-          <Text style={styles.context}>@{context}</Text>
+        {(isRecurring || context) ? (
+          <View style={styles.metaRow}>
+            {isRecurring && <Repeat color="rgba(255,255,255,0.35)" size={13} />}
+            {context ? <Text style={styles.context}>@{context}</Text> : null}
+          </View>
         ) : null}
       </View>
       {synced !== undefined && (
@@ -58,7 +64,8 @@ const styles = StyleSheet.create({
   time: { color: 'rgba(255,255,255,0.45)', fontSize: 13, width: 56, textAlign: 'right', flexShrink: 0 },
   content: { flex: 1 },
   title: { color: '#ffffff', fontSize: 15 },
-  context: { color: 'rgba(255,255,255,0.60)', fontSize: 12, marginTop: 2 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 },
+  context: { color: 'rgba(255,255,255,0.60)', fontSize: 12 },
   dot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
   dotSynced: { backgroundColor: '#3ECF8E' },
   dotUnsynced: { backgroundColor: '#f59e0b' },
