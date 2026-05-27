@@ -1158,14 +1158,15 @@ function MobileAppSection() {
           <div className="relative z-10 flex flex-col items-center gap-3">
             <motion.a
               href={APK_URL}
-              download
+              download="time24.apk"
+              aria-describedby="apk-install-hint"
               whileHover={{ scale: 1.07 }}
               whileTap={{ scale: 0.96 }}
               className="px-8 py-3 rounded-lg bg-[#3ECF8E] text-black font-semibold text-sm hover:bg-[#34B27B] transition-colors"
             >
               Download APK
             </motion.a>
-            <p className="text-xs text-zinc-500">
+            <p id="apk-install-hint" className="text-xs text-zinc-500">
               Android 8.0+ · Enable &ldquo;Install from unknown sources&rdquo; in Settings
             </p>
           </div>
