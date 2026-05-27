@@ -5,7 +5,7 @@ import {
   Zap, Brain, Target, Lock, ShieldCheck, Database, Globe,
   BookOpen, Sparkles, CalendarCheck, Layers,
   Calendar, Lightbulb, CheckCircle2, AlertTriangle, CheckCheck,
-  Inbox, ChevronDown,
+  Inbox, ChevronDown, Smartphone,
 } from 'lucide-react'
 import { Logo } from '@/components/ui'
 import {
@@ -13,6 +13,8 @@ import {
 } from 'framer-motion'
 import { useRef, useState, type ElementType } from 'react'
 import type { LandingStats } from '@/lib/stats'
+
+const APK_URL = process.env.NEXT_PUBLIC_APK_URL
 
 // ─── Animation Primitives ────────────────────────────────────────────────────
 
@@ -1057,7 +1059,7 @@ const faqs: FAQItem[] = [
   },
   {
     q: 'Is there a mobile app?',
-    a: 'time24 is fully mobile-responsive and works in any browser on iOS and Android. A native iOS and Android app is currently in development — sign up to get notified when it launches.',
+    a: 'time24 is fully mobile-responsive and works in any browser on iOS and Android. An early-access Android APK is available — scroll down to the Android section on this page to download it. iOS is coming soon.',
   },
   {
     q: 'Will there ever be a paid version?',
@@ -1114,6 +1116,60 @@ function FAQSection() {
               </AnimatePresence>
             </div>
           ))}
+        </div>
+      </FadeUp>
+    </section>
+  )
+}
+
+// ─── Mobile App ──────────────────────────────────────────────────────────────
+
+function MobileAppSection() {
+  if (!APK_URL) return null
+
+  return (
+    <section className="max-w-6xl mx-auto px-6 py-12 sm:py-20 border-t border-white/10">
+      <FadeUp>
+        <div className="relative max-w-2xl mx-auto rounded-2xl bg-[#1c1c1c] border border-white/10 px-5 py-10 sm:px-8 sm:py-12 flex flex-col items-center gap-6 text-center overflow-hidden">
+          <motion.div
+            className="absolute inset-0 pointer-events-none"
+            animate={{
+              background: [
+                'radial-gradient(ellipse at 50% 130%, #3ECF8E14 0%, transparent 60%)',
+                'radial-gradient(ellipse at 50% 90%, #3ECF8E20 0%, transparent 60%)',
+                'radial-gradient(ellipse at 50% 130%, #3ECF8E14 0%, transparent 60%)',
+              ],
+            }}
+            transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <div className="relative z-10 w-14 h-14 rounded-2xl bg-[#3ECF8E]/10 flex items-center justify-center">
+            <Smartphone size={28} className="text-[#3ECF8E]" />
+          </div>
+          <div className="relative z-10 flex flex-col gap-3">
+            <span className="text-xs font-semibold uppercase tracking-widest text-[#3ECF8E]">
+              Android App · Early Access
+            </span>
+            <h2 className="text-3xl font-bold text-zinc-100">Take time24 with you</h2>
+            <p className="text-zinc-300 max-w-md">
+              The native Android app is in early access. Install the APK and try it before it
+              hits the Play Store.
+            </p>
+          </div>
+          <div className="relative z-10 flex flex-col items-center gap-3">
+            <motion.a
+              href={APK_URL}
+              download
+              whileHover={{ scale: 1.07 }}
+              whileTap={{ scale: 0.96 }}
+              className="px-8 py-3 rounded-lg bg-[#3ECF8E] text-black font-semibold text-sm hover:bg-[#34B27B] transition-colors"
+            >
+              Download APK
+            </motion.a>
+            <p className="text-xs text-zinc-500">
+              Android 8.0+ · Enable &ldquo;Install from unknown sources&rdquo; in Settings
+            </p>
+          </div>
+          <p className="relative z-10 text-xs text-zinc-600">iOS coming soon</p>
         </div>
       </FadeUp>
     </section>
@@ -1224,6 +1280,7 @@ export function LandingPage({ stats }: { stats: LandingStats }) {
         <FeatureChecklistSection />
         <TrustBanner />
         <FAQSection />
+        <MobileAppSection />
         <FinalCTASection />
       </main>
       <LandingFooter />
