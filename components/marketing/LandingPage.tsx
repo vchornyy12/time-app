@@ -1059,7 +1059,9 @@ const faqs: FAQItem[] = [
   },
   {
     q: 'Is there a mobile app?',
-    a: 'time24 is fully mobile-responsive and works in any browser on iOS and Android. An early-access Android APK is available — scroll down to the Android section on this page to download it. iOS is coming soon.',
+    a: APK_URL
+      ? 'time24 is fully mobile-responsive and works in any browser on iOS and Android. An early-access Android APK is available — scroll down to the Android section on this page to download it. iOS is coming soon.'
+      : 'time24 is fully mobile-responsive and works in any browser on iOS and Android. A native iOS and Android app is currently in development — sign up to get notified when it launches.',
   },
   {
     q: 'Will there ever be a paid version?',
