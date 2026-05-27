@@ -369,7 +369,7 @@ function StatsBar({ stats }: { stats: LandingStats }) {
   const items = [
     { value: `${formatStat(stats.userCount)}+`, label: 'Beta Users' },
     { value: `${formatStat(stats.taskCount)}+`, label: 'Tasks Processed' },
-    { value: '4.9 / 5', label: 'Average Rating' },
+    { value: '100%', label: 'Free during beta' },
   ]
 
   return (
@@ -392,19 +392,19 @@ function StatsBar({ stats }: { stats: LandingStats }) {
 
 const painPoints = [
   {
-    icon: AlertTriangle,
+    icon: Inbox,
     title: 'The overwhelmed inbox',
     description:
       'You dump tasks in, feel productive - then open the app and feel buried. Every item is a vague obligation, not a decision.',
   },
   {
-    icon: AlertTriangle,
+    icon: Layers,
     title: 'The paralyzed list',
     description:
       '87 items, none obviously actionable. You scroll, feel anxious, close the app. Nothing actually gets done.',
   },
   {
-    icon: AlertTriangle,
+    icon: Brain,
     title: 'The forgotten project',
     description:
       'No next action defined, so the project just sits there. Out of sight, out of mind - until it becomes urgent.',
@@ -1057,7 +1057,7 @@ const faqs: FAQItem[] = [
   },
   {
     q: 'Is there a mobile app?',
-    a: 'time24 is fully mobile-responsive and works in any browser on iOS and Android. A dedicated native app is on the roadmap - sign up to get notified when it launches.',
+    a: 'time24 is fully mobile-responsive and works in any browser on iOS and Android. A native iOS and Android app is currently in development — sign up to get notified when it launches.',
   },
   {
     q: 'Will there ever be a paid version?',
@@ -1222,7 +1222,6 @@ export function LandingPage({ stats }: { stats: LandingStats }) {
         <DifferentiatorsSection />
         <ComparisonTable />
         <FeatureChecklistSection />
-        <TestimonialsSection />
         <TrustBanner />
         <FAQSection />
         <FinalCTASection />
