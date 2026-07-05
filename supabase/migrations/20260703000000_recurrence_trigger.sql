@@ -8,9 +8,15 @@ SET recurrence_rule = NULL
 WHERE recurrence_rule IS NOT NULL
   AND recurrence_rule NOT IN ('daily', 'weekly', 'monthly', 'yearly');
 
-ALTER TABLE tasks
-  ADD CONSTRAINT tasks_recurrence_rule_check
-  CHECK (recurrence_rule IS NULL OR recurrence_rule IN ('daily', 'weekly', 'monthly', 'yearly'));
+DO $$ BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'tasks_recurrence_rule_check'
+    ) THEN
+        ALTER TABLE tasks
+            ADD CONSTRAINT tasks_recurrence_rule_check
+            CHECK (recurrence_rule IS NULL OR recurrence_rule IN ('daily', 'weekly', 'monthly', 'yearly'));
+    END IF;
+END $$;
 
 -- When a recurring calendar/next_actions task is completed, insert the next
 -- occurrence in the same transaction. Fires on UPDATE, performs INSERT — no
