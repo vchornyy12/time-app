@@ -1,5 +1,6 @@
 'use client'
 
+import { useId } from 'react'
 import type { RecurrenceRule } from '@/lib/types'
 
 const OPTIONS: { value: '' | RecurrenceRule; label: string }[] = [
@@ -18,13 +19,14 @@ interface RepeatPickerProps {
 
 /** Recurrence preset select used in the processing flow (spec: recurrence v1). */
 export function RepeatPicker({ value, onChange, disabled }: RepeatPickerProps) {
+  const id = useId()
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor="repeat-picker" className="text-xs" style={{ color: 'var(--text-muted)' }}>
+      <label htmlFor={id} className="text-xs" style={{ color: 'var(--text-muted)' }}>
         Repeat
       </label>
       <select
-        id="repeat-picker"
+        id={id}
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value === '' ? null : (e.target.value as RecurrenceRule))}
         className="glass-input text-sm"
