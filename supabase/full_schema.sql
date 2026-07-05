@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     created_at                  timestamptz NOT NULL DEFAULT now(),
     updated_at                  timestamptz NOT NULL DEFAULT now(),
     completed_at                timestamptz,
-    recurrence_rule             text
+    recurrence_rule             text CHECK (recurrence_rule IS NULL OR recurrence_rule IN ('daily', 'weekly', 'monthly', 'yearly'))
 );
 
 -- Circular reference handling
@@ -138,6 +138,55 @@ DROP TRIGGER IF EXISTS trigger_completed_at ON tasks;
 CREATE TRIGGER trigger_completed_at
   BEFORE UPDATE ON tasks
   FOR EACH ROW EXECUTE FUNCTION set_completed_at();
+
+-- When a recurring calendar/next_actions task is completed, insert the next
+-- occurrence in the same transaction. Fires on UPDATE, performs INSERT — no
+-- recursion. Runs as the invoking role: the clone keeps the same user_id as
+-- the completing user, so the RLS insert policy (auth.uid() = user_id) passes.
+CREATE OR REPLACE FUNCTION handle_recurring_task_done()
+RETURNS trigger AS $$
+DECLARE
+  step    interval;
+  next_at timestamptz;
+BEGIN
+  step := CASE NEW.recurrence_rule
+    WHEN 'daily'   THEN interval '1 day'
+    WHEN 'weekly'  THEN interval '7 days'
+    WHEN 'monthly' THEN interval '1 month'
+    WHEN 'yearly'  THEN interval '1 year'
+  END;
+  IF step IS NULL THEN
+    RETURN NEW;  -- defensive: unknown rule, do nothing
+  END IF;
+
+  IF OLD.status = 'calendar' THEN
+    -- Advance from the original slot, rolling forward past now() so a task
+    -- completed late is scheduled in the future while preserving time of day.
+    next_at := COALESCE(OLD.scheduled_at, now());
+    LOOP
+      next_at := next_at + step;
+      EXIT WHEN next_at > now();
+    END LOOP;
+  ELSE
+    next_at := NULL;  -- next_actions clones carry no schedule
+  END IF;
+
+  INSERT INTO tasks (user_id, project_id, title, status, scheduled_at, contexts, recurrence_rule)
+  VALUES (NEW.user_id, NEW.project_id, NEW.title, OLD.status, next_at, NEW.contexts, NEW.recurrence_rule);
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tasks_recurring_done ON tasks;
+CREATE TRIGGER tasks_recurring_done
+  AFTER UPDATE OF status ON tasks
+  FOR EACH ROW
+  WHEN (NEW.status = 'done'
+        AND OLD.status IS DISTINCT FROM NEW.status
+        AND OLD.status IN ('calendar', 'next_actions')
+        AND NEW.recurrence_rule IS NOT NULL)
+  EXECUTE FUNCTION handle_recurring_task_done();
 
 CREATE OR REPLACE FUNCTION get_analytics(
   p_user_id uuid,
