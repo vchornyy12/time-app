@@ -100,6 +100,7 @@ function makeCompletedTask(overrides: Partial<Task> = {}): Task {
     contexts: [],
     completed_at: '2025-03-10T12:00:00Z',
     attachments: [],
+    recurrence_rule: null,
     ...overrides,
   }
 }

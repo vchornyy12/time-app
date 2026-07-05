@@ -123,6 +123,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     contexts: [],
     completed_at: null,
     attachments: [],
+    recurrence_rule: null,
     ...overrides,
   }
 }
