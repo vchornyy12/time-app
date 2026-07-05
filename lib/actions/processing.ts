@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import type { RecurrenceRule } from '@/lib/types'
 import { syncCreateCalendarEvent, syncWaitingForReminder } from '@/lib/actions/calendar'
 import { authedClient } from '@/lib/actions/authed-action'
 import {
@@ -74,8 +75,12 @@ export async function processToWaitingFor(
   }
 }
 
-export async function processToCalendar(taskId: string, scheduledAt: string) {
-  const parsed = processToCalendarSchema.parse({ taskId, scheduledAt })
+export async function processToCalendar(
+  taskId: string,
+  scheduledAt: string,
+  recurrenceRule: RecurrenceRule | null = null
+) {
+  const parsed = processToCalendarSchema.parse({ taskId, scheduledAt, recurrenceRule })
   const { supabase, user } = await authedClient()
 
   // Fetch title before updating status (needed for Google Calendar event)
@@ -88,7 +93,11 @@ export async function processToCalendar(taskId: string, scheduledAt: string) {
 
   const { error } = await supabase
     .from('tasks')
-    .update({ status: 'calendar', scheduled_at: new Date(parsed.scheduledAt).toISOString() })
+    .update({
+      status: 'calendar',
+      scheduled_at: new Date(parsed.scheduledAt).toISOString(),
+      recurrence_rule: parsed.recurrenceRule,
+    })
     .eq('id', parsed.taskId)
     .eq('user_id', user.id)
   if (error) throw error
@@ -124,11 +133,16 @@ export async function processToSomedayMaybe(taskId: string, reviewDate?: string)
 export async function processToNextActions(
   taskId: string,
   contexts: string[] = [],
-  nextActionTitle?: string
+  nextActionTitle?: string,
+  recurrenceRule: RecurrenceRule | null = null
 ) {
-  const parsed = processToNextActionsSchema.parse({ taskId, contexts, nextActionTitle })
+  const parsed = processToNextActionsSchema.parse({ taskId, contexts, nextActionTitle, recurrenceRule })
   const { supabase, user } = await authedClient()
-  const update: Record<string, unknown> = { status: 'next_actions', contexts: parsed.contexts }
+  const update: Record<string, unknown> = {
+    status: 'next_actions',
+    contexts: parsed.contexts,
+    recurrence_rule: parsed.recurrenceRule,
+  }
   if (parsed.nextActionTitle?.trim()) update.title = parsed.nextActionTitle.trim()
   const { error } = await supabase
     .from('tasks')
