@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation'
 import { X, Loader2, ChevronLeft } from 'lucide-react'
 import { useFocusTrap } from '@/lib/hooks/useFocusTrap'
 import { ContextPicker } from '@/components/ui/ContextPicker'
+import { RepeatPicker } from '@/components/ui/RepeatPicker'
 import { cn } from '@/lib/utils/cn'
-import type { Task } from '@/lib/types'
+import type { Task, RecurrenceRule } from '@/lib/types'
 import {
   processToTrash,
   processToNotes,
@@ -65,6 +66,7 @@ export function ProcessingOverlay({ task, userContexts = [], onClose }: Processi
   const [selectedContexts, setSelectedContexts] = useState<string[]>([])
   const [selectedWFContexts, setSelectedWFContexts] = useState<string[]>([])
   const [nextActionTitle, setNextActionTitle] = useState(task.title)
+  const [recurrence, setRecurrence] = useState<RecurrenceRule | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
   // Trap focus inside the dialog; restores on close/unmount
@@ -288,8 +290,9 @@ export function ProcessingOverlay({ task, userContexts = [], onClose }: Processi
                 autoFocus
                 disabled={isPending}
               />
+              <RepeatPicker value={recurrence} onChange={setRecurrence} disabled={isPending} />
               <ActionButton
-                onClick={() => finish(() => processToCalendar(task.id, new Date(scheduledAt).toISOString()))}
+                onClick={() => finish(() => processToCalendar(task.id, new Date(scheduledAt).toISOString(), recurrence))}
                 disabled={!scheduledAt || isPending}
                 loading={isPending}
               >
@@ -391,8 +394,9 @@ export function ProcessingOverlay({ task, userContexts = [], onClose }: Processi
                 />
               </div>
               <ContextPicker value={selectedContexts} onChange={setSelectedContexts} userContexts={userContexts} />
+              <RepeatPicker value={recurrence} onChange={setRecurrence} disabled={isPending} />
               <ActionButton
-                onClick={() => finish(() => processToNextActions(task.id, selectedContexts, nextActionTitle.trim() || undefined))}
+                onClick={() => finish(() => processToNextActions(task.id, selectedContexts, nextActionTitle.trim() || undefined, recurrence))}
                 loading={isPending}
                 disabled={isPending || !nextActionTitle.trim()}
               >
