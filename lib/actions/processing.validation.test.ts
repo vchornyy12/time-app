@@ -234,3 +234,76 @@ describe('processToNextActions validation', () => {
     ).toThrow()
   })
 })
+
+// ── recurrenceRule (Recurrence v1) ────────────────────────────
+
+describe('processToCalendar recurrenceRule validation', () => {
+  it('defaults recurrenceRule to null when omitted', () => {
+    const result = processToCalendarSchema.parse({
+      taskId: VALID_UUID,
+      scheduledAt: '2026-07-04T09:00:00Z',
+    })
+    expect(result.recurrenceRule).toBeNull()
+  })
+
+  it.each(['daily', 'weekly', 'monthly', 'yearly'] as const)('accepts %s', (rule) => {
+    const result = processToCalendarSchema.parse({
+      taskId: VALID_UUID,
+      scheduledAt: '2026-07-04T09:00:00Z',
+      recurrenceRule: rule,
+    })
+    expect(result.recurrenceRule).toBe(rule)
+  })
+
+  it('accepts explicit null', () => {
+    const result = processToCalendarSchema.parse({
+      taskId: VALID_UUID,
+      scheduledAt: '2026-07-04T09:00:00Z',
+      recurrenceRule: null,
+    })
+    expect(result.recurrenceRule).toBeNull()
+  })
+
+  it('rejects unknown rule strings', () => {
+    expect(() =>
+      processToCalendarSchema.parse({
+        taskId: VALID_UUID,
+        scheduledAt: '2026-07-04T09:00:00Z',
+        recurrenceRule: 'fortnightly',
+      })
+    ).toThrow()
+  })
+
+  it('rejects empty string (must be null, never "")', () => {
+    expect(() =>
+      processToCalendarSchema.parse({
+        taskId: VALID_UUID,
+        scheduledAt: '2026-07-04T09:00:00Z',
+        recurrenceRule: '',
+      })
+    ).toThrow()
+  })
+})
+
+describe('processToNextActions recurrenceRule validation', () => {
+  it('defaults recurrenceRule to null when omitted', () => {
+    const result = processToNextActionsSchema.parse({ taskId: VALID_UUID })
+    expect(result.recurrenceRule).toBeNull()
+  })
+
+  it('accepts a valid rule alongside contexts', () => {
+    const result = processToNextActionsSchema.parse({
+      taskId: VALID_UUID,
+      contexts: ['@home'],
+      recurrenceRule: 'weekly',
+    })
+    expect(result.recurrenceRule).toBe('weekly')
+    expect(result.contexts).toEqual(['@home'])
+  })
+
+  it('rejects unknown rule strings', () => {
+    expect(() =>
+      processToNextActionsSchema.parse({ taskId: VALID_UUID, recurrenceRule: 'hourly' })
+    ).toThrow()
+  })
+})

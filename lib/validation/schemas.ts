@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { RECURRENCE_RULES } from '@/lib/types'
 
 // ── Primitives ───────────────────────────────────────────────
 
@@ -23,6 +24,8 @@ export const contexts = z.array(z.string().max(50)).max(20)
 
 export const contextName = z.string().trim().min(1, 'Context name is required').max(50)
 
+export const recurrenceRule = z.enum(RECURRENCE_RULES)
+
 // ── Server action schemas ────────────────────────────────────
 
 export const captureTaskSchema = z.object({
@@ -39,6 +42,7 @@ export const processToWaitingForSchema = z.object({
 export const processToCalendarSchema = z.object({
   taskId,
   scheduledAt: datetimeString,
+  recurrenceRule: recurrenceRule.nullable().default(null),
 })
 
 export const processToSomedayMaybeSchema = z.object({
@@ -50,6 +54,7 @@ export const processToNextActionsSchema = z.object({
   taskId,
   contexts: contexts.default([]),
   nextActionTitle: optionalTitle,
+  recurrenceRule: recurrenceRule.nullable().default(null),
 })
 
 export const createProjectSchema = z.object({

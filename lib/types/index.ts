@@ -10,6 +10,9 @@ export type TaskStatus =
 
 export type ProjectStatus = 'active' | 'completed'
 
+export const RECURRENCE_RULES = ['daily', 'weekly', 'monthly', 'yearly'] as const
+export type RecurrenceRule = (typeof RECURRENCE_RULES)[number]
+
 export interface RoughPlanItem {
   id: string
   text: string
@@ -39,7 +42,7 @@ export interface Task {
   contexts: string[]
   completed_at: string | null
   attachments: Attachment[]
-  recurrence_rule: string | null
+  recurrence_rule: RecurrenceRule | null
 }
 
 export interface Project {
