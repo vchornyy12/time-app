@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Tag, UserPlus } from 'lucide-react'
+import { Repeat, Tag, UserPlus } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { ContextPicker } from '@/components/ui/ContextPicker'
 import { DelegatePopover } from '@/components/tasks/DelegatePopover'
@@ -98,12 +98,22 @@ export function TaskCard({ task, projectTitle, userContexts = [], onComplete, is
         </button>
 
         {/* Metadata chips */}
-        {!isEditingContexts && (projectTitle || task.contexts.length > 0) && (
+        {!isEditingContexts && (projectTitle || task.contexts.length > 0 || task.recurrence_rule) && (
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             {projectTitle && (
               <span className="inline-flex items-center gap-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
                 <span aria-hidden="true">📁</span>
                 {projectTitle}
+              </span>
+            )}
+            {task.recurrence_rule && (
+              <span
+                className="inline-flex items-center text-sm"
+                style={{ color: 'var(--text-secondary)' }}
+                aria-label={`Repeats ${task.recurrence_rule}`}
+                title={`Repeats ${task.recurrence_rule}`}
+              >
+                <Repeat className="w-3.5 h-3.5" aria-hidden="true" />
               </span>
             )}
             {task.contexts.map((ctx) => (

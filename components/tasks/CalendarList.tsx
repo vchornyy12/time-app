@@ -2,7 +2,7 @@
 
 import { useState, useOptimistic, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Inbox, Trash2, Clock, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react'
+import { Inbox, Trash2, Clock, CheckCircle2, AlertTriangle, Loader2, Repeat } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import type { Task } from '@/lib/types'
 import { EmptyState, ConfirmDeleteModal } from '@/components/ui'
@@ -170,6 +170,17 @@ function CalendarCard({
       {/* Content */}
       <div className="flex-1 min-w-0">
         <p className="text-base leading-snug" style={{ color: 'var(--text-primary)' }}>{task.title}</p>
+
+        {task.recurrence_rule && (
+          <span
+            className="flex items-center gap-1 text-xs mt-1"
+            style={{ color: 'var(--text-muted)' }}
+            aria-label={`Repeats ${task.recurrence_rule}`}
+          >
+            <Repeat className="w-3 h-3" aria-hidden="true" />
+            Repeats {task.recurrence_rule}
+          </span>
+        )}
 
         {/* Sync status */}
         {isGoogleConnected && (
