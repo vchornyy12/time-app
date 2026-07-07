@@ -30,17 +30,19 @@ test.describe('Recurring tasks', () => {
 
     // Shows up in Next Actions with the repeat indicator
     await page.goto('/next-actions')
-    await expect(page.getByText(task.title)).toBeVisible({ timeout: 8_000 })
-    await expect(page.getByLabel('Repeats weekly')).toBeVisible()
+    const row = page.locator('li', { hasText: task.title })
+    await expect(row).toBeVisible({ timeout: 8_000 })
+    await expect(row.getByLabel('Repeats weekly')).toBeVisible()
 
     // Complete it — the DB trigger must clone a fresh occurrence
     await page.locator(`button[aria-label='Mark "${task.title}" as done']`).click()
-    // Completion animates out, server action runs, trigger inserts the clone.
-    // Reload to read fresh server state rather than racing the optimistic UI.
-    await page.waitForTimeout(2_000)
-    await page.reload()
-    await expect(page.getByText(task.title)).toBeVisible({ timeout: 8_000 })
-    await expect(page.getByLabel('Repeats weekly')).toBeVisible()
+    // Completion commits the done update and the trigger's clone insert in one
+    // transaction; poll fresh server state until the clone row is visible.
+    await expect(async () => {
+      await page.reload()
+      await expect(row).toBeVisible({ timeout: 2_000 })
+      await expect(row.getByLabel('Repeats weekly')).toBeVisible({ timeout: 1_000 })
+    }).toPass({ timeout: 20_000 })
     // No inline cleanup needed — global-setup deletes all E2E% tasks before each run
   })
 
@@ -54,11 +56,14 @@ test.describe('Recurring tasks', () => {
     await expect(dialog).not.toBeVisible({ timeout: 8_000 })
 
     await page.goto('/next-actions')
-    await expect(page.getByText(task.title)).toBeVisible({ timeout: 8_000 })
+    const row = page.locator('li', { hasText: task.title })
+    await expect(row).toBeVisible({ timeout: 8_000 })
 
     await page.locator(`button[aria-label='Mark "${task.title}" as done']`).click()
-    await page.waitForTimeout(2_000)
-    await page.reload()
-    await expect(page.getByText(task.title)).not.toBeVisible({ timeout: 8_000 })
+    // No clone must appear: poll fresh server state until the row is gone.
+    await expect(async () => {
+      await page.reload()
+      await expect(row).toHaveCount(0, { timeout: 2_000 })
+    }).toPass({ timeout: 20_000 })
   })
 })

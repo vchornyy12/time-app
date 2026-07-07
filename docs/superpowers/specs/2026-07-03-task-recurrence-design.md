@@ -71,6 +71,7 @@ The function inserts one new row (the next occurrence):
 2. Trigger-created calendar occurrences have no Google Calendar event (`google_calendar_event_id` is NULL → shown as unsynced). GCal sync for regenerated occurrences is a future enhancement.
 3. Recurrence can only be set during inbox processing; editing/removing it on an existing task is out of scope.
 4. Attachments are not carried to the next occurrence.
+5. Recurrence does not survive lifecycle transitions out of `calendar`/`next_actions`: delegating, moving to inbox/someday/notes/trash, or reprocessing keeps (or later resurrects) the stored rule but only completion from `calendar`/`next_actions` regenerates. Clearing `recurrence_rule` on those transitions is a planned fast-follow.
 
 ## Testing
 
