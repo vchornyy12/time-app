@@ -42,3 +42,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# EAS build inspection dumps (contain nested .git dirs — break clones as phantom submodules)
+mobile/eas-inspect-output*/
