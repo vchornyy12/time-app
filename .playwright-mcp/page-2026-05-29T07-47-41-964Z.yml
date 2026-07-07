@@ -1,0 +1,100 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - complementary [ref=e5]:
+      - generic [ref=e6]:
+        - generic "time24" [ref=e8]:
+          - img [ref=e9]
+          - generic [ref=e12]: time24
+        - button "Search (⌘K)" [ref=e13]:
+          - img [ref=e14]
+      - navigation "Main navigation" [ref=e17]:
+        - link "Inbox" [ref=e334] [cursor=pointer]:
+          - /url: /inbox
+          - img [ref=e21]
+          - generic [ref=e24]: Inbox
+        - link "Next Actions" [ref=e26] [cursor=pointer]:
+          - /url: /next-actions
+          - img [ref=e28]
+          - generic [ref=e31]: Next Actions
+        - link "Waiting For" [ref=e32] [cursor=pointer]:
+          - /url: /waiting-for
+          - img [ref=e34]
+          - generic [ref=e37]: Waiting For
+        - link "Someday / Maybe" [ref=e38] [cursor=pointer]:
+          - /url: /someday
+          - img [ref=e40]
+          - generic [ref=e43]: Someday / Maybe
+        - link "Calendar" [ref=e44] [cursor=pointer]:
+          - /url: /calendar
+          - img [ref=e46]
+          - generic [ref=e49]: Calendar
+        - link "Notes" [ref=e50] [cursor=pointer]:
+          - /url: /notes
+          - img [ref=e52]
+          - generic [ref=e55]: Notes
+        - link "Projects" [ref=e57] [cursor=pointer]:
+          - /url: /projects
+          - img [ref=e59]
+          - generic [ref=e62]: Projects
+        - link "Weekly Review Never" [ref=e63] [cursor=pointer]:
+          - /url: /weekly-review
+          - img [ref=e65]
+          - generic [ref=e67]:
+            - generic [ref=e68]: Weekly Review
+            - generic [ref=e69]: Never
+        - link "Analytics" [ref=e70] [cursor=pointer]:
+          - /url: /analytics
+          - img [ref=e72]
+          - generic [ref=e75]: Analytics
+        - link "Success Diary" [ref=e76] [cursor=pointer]:
+          - /url: /logbook
+          - img [ref=e78]
+          - generic [ref=e81]: Success Diary
+        - link "Clarity Protocol" [ref=e82] [cursor=pointer]:
+          - /url: /clarity
+          - img [ref=e84]
+          - generic [ref=e87]: Clarity Protocol
+        - link "Trash" [ref=e88] [cursor=pointer]:
+          - /url: /trash
+          - img [ref=e90]
+          - generic [ref=e93]: Trash
+        - link "Settings" [ref=e94] [cursor=pointer]:
+          - /url: /settings
+          - img [ref=e96]
+          - generic [ref=e99]: Settings
+      - link "☕ Buy me a coffee" [ref=e101] [cursor=pointer]:
+        - /url: https://buymeacoffee.com/vchornyy12
+        - generic [ref=e102]: ☕
+        - generic [ref=e103]: Buy me a coffee
+      - generic [ref=e104]:
+        - generic [ref=e106]: VC
+        - generic "vchornyy@ukr.net" [ref=e107]
+        - button "Switch to system theme" [ref=e108]:
+          - img [ref=e109]
+        - button "Sign out" [ref=e111]:
+          - img [ref=e112]
+    - generic [ref=e114]:
+      - main [ref=e115]:
+        - generic [ref=e116]:
+          - heading "Inbox" [level=1] [ref=e118]
+          - generic [ref=e335]:
+            - generic [ref=e336]: 🧠
+            - generic [ref=e337]:
+              - paragraph [ref=e338]: Your mind is clear.
+              - paragraph [ref=e339]: Nothing to process. Capture something new or enjoy the calm.
+      - generic [ref=e134]:
+        - img [ref=e135]
+        - textbox "Quick capture — press Enter to add, Shift+Enter for new line" [ref=e137]:
+          - /placeholder: Capture anything…
+        - button "Attach files" [ref=e138]:
+          - img [ref=e139]
+  - button "Open Next.js Dev Tools" [ref=e264] [cursor=pointer]:
+    - generic [ref=e267]:
+      - text: Compiling
+      - generic [ref=e268]:
+        - generic [ref=e269]: .
+        - generic [ref=e270]: .
+        - generic [ref=e271]: .
+  - alert [ref=e178]
