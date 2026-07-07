@@ -36,8 +36,18 @@ setup('authenticate', async ({ page }) => {
   // ── 2. Log in via the browser and save the auth state ────────────────────
   await page.goto('/login')
   await page.getByLabel('Email address').fill(email)
-  await page.getByLabel('Password').fill(password)
+  // exact: true — the "Show password" toggle button's aria-label also contains
+  // "Password" as a substring, which trips strict mode without it.
+  await page.getByLabel('Password', { exact: true }).fill(password)
   await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(page).toHaveURL(/\/inbox/, { timeout: 15_000 })
+
+  // Suppress the first-run onboarding modal (WelcomeModal) for all tests.
+  // It opens whenever localStorage lacks this key — i.e. in every fresh
+  // browser context — and its role="dialog" collides with the processing
+  // dialog in strict-mode getByRole('dialog') lookups. Seeding the key here
+  // persists it via storageState for every test context.
+  await page.evaluate(() => localStorage.setItem('gtd_onboarding_v2', 'true'))
+
   await page.context().storageState({ path: authFile })
 })
