@@ -45,3 +45,10 @@ next-env.d.ts
 
 # EAS build inspection dumps (contain nested .git dirs — break clones as phantom submodules)
 mobile/eas-inspect-output*/
+
+# Local Claude Code permission grants (per-machine)
+.claude/settings.local.json
+
+# Browser-automation debug artifacts and session screenshots
+.playwright-mcp/
+/*.png
