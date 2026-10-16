@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import { WaitingForList } from '@/components/tasks/WaitingForList'
 
 export const metadata: Metadata = { title: 'Waiting For' }
@@ -9,7 +9,7 @@ export default async function WaitingForPage() {
   const supabase = await createClient()
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await getUser()
 
   if (!user) redirect('/login')
 

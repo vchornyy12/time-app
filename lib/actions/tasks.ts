@@ -2,7 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { authedClient } from '@/lib/actions/authed-action'
-import { cleanupWFReminderIfNeeded, syncWaitingForReminder } from '@/lib/actions/calendar'
+import { cleanupWaitingForReminder } from '@/lib/google/reminders'
+import { syncWaitingForReminder } from '@/lib/actions/calendar'
 import {
   captureTaskSchema,
   taskId as taskIdSchema,
@@ -20,20 +21,30 @@ function revalidateAll() {
 
 // ── capture ───────────────────────────────────────────────────
 
-export async function captureTask(title: string): Promise<{ id: string }> {
+export async function captureTask(title: string, requestId?: string): Promise<{ id: string }> {
   const { title: trimmed } = captureTaskSchema.parse({ title })
+  const id = requestId === undefined ? crypto.randomUUID() : taskIdSchema.parse(requestId)
 
   const { supabase, user } = await authedClient()
 
   const { data, error } = await supabase
     .from('tasks')
-    .insert({ title: trimmed, status: 'inbox', user_id: user.id })
+    .upsert(
+      { id, title: trimmed, status: 'inbox', user_id: user.id },
+      { onConflict: 'id', ignoreDuplicates: true }
+    )
     .select('id')
-    .single()
+    .maybeSingle()
 
   if (error) throw error
+  // A retry after a lost response returns the original task without changing it.
+  if (!data) {
+    const { error: lookupError } = await supabase.from('tasks').select('id')
+      .eq('id', id).eq('user_id', user.id).single()
+    if (lookupError) throw lookupError
+  }
   revalidateAll()
-  return { id: data.id }
+  return { id }
 }
 
 // ── update title ─────────────────────────────────────────────
@@ -74,9 +85,8 @@ export async function deleteTask(taskId: string) {
 
 export async function markTaskDone(taskId: string) {
   const id = taskIdSchema.parse(taskId)
-  await cleanupWFReminderIfNeeded(id).catch(() => {})
-
   const { supabase, user } = await authedClient()
+  await cleanupWaitingForReminder(id, { supabase, user }).catch(() => {})
 
   const { error } = await supabase
     .from('tasks')
@@ -121,9 +131,8 @@ export async function restoreTask(taskId: string) {
 
 export async function moveToInbox(taskId: string) {
   const id = taskIdSchema.parse(taskId)
-  await cleanupWFReminderIfNeeded(id).catch(() => {})
-
   const { supabase, user } = await authedClient()
+  await cleanupWaitingForReminder(id, { supabase, user }).catch(() => {})
 
   const { error } = await supabase
     .from('tasks')
@@ -172,9 +181,8 @@ export async function hardDeleteTask(taskId: string) {
 
 export async function updateWaitingForDueDate(taskId: string, dueDate: string | null) {
   const parsed = updateWaitingForDueDateSchema.parse({ taskId, dueDate })
-  await cleanupWFReminderIfNeeded(parsed.taskId).catch(() => {})
-
   const { supabase, user } = await authedClient()
+  await cleanupWaitingForReminder(parsed.taskId, { supabase, user }).catch(() => {})
 
   const { error } = await supabase
     .from('tasks')
@@ -212,9 +220,8 @@ export async function updateTaskContexts(taskId: string, contexts: string[]) {
 
 export async function moveToNextActions(taskId: string) {
   const id = taskIdSchema.parse(taskId)
-  await cleanupWFReminderIfNeeded(id).catch(() => {})
-
   const { supabase, user } = await authedClient()
+  await cleanupWaitingForReminder(id, { supabase, user }).catch(() => {})
 
   const { error } = await supabase
     .from('tasks')

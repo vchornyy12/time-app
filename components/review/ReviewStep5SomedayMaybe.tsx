@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState } from 'react'
 import { Zap, Trash2, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
-import { createClient } from '@/lib/supabase/client'
+import { useReviewTasks } from '@/lib/hooks/useReviewTasks'
+import { ReviewError } from './ReviewError'
 import { moveToNextActions, deleteTask, updateSomedayReviewDate } from '@/lib/actions/tasks'
 import type { Task, ReviewItemSelection } from '@/lib/types'
 
@@ -13,37 +14,16 @@ interface ReviewStep5SomedayMaybeProps {
 }
 
 export function ReviewStep5SomedayMaybe({ onNext, onItemSelect }: ReviewStep5SomedayMaybeProps) {
-  const [tasks, setTasks] = useState<Task[] | null>(null)
+  const { tasks, error, retry, isPending, remove, mutate } = useReviewTasks('someday_maybe')
   const [editingDateFor, setEditingDateFor] = useState<string | null>(null)
   const [editDate, setEditDate] = useState('')
-  const [, startTransition] = useTransition()
-
-  useEffect(() => {
-    let mounted = true
-    async function load() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user || !mounted) return
-      const { data } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('status', 'someday_maybe')
-        .order('due_date', { ascending: true, nullsFirst: false })
-      if (mounted) setTasks(data ?? [])
-    }
-    load()
-    return () => { mounted = false }
-  }, [])
 
   function handleActivate(taskId: string) {
-    setTasks((prev) => prev?.filter((t) => t.id !== taskId) ?? null)
-    startTransition(async () => { await moveToNextActions(taskId) })
+    remove(taskId, () => moveToNextActions(taskId))
   }
 
   function handleTrash(taskId: string) {
-    setTasks((prev) => prev?.filter((t) => t.id !== taskId) ?? null)
-    startTransition(async () => { await deleteTask(taskId) })
+    remove(taskId, () => deleteTask(taskId))
   }
 
   function openDateEditor(task: Task) {
@@ -51,21 +31,21 @@ export function ReviewStep5SomedayMaybe({ onNext, onItemSelect }: ReviewStep5Som
     setEditingDateFor(task.id)
   }
 
-  function handleSaveDate(taskId: string) {
-    const newDate = editDate || null
-    setTasks((prev) =>
-      prev?.map((t) => (t.id === taskId ? { ...t, due_date: newDate } : t)) ?? null
-    )
-    setEditingDateFor(null)
-    startTransition(async () => { await updateSomedayReviewDate(taskId, newDate) })
+  function handleSaveDate(taskId: string, date = editDate) {
+    const newDate = date || null
+    mutate(async () => {
+      await updateSomedayReviewDate(taskId, newDate)
+      setEditingDateFor(null)
+    }, (tasks) => tasks.map((task) => task.id === taskId ? { ...task, due_date: newDate } : task))
   }
 
-  if (tasks === null) return <StepLoading />
+  if (tasks === null) return error ? <ReviewError error={error} retry={retry} /> : <StepLoading />
 
   const today = startOfToday()
 
   return (
     <div className="flex flex-col gap-4">
+      {error && <ReviewError error={error} retry={retry} disabled={isPending} />}
       <p className="text-sm leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
         Is anything ready to activate? Archive what&apos;s no longer interesting, and update
         review dates to stay on top of the rest.
@@ -121,6 +101,7 @@ export function ReviewStep5SomedayMaybe({ onNext, onItemSelect }: ReviewStep5Som
                     <div className="mt-2 flex flex-col gap-2">
                       <input
                         type="date"
+                        disabled={isPending}
                         value={editDate}
                         onChange={(e) => setEditDate(e.target.value)}
                         className="glass-input text-sm"
@@ -129,13 +110,15 @@ export function ReviewStep5SomedayMaybe({ onNext, onItemSelect }: ReviewStep5Som
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => handleSaveDate(task.id)}
+                          disabled={isPending}
                           className="text-xs text-indigo-300 hover:text-indigo-200 transition-colors"
                         >
                           Save
                         </button>
                         {task.due_date && (
                           <button
-                            onClick={() => { setEditDate(''); handleSaveDate(task.id) }}
+                            onClick={() => handleSaveDate(task.id, '')}
+                            disabled={isPending}
                             className="text-xs transition-colors"
                             style={{ color: 'var(--text-tertiary)' }}
                             onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-secondary)' }}
@@ -162,6 +145,7 @@ export function ReviewStep5SomedayMaybe({ onNext, onItemSelect }: ReviewStep5Som
                   <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
                     <button
                       onClick={() => handleActivate(task.id)}
+                        disabled={isPending}
                       className="p-1.5 rounded-lg hover:text-indigo-300 hover:bg-indigo-500/10 transition-all duration-150"
                       style={{ color: 'var(--text-muted)' }}
                       title="Activate — move to Next Actions"
@@ -180,6 +164,7 @@ export function ReviewStep5SomedayMaybe({ onNext, onItemSelect }: ReviewStep5Som
                     </button>
                     <button
                       onClick={() => handleTrash(task.id)}
+                        disabled={isPending}
                       className="p-1.5 rounded-lg transition-all duration-150 hover:text-red-500 dark:hover:text-red-300 hover:bg-red-500/10"
                       style={{ color: 'var(--text-muted)' }}
                       title="Archive to Trash"
@@ -195,7 +180,7 @@ export function ReviewStep5SomedayMaybe({ onNext, onItemSelect }: ReviewStep5Som
         </ul>
       )}
 
-      <button onClick={onNext} className="btn-primary mt-2">
+      <button onClick={onNext} disabled={isPending || error !== null} className="btn-primary mt-2">
         Someday / Maybe reviewed →
       </button>
     </div>

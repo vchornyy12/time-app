@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+
 import { CheckCircle2, Bookmark, Trash2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { useReviewTasks } from '@/lib/hooks/useReviewTasks'
+import { ReviewError } from './ReviewError'
 import { markTaskDone, deleteTask } from '@/lib/actions/tasks'
 import { processToSomedayMaybe } from '@/lib/actions/processing'
 import type { Task, ReviewItemSelection } from '@/lib/types'
@@ -13,48 +14,27 @@ interface ReviewStep4NextActionsProps {
 }
 
 export function ReviewStep4NextActions({ onNext, onItemSelect }: ReviewStep4NextActionsProps) {
-  const [tasks, setTasks] = useState<Task[] | null>(null)
-  const [, startTransition] = useTransition()
-
-  useEffect(() => {
-    let mounted = true
-    async function load() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user || !mounted) return
-      const { data } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('status', 'next_actions')
-        .order('created_at', { ascending: false })
-      if (mounted) setTasks(data ?? [])
-    }
-    load()
-    return () => { mounted = false }
-  }, [])
+  const { tasks, error, retry, isPending, remove } = useReviewTasks('next_actions')
 
   function handleDone(taskId: string) {
-    setTasks((prev) => prev?.filter((t) => t.id !== taskId) ?? null)
-    startTransition(async () => { await markTaskDone(taskId) })
+    remove(taskId, () => markTaskDone(taskId))
   }
 
   function handleDefer(taskId: string) {
-    setTasks((prev) => prev?.filter((t) => t.id !== taskId) ?? null)
-    startTransition(async () => { await processToSomedayMaybe(taskId) })
+    remove(taskId, () => processToSomedayMaybe(taskId))
   }
 
   function handleTrash(taskId: string) {
-    setTasks((prev) => prev?.filter((t) => t.id !== taskId) ?? null)
-    startTransition(async () => { await deleteTask(taskId) })
+    remove(taskId, () => deleteTask(taskId))
   }
 
-  if (tasks === null) return <StepLoading />
+  if (tasks === null) return error ? <ReviewError error={error} retry={retry} /> : <StepLoading />
 
   const groups = groupByContext(tasks)
 
   return (
     <div className="flex flex-col gap-4">
+      {error && <ReviewError error={error} retry={retry} disabled={isPending} />}
       <p className="text-sm leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
         Review each next action. Mark done anything completed, defer what isn&apos;t timely,
         or trash what&apos;s no longer relevant.
@@ -88,6 +68,7 @@ export function ReviewStep4NextActions({ onNext, onItemSelect }: ReviewStep4Next
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <button
                         onClick={() => handleDone(task.id)}
+                        disabled={isPending}
                         className="p-1.5 rounded-lg hover:text-emerald-300 hover:bg-emerald-500/10 transition-all duration-150"
                         style={{ color: 'var(--text-muted)' }}
                         title="Mark done"
@@ -97,6 +78,7 @@ export function ReviewStep4NextActions({ onNext, onItemSelect }: ReviewStep4Next
                       </button>
                       <button
                         onClick={() => handleDefer(task.id)}
+                        disabled={isPending}
                         className="p-1.5 rounded-lg hover:text-purple-300 hover:bg-purple-500/10 transition-all duration-150"
                         style={{ color: 'var(--text-muted)' }}
                         title="Defer to Someday/Maybe"
@@ -106,6 +88,7 @@ export function ReviewStep4NextActions({ onNext, onItemSelect }: ReviewStep4Next
                       </button>
                       <button
                         onClick={() => handleTrash(task.id)}
+                        disabled={isPending}
                         className="p-1.5 rounded-lg hover:text-red-300 hover:bg-red-500/10 transition-all duration-150"
                         style={{ color: 'var(--text-muted)' }}
                         title="Move to Trash"
@@ -122,7 +105,7 @@ export function ReviewStep4NextActions({ onNext, onItemSelect }: ReviewStep4Next
         </div>
       )}
 
-      <button onClick={onNext} className="btn-primary mt-2">
+      <button onClick={onNext} disabled={isPending || error !== null} className="btn-primary mt-2">
         Next Actions reviewed →
       </button>
     </div>

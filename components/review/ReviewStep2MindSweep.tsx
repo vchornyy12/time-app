@@ -2,14 +2,18 @@
 
 import { useState, useTransition } from 'react'
 import { CalendarDays } from 'lucide-react'
+import { useReviewDraft } from '@/lib/hooks/useReviewDraft'
 import { captureTask } from '@/lib/actions/tasks'
 
 interface ReviewStep2MindSweepProps {
   onNext: () => void
+  userId: string
 }
 
-export function ReviewStep2MindSweep({ onNext }: ReviewStep2MindSweepProps) {
-  const [thoughts, setThoughts] = useState('')
+export function ReviewStep2MindSweep({ onNext, userId }: ReviewStep2MindSweepProps) {
+  const [draft, setDraft] = useReviewDraft(userId)
+  const thoughts = draft.text
+  const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   function handleCapture() {
@@ -23,11 +27,24 @@ export function ReviewStep2MindSweep({ onNext }: ReviewStep2MindSweepProps) {
       return
     }
 
+    if (lines.some((line) => line.length > 500)) {
+      setError('Each item must be 500 characters or fewer. Please shorten it before capturing.')
+      return
+    }
+    const requests = draft.requests.length > 0 ? draft.requests : lines.map((title) => ({ id: crypto.randomUUID(), title }))
+    setDraft({ text: thoughts, requests })
+    setError(null)
     startTransition(async () => {
-      for (const line of lines) {
-        await captureTask(line)
+      try {
+        for (let index = 0; index < requests.length; index++) {
+          await captureTask(requests[index].title, requests[index].id)
+          const remaining = requests.slice(index + 1)
+          setDraft({ text: remaining.map((request) => request.title).join('\n'), requests: remaining })
+        }
+        onNext()
+      } catch {
+        setError('Some items could not be confirmed. Your remaining items are kept here; retry safely.')
       }
-      onNext()
     })
   }
 
@@ -54,13 +71,14 @@ export function ReviewStep2MindSweep({ onNext }: ReviewStep2MindSweepProps) {
         </p>
       </div>
 
+      {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
       <textarea
         value={thoughts}
-        onChange={(e) => setThoughts(e.target.value)}
+        onChange={(e) => setDraft({ text: e.target.value, requests: [] })}
         placeholder="One item per line (optional)"
         rows={6}
         className="glass-input resize-none text-sm"
-        disabled={isPending}
+        disabled={isPending || draft.requests.length > 0}
         autoFocus
       />
 
@@ -69,7 +87,7 @@ export function ReviewStep2MindSweep({ onNext }: ReviewStep2MindSweepProps) {
         disabled={isPending}
         className="btn-primary"
       >
-        {hasContent ? 'Capture to Inbox →' : 'Nothing to add →'}
+        {isPending ? 'Capturing…' : error && draft.requests.length > 0 ? 'Retry capture →' : hasContent ? 'Capture to Inbox →' : 'Nothing to add →'}
       </button>
     </div>
   )

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Spinner } from '@/components/ui'
 import { ProjectDetail } from './ProjectDetail'
+import { getActiveProjectTask, type ProjectTask } from '@/lib/projects/health'
 import type { Project, Task } from '@/lib/types'
 
 type FirstStepTask = Pick<Task, 'id' | 'title' | 'status' | 'contexts' | 'due_date'>
@@ -20,6 +21,7 @@ export function ProjectDetailPanel({ projectId }: ProjectDetailPanelProps) {
   const [project, setProject] = useState<Project | null>(null)
   const [firstStepTask, setFirstStepTask] = useState<FirstStepTask | null>(null)
   const [loading, setLoading] = useState(true)
+  const [reload, setReload] = useState(0)
   const [error, setError] = useState(false)
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export function ProjectDetailPanel({ projectId }: ProjectDetailPanelProps) {
       const supabase = createClient()
       const { data: proj } = await supabase
         .from('projects')
-        .select('*')
+        .select('*, tasks!tasks_project_id_fkey(id, title, status, contexts, due_date)')
         .eq('id', projectId)
         .single()
 
@@ -40,22 +42,16 @@ export function ProjectDetailPanel({ projectId }: ProjectDetailPanelProps) {
       }
 
       const project = proj as Project
+      setError(false)
       setProject(project)
 
-      if (project.first_step_task_id) {
-        const { data: task } = await supabase
-          .from('tasks')
-          .select('id, title, status, contexts, due_date')
-          .eq('id', project.first_step_task_id)
-          .single()
-        if (mounted) setFirstStepTask(task as FirstStepTask | null)
-      }
+      setFirstStepTask(getActiveProjectTask(proj.tasks as ProjectTask[], project.first_step_task_id))
 
       if (mounted) setLoading(false)
     }
     load()
     return () => { mounted = false }
-  }, [projectId])
+  }, [projectId, reload])
 
   if (loading) {
     return (
@@ -73,5 +69,5 @@ export function ProjectDetailPanel({ projectId }: ProjectDetailPanelProps) {
     )
   }
 
-  return <ProjectDetail project={project} firstStepTask={firstStepTask} />
+  return <ProjectDetail key={`${project.updated_at}:${firstStepTask?.id}:${firstStepTask?.status}`} project={project} firstStepTask={firstStepTask} onChanged={() => setReload((value) => value + 1)} />
 }

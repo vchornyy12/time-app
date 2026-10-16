@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { getUser } from '@/lib/supabase/server'
 import { LandingPage } from '@/components/marketing/LandingPage'
 import { getLandingStats } from '@/lib/stats'
 
@@ -11,10 +11,9 @@ export const metadata: Metadata = {
 }
 
 export default async function RootPage() {
-  const supabase = await createClient()
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await getUser()
   if (user) redirect('/inbox')
   const stats = await getLandingStats()
   return <LandingPage stats={stats} />

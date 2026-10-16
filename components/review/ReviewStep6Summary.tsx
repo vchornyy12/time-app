@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useTransition } from 'react'
 import { cn } from '@/lib/utils/cn'
 import { createClient } from '@/lib/supabase/client'
 import { saveWeeklyReviewComplete } from '@/lib/actions/preferences'
@@ -15,30 +14,39 @@ interface WeekStats {
   inbox: number
 }
 
-export function ReviewStep6Summary() {
-  const router = useRouter()
+export function ReviewStep6Summary({ onComplete }: { onComplete: () => void }) {
   const [stats, setStats] = useState<WeekStats | null>(null)
-  const [canClose, setCanClose] = useState(false)
+  const [isSaving, startTransition] = useTransition()
+  const [saveError, setSaveError] = useState(false)
+  const [statsError, setStatsError] = useState(false)
+  const [reload, setReload] = useState(0)
+
+  function finish() {
+    if (isSaving) return
+    setSaveError(false)
+    startTransition(async () => {
+      try {
+        await saveWeeklyReviewComplete()
+        onComplete()
+      } catch { setSaveError(true) }
+    })
+  }
 
   useEffect(() => {
     let mounted = true
 
-    // Save the review completion in the background (non-fatal)
-    saveWeeklyReviewComplete()
-      .catch(() => {})
-      .finally(() => { if (mounted) setCanClose(true) })
-
     // Load weekly stats
     async function loadStats() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user || !mounted) return
-
-      const sevenDaysAgo = new Date()
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-      const since = sevenDaysAgo.toISOString()
-
       try {
+        const supabase = createClient()
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) throw new Error('Unauthorized')
+        if (!mounted) return
+
+        const sevenDaysAgo = new Date()
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+        const since = sevenDaysAgo.toISOString()
+
         const [
           completedResult,
           capturedResult,
@@ -87,7 +95,10 @@ export function ReviewStep6Summary() {
             .eq('status', 'inbox'),
         ])
 
+        if ([completedResult, capturedResult, projectsCompletedResult, activeProjectsResult, nextActionsResult, inboxResult]
+          .some((result) => result.error || result.count === null)) throw new Error('Stats unavailable')
         if (!mounted) return
+        setStatsError(false)
         setStats({
           completedThisWeek: completedResult.count ?? 0,
           capturedThisWeek: capturedResult.count ?? 0,
@@ -97,46 +108,28 @@ export function ReviewStep6Summary() {
           inbox: inboxResult.count ?? 0,
         })
       } catch {
-        // completed_at column or other field not yet migrated — show zeros
-        if (!mounted) return
-        setStats({
-          completedThisWeek: 0,
-          capturedThisWeek: 0,
-          projectsCompletedThisWeek: 0,
-          activeProjects: 0,
-          nextActions: 0,
-          inbox: 0,
-        })
+        if (mounted) setStatsError(true)
       }
     }
 
     loadStats()
     return () => { mounted = false }
-  }, [])
+  }, [reload])
 
-  const congratsMessage = stats
-    ? stats.completedThisWeek >= 10
-      ? 'Exceptional week — you crushed it!'
-      : stats.completedThisWeek >= 5
-      ? 'Great week — solid progress!'
-      : stats.completedThisWeek >= 1
-      ? 'Good week — keep the momentum going.'
-      : 'Your system is clear and ready.'
-    : ''
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Celebration header */}
+      {/* Review is only complete after the explicit save succeeds. */}
       <div className="text-center py-2">
-        <div className="text-5xl mb-3">🎉</div>
-        <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Review complete!</h2>
-        {stats && (
-          <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>{congratsMessage}</p>
-        )}
+        <div className="text-5xl mb-3" aria-hidden="true">📋</div>
+        <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Ready to finish?</h2>
+        <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>Check what remains, then save your weekly review.</p>
       </div>
 
       {/* Stats grid */}
-      {stats ? (
+      {statsError ? (
+        <p role="alert">Could not load your summary. <button onClick={() => setReload((value) => value + 1)}>Retry summary</button></p>
+      ) : stats ? (
         <div className="grid grid-cols-2 gap-3">
           <StatCard
             value={stats.completedThisWeek}
@@ -183,12 +176,13 @@ export function ReviewStep6Summary() {
         </div>
       )}
 
+      {saveError && <p role="alert">Your review could not be saved. Please try again; your progress is kept.</p>}
       <button
-        onClick={() => router.push('/inbox')}
-        disabled={!canClose}
+        onClick={finish}
+        disabled={isSaving}
         className="btn-primary disabled:opacity-50"
       >
-        Return to Inbox
+        {isSaving ? 'Saving review…' : saveError ? 'Retry saving review' : 'Finish and save review'}
       </button>
     </div>
   )

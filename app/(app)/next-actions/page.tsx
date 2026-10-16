@@ -1,20 +1,16 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import { TaskList } from '@/components/tasks/TaskList'
 import { getUserContexts } from '@/lib/actions/contexts'
 
 export const metadata: Metadata = { title: 'Next Actions' }
 
-export default async function NextActionsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ context?: string }>
-}) {
+export default async function NextActionsPage() {
   const supabase = await createClient()
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await getUser()
 
   if (!user) redirect('/login')
 
@@ -31,7 +27,6 @@ export default async function NextActionsPage({
   ])
 
   const tasks = data ?? []
-  const { context } = await searchParams
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -47,7 +42,6 @@ export default async function NextActionsPage({
       <TaskList
         tasks={tasks}
         userContexts={userContexts}
-        initialContext={context ?? null}
         emptyIcon="⚡"
         emptyTitle="You're all caught up."
         emptyDescription="No next actions right now. Process your inbox to add some."

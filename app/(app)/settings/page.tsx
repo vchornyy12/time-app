@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import { GoogleCalendarCard } from '@/components/settings/GoogleCalendarCard'
 import { AccountCard } from '@/components/settings/AccountCard'
 
@@ -24,7 +24,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const supabase = await createClient()
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await getUser()
 
   if (!user) redirect('/login')
 

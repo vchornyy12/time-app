@@ -1,7 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { cache } from 'react'
 
-export async function createClient() {
+// React cache is scoped to a server render/request, never shared across users.
+export const createClient = cache(async () => {
   const cookieStore = await cookies()
 
   return createServerClient(
@@ -25,4 +27,9 @@ export async function createClient() {
       },
     }
   )
-}
+})
+
+export const getUser = cache(async () => {
+  const supabase = await createClient()
+  return supabase.auth.getUser()
+})

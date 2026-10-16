@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import { InboxList } from '@/components/tasks/InboxList'
 import { getUserContexts } from '@/lib/actions/contexts'
 
@@ -10,7 +10,7 @@ export default async function InboxPage() {
   const supabase = await createClient()
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await getUser()
 
   if (!user) redirect('/login')
 

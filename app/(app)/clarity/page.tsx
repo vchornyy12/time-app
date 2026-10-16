@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getUser } from '@/lib/supabase/server'
 import { ClarityWizard } from '@/components/clarity/ClarityWizard'
 
 export const metadata: Metadata = {
@@ -9,10 +9,9 @@ export const metadata: Metadata = {
 }
 
 export default async function ClarityPage() {
-  const supabase = await createClient()
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await getUser()
 
   if (!user) redirect('/login')
 

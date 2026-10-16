@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+
 import { CheckCircle2, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
-import { createClient } from '@/lib/supabase/client'
+import { useReviewTasks } from '@/lib/hooks/useReviewTasks'
+import { ReviewError } from './ReviewError'
 import { markTaskDone, moveToNextActions } from '@/lib/actions/tasks'
-import type { Task, ReviewItemSelection } from '@/lib/types'
+import type { ReviewItemSelection } from '@/lib/types'
 
 interface ReviewStep2WaitingForProps {
   onNext: () => void
@@ -13,43 +14,23 @@ interface ReviewStep2WaitingForProps {
 }
 
 export function ReviewStep2WaitingFor({ onNext, onItemSelect }: ReviewStep2WaitingForProps) {
-  const [tasks, setTasks] = useState<Task[] | null>(null)
-  const [, startTransition] = useTransition()
-
-  useEffect(() => {
-    let mounted = true
-    async function load() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user || !mounted) return
-      const { data } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('status', 'waiting_for')
-        .order('due_date', { ascending: true, nullsFirst: false })
-      if (mounted) setTasks(data ?? [])
-    }
-    load()
-    return () => { mounted = false }
-  }, [])
+  const { tasks, error, retry, isPending, remove } = useReviewTasks('waiting_for')
 
   function handleDone(taskId: string) {
-    setTasks((prev) => prev?.filter((t) => t.id !== taskId) ?? null)
-    startTransition(async () => { await markTaskDone(taskId) })
+    remove(taskId, () => markTaskDone(taskId))
   }
 
   function handleActivate(taskId: string) {
-    setTasks((prev) => prev?.filter((t) => t.id !== taskId) ?? null)
-    startTransition(async () => { await moveToNextActions(taskId) })
+    remove(taskId, () => moveToNextActions(taskId))
   }
 
-  if (tasks === null) return <StepLoading />
+  if (tasks === null) return error ? <ReviewError error={error} retry={retry} /> : <StepLoading />
 
   const today = startOfToday()
 
   return (
     <div className="flex flex-col gap-4">
+      {error && <ReviewError error={error} retry={retry} disabled={isPending} />}
       <p className="text-sm leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
         Check each delegated item. Has it come back? Is it still relevant? Mark done or
         activate anything that needs action now.
@@ -101,6 +82,7 @@ export function ReviewStep2WaitingFor({ onNext, onItemSelect }: ReviewStep2Waiti
                 <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
                   <button
                     onClick={() => handleDone(task.id)}
+                        disabled={isPending}
                     className="p-1.5 rounded-lg hover:text-emerald-300 hover:bg-emerald-500/10 transition-all duration-150"
                     style={{ color: 'var(--text-muted)' }}
                     title="Mark done"
@@ -110,6 +92,7 @@ export function ReviewStep2WaitingFor({ onNext, onItemSelect }: ReviewStep2Waiti
                   </button>
                   <button
                     onClick={() => handleActivate(task.id)}
+                        disabled={isPending}
                     className="p-1.5 rounded-lg hover:text-indigo-300 hover:bg-indigo-500/10 transition-all duration-150"
                     style={{ color: 'var(--text-muted)' }}
                     title="Move to Next Actions"
@@ -124,7 +107,7 @@ export function ReviewStep2WaitingFor({ onNext, onItemSelect }: ReviewStep2Waiti
         </ul>
       )}
 
-      <button onClick={onNext} className="btn-primary mt-2">
+      <button onClick={onNext} disabled={isPending || error !== null} className="btn-primary mt-2">
         Waiting For reviewed →
       </button>
     </div>

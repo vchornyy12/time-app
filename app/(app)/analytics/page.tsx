@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import { AnalyticsDashboard, type AnalyticsData } from '@/components/analytics/AnalyticsDashboard'
 
 export const metadata: Metadata = { title: 'Analytics' }
@@ -9,7 +9,7 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
 
 export default async function AnalyticsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getUser()
   if (!user) redirect('/login')
 
   const from = new Date(Date.now() - THIRTY_DAYS_MS).toISOString()

@@ -1,57 +1,63 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useEffect, useTransition, useCallback } from 'react'
 import { CheckCircle2, AlertCircle } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { getReviewProjects, type ReviewProject } from '@/lib/actions/review'
+import { getProjectHealth } from '@/lib/projects/health'
 import { promoteRoughPlanItem } from '@/lib/actions/projects'
-import type { Project, RoughPlanItem, ReviewItemSelection } from '@/lib/types'
+import type { RoughPlanItem, ReviewItemSelection } from '@/lib/types'
 
 interface ReviewStep3ProjectsProps {
+  refreshKey?: number
   onNext: () => void
   onItemSelect?: (item: ReviewItemSelection) => void
 }
 
-export function ReviewStep3Projects({ onNext, onItemSelect }: ReviewStep3ProjectsProps) {
-  const [projects, setProjects] = useState<Project[] | null>(null)
-  const [, startTransition] = useTransition()
+export function ReviewStep3Projects({ onNext, onItemSelect, refreshKey = 0 }: ReviewStep3ProjectsProps) {
+  const [projects, setProjects] = useState<ReviewProject[] | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  const [error, setError] = useState<string | null>(null)
+  const [reload, setReload] = useState(0)
 
   useEffect(() => {
     let mounted = true
-    async function load() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user || !mounted) return
-      const { data } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-      if (mounted) setProjects((data as Project[]) ?? [])
-    }
-    load()
+    getReviewProjects().then((data) => {
+      if (mounted) { setProjects(data); setError(null) }
+    }).catch(() => {
+      if (mounted) setError('Could not load projects. Please retry.')
+    })
     return () => { mounted = false }
-  }, [])
+  }, [reload, refreshKey])
 
-  function handlePromote(project: Project) {
-    const plan = project.rough_plan as RoughPlanItem[]
-    const firstItem = plan[0]
-    if (!firstItem) return
-    // Optimistically mark the project as having a next action
-    setProjects((prev) =>
-      prev?.map((p) =>
-        p.id === project.id
-          ? { ...p, first_step_task_id: 'promoted', rough_plan: plan.slice(1) as RoughPlanItem[] }
-          : p
-      ) ?? null
-    )
-    startTransition(async () => { await promoteRoughPlanItem(project.id, firstItem.id) })
+  const retry = useCallback(() => setReload((value) => value + 1), [])
+
+  function handlePromote(project: ReviewProject) {
+    const firstItem = project.rough_plan[0]
+    if (!firstItem || isPending) return
+    setError(null)
+    startTransition(async () => {
+      try {
+        await promoteRoughPlanItem(project.id, firstItem.id)
+        // Reload authoritative tasks/plan, including retries that already committed.
+        setProjects(await getReviewProjects())
+      } catch {
+        setError('Could not confirm the next step. Retry to refresh projects.')
+        retry()
+      }
+    })
   }
+
+  if (error && projects === null) return (
+    <div role="alert"><p>{error}</p><button onClick={retry} className="btn-primary">Retry</button></div>
+  )
 
   if (projects === null) return <StepLoading />
 
   return (
     <div className="flex flex-col gap-4">
+      {error && <p role="alert">{error} <button onClick={retry}>Retry</button></p>}
+      <button type="button" onClick={retry} disabled={isPending} className="text-sm self-start">Refresh projects</button>
       <p className="text-sm leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
         Each active project should have a clear next action. Promote one if it&apos;s missing.
       </p>
@@ -62,7 +68,8 @@ export function ReviewStep3Projects({ onNext, onItemSelect }: ReviewStep3Project
         <ul className="flex flex-col gap-2" aria-label="Active projects">
           {projects.map((project) => {
             const plan = project.rough_plan as RoughPlanItem[]
-            const hasNextAction = project.first_step_task_id !== null
+            const health = getProjectHealth(project.tasks)
+            const hasNextAction = health !== 'missing'
             const canPromote = !hasNextAction && plan.length > 0
 
             return (
@@ -84,7 +91,7 @@ export function ReviewStep3Projects({ onNext, onItemSelect }: ReviewStep3Project
                     {hasNextAction ? (
                       <span className="flex-shrink-0 flex items-center gap-1 text-xs text-emerald-400/70">
                         <CheckCircle2 className="w-3 h-3" />
-                        Next action set
+                        {health === 'actionable' ? 'Next action set' : health === 'waiting' ? 'Waiting for response' : 'Scheduled commitment'}
                       </span>
                     ) : (
                       <span className="flex-shrink-0 flex items-center gap-1 text-xs text-amber-400">
@@ -101,6 +108,7 @@ export function ReviewStep3Projects({ onNext, onItemSelect }: ReviewStep3Project
                       </span>
                       <button
                         onClick={() => handlePromote(project)}
+                        disabled={isPending}
                         className="flex-shrink-0 text-xs text-indigo-300 hover:text-indigo-200 transition-colors"
                       >
                         Promote →
@@ -114,7 +122,7 @@ export function ReviewStep3Projects({ onNext, onItemSelect }: ReviewStep3Project
         </ul>
       )}
 
-      <button onClick={onNext} className="btn-primary mt-2">
+      <button onClick={onNext} disabled={isPending || error !== null} className="btn-primary mt-2">
         Projects reviewed →
       </button>
     </div>

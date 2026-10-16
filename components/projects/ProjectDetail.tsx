@@ -1,7 +1,8 @@
 'use client'
 
-import { useId, useState, useTransition } from 'react'
+import { useId, useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import {
   DndContext,
   DragOverlay,
@@ -39,6 +40,7 @@ type FirstStepTask = Pick<Task, 'id' | 'title' | 'status' | 'contexts' | 'due_da
 interface ProjectDetailProps {
   project: Project
   firstStepTask: FirstStepTask | null
+  onChanged?: () => void
 }
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -54,7 +56,7 @@ const DROPZONE_ID = 'first-step-dropzone'
 
 // ── Main component ────────────────────────────────────────────
 
-export function ProjectDetail({ project, firstStepTask: initialFirstStep }: ProjectDetailProps) {
+export function ProjectDetail({ project, firstStepTask: initialFirstStep, onChanged }: ProjectDetailProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -64,6 +66,8 @@ export function ProjectDetail({ project, firstStepTask: initialFirstStep }: Proj
   const [justCompleted, setJustCompleted] = useState(false)
   const [activeItem, setActiveItem] = useState<RoughPlanItem | null>(null)
   const [newStepText, setNewStepText] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const pendingAdd = useRef<{ id: string; text: string } | null>(null)
   const dndId = useId()
 
   // Require 8px of movement to start a drag — prevents click hijacking
@@ -74,47 +78,57 @@ export function ProjectDetail({ project, firstStepTask: initialFirstStep }: Proj
 
   // ── Action handlers ────────────────────────────────────────
 
+  function mutate(action: () => Promise<void>) {
+    if (isPending) return
+    setError(null)
+    startTransition(async () => {
+      try { await action() }
+      catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save changes. Please retry.') }
+    })
+  }
+
   function handleCompleteFirstStep() {
     if (!firstStep) return
-    startTransition(async () => {
+    mutate(async () => {
       await completeFirstStep(project.id, firstStep.id)
       setFirstStep(null)
       setJustCompleted(roughPlan.length > 0)
+      onChanged?.()
       router.refresh()
     })
   }
 
   function handlePromote(item: RoughPlanItem) {
-    startTransition(async () => {
+    mutate(async () => {
       const task = await promoteRoughPlanItem(project.id, item.id)
       setRoughPlan((prev) => prev.filter((i) => i.id !== item.id))
-      setFirstStep({
-        id: task.id,
-        title: task.title,
-        status: 'next_actions',
-        contexts: task.contexts as string[],
-        due_date: task.due_date,
-      })
+      setFirstStep(task.status === 'next_actions' || task.status === 'waiting_for' || task.status === 'calendar' ? task : null)
       setJustCompleted(false)
+      onChanged?.()
       router.refresh()
     })
   }
 
   function handleCompleteProject() {
-    startTransition(async () => {
+    mutate(async () => {
       await completeProject(project.id)
       setIsDone(true)
+      onChanged?.()
       router.refresh()
     })
   }
 
   function handleAddStep() {
     const text = newStepText.trim()
-    if (!text) return
-    setNewStepText('')
-    startTransition(async () => {
-      const newItem = await addRoughPlanStep(project.id, text)
-      setRoughPlan((prev) => [...prev, newItem])
+    if (!text || isPending) return
+    if (pendingAdd.current?.text !== text) pendingAdd.current = { id: crypto.randomUUID(), text }
+    const request = pendingAdd.current
+    mutate(async () => {
+      const newItem = await addRoughPlanStep(project.id, text, request.id)
+      setRoughPlan((prev) => prev.some((item) => item.id === newItem.id) ? prev : [...prev, newItem])
+      setNewStepText('')
+      pendingAdd.current = null
+      onChanged?.()
       router.refresh()
     })
   }
@@ -130,7 +144,7 @@ export function ProjectDetail({ project, firstStepTask: initialFirstStep }: Proj
     const { active, over } = event
     setActiveItem(null)
 
-    if (!over) return
+    if (!over || isPending) return
 
     // Dropped on the promote drop zone
     if (over.id === DROPZONE_ID && !firstStep) {
@@ -149,10 +163,9 @@ export function ProjectDetail({ project, firstStepTask: initialFirstStep }: Proj
         ...item,
         order: idx,
       }))
-      setRoughPlan(reordered)
-
-      startTransition(async () => {
-        await reorderRoughPlan(project.id, reordered.map((i) => i.id))
+      mutate(async () => {
+        setRoughPlan(await reorderRoughPlan(project.id, reordered.map((i) => i.id)))
+        onChanged?.()
         router.refresh()
       })
     }
@@ -181,6 +194,7 @@ export function ProjectDetail({ project, firstStepTask: initialFirstStep }: Proj
       onDragEnd={handleDragEnd}
     >
       <div className="flex flex-col gap-8">
+        {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
 
         {/* Completion criteria */}
         {project.completion_criteria && (
@@ -374,7 +388,7 @@ function FirstStepCard({
     <div className="flex items-start gap-3 px-4 py-4 rounded-xl bg-indigo-500/[0.07] border border-indigo-500/[0.15]">
       <button
         onClick={onComplete}
-        disabled={isPending}
+        disabled={isPending || task.status !== 'next_actions'}
         className={cn(
           'mt-0.5 flex-shrink-0 w-[20px] h-[20px] rounded-full border-2',
           'flex items-center justify-center transition-all duration-150',
@@ -399,6 +413,11 @@ function FirstStepCard({
 
       <div className="flex-1 min-w-0">
         <p className="text-sm leading-snug" style={{ color: 'var(--text-primary)' }}>{task.title}</p>
+        {task.status !== 'next_actions' && (
+          <Link className="text-xs underline" href={task.status === 'waiting_for' ? '/waiting-for' : '/calendar'}>
+            {task.status === 'waiting_for' ? 'Resolve this item in Waiting For' : 'Resolve this commitment in Calendar'}
+          </Link>
+        )}
         {task.contexts.length > 0 && (
           <div className="flex gap-1.5 mt-1.5 flex-wrap">
             {task.contexts.map((ctx) => (

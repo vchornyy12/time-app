@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import { ProjectCard } from '@/components/projects/ProjectCard'
 import { EmptyState } from '@/components/ui'
+import { getActiveProjectTask, type ProjectTask } from '@/lib/projects/health'
 import type { Project } from '@/lib/types'
 
 export const metadata: Metadata = { title: 'Projects' }
@@ -11,13 +12,13 @@ export default async function ProjectsPage() {
   const supabase = await createClient()
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await getUser()
 
   if (!user) redirect('/login')
 
   const { data } = await supabase
     .from('projects')
-    .select('*, first_step_task:tasks!fk_first_step_task(id, title)')
+    .select('*, tasks!tasks_project_id_fkey(id, title, status, contexts, due_date)')
     .eq('user_id', user.id)
     .eq('status', 'active')
     .order('created_at', { ascending: false })
@@ -51,7 +52,7 @@ export default async function ProjectsPage() {
           {projects.map((project) => (
             <li key={project.id}>
               <ProjectCard
-                project={project as unknown as Project & { first_step_task: { id: string; title: string } | null }}
+                project={{ ...project, first_step_task: getActiveProjectTask(project.tasks as ProjectTask[], project.first_step_task_id) } as unknown as Project & { first_step_task: { id: string; title: string } | null }}
               />
             </li>
           ))}

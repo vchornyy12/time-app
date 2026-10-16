@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 
 /**
  * Returns an authenticated Supabase client and the current user.
@@ -9,7 +9,7 @@ export async function authedClient() {
   const supabase = await createClient()
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await getUser()
   if (!user) throw new Error('Unauthorized')
   return { supabase, user }
 }

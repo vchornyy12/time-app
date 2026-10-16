@@ -3,9 +3,10 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import { ProjectDetail } from '@/components/projects/ProjectDetail'
-import type { Task, Project } from '@/lib/types'
+import type { Project } from '@/lib/types'
+import { getActiveProjectTask, type ProjectTask } from '@/lib/projects/health'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -19,12 +20,12 @@ const fetchProject = cache(async (id: string) => {
   const supabase = await createClient()
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await getUser()
   if (!user) return null
 
   const { data } = await supabase
     .from('projects')
-    .select('*, first_step_task:tasks!fk_first_step_task(id, title, status, contexts, due_date)')
+    .select('*, tasks!tasks_project_id_fkey(id, title, status, contexts, due_date)')
     .eq('id', id)
     .eq('user_id', user.id)
     .single()
@@ -46,14 +47,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
   if (!project) notFound()
 
-  // Separate the joined task from the project data
-  const firstStepTask = (project.first_step_task as Pick<
-    Task,
-    'id' | 'title' | 'status' | 'contexts' | 'due_date'
-  > | null) ?? null
-
-  // Strip the join from the project object so types stay clean
-  const { first_step_task: _first_step_task, ...projectData } = project
+  const firstStepTask = getActiveProjectTask(project.tasks as ProjectTask[], project.first_step_task_id)
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -86,7 +80,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      <ProjectDetail project={projectData as Project} firstStepTask={firstStepTask} />
+      <ProjectDetail key={`${project.id}:${project.updated_at}:${firstStepTask?.id}:${firstStepTask?.status}`} project={project as Project} firstStepTask={firstStepTask} />
     </div>
   )
 }

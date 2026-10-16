@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { subDays, startOfDay, isBefore, isEqual, parseISO, format } from 'date-fns'
 import { authedClient } from '@/lib/actions/authed-action'
+import { cleanupWaitingForReminder } from '@/lib/google/reminders'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   getAccessToken,
@@ -336,42 +337,7 @@ export async function syncWaitingForReminder(
  */
 export async function cleanupWFReminderIfNeeded(taskId: string): Promise<void> {
   const id = taskIdSchema.parse(taskId)
-  const { supabase, user } = await authedClient()
-
-  const { data: task } = await supabase
-    .from('tasks')
-    .select('status, google_calendar_event_id')
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .single()
-
-  if (
-    !task ||
-    task.status !== 'waiting_for' ||
-    !task.google_calendar_event_id
-  ) return
-
-  // Clear the event ID immediately so the UI is consistent
-  await supabase
-    .from('tasks')
-    .update({ google_calendar_event_id: null })
-    .eq('id', id)
-    .eq('user_id', user.id)
-
-  // Delete from Google Calendar (non-fatal)
-  const integration = await getUserIntegration(supabase, user.id)
-  if (!integration?.google_refresh_token) return
-
-  try {
-    const accessToken = await getAccessToken(integration.google_refresh_token)
-    await deleteGCalEvent(
-      accessToken,
-      integration.google_calendar_id ?? 'primary',
-      task.google_calendar_event_id
-    )
-  } catch {
-    console.error('Failed to delete WF reminder from GCal')
-  }
+  await cleanupWaitingForReminder(id, await authedClient())
 }
 
 // ── Disconnects Google Calendar (clears the stored token) ─────

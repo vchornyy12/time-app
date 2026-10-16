@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useRef, useTransition, useCallback, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { Plus, SpinnerGap } from '@phosphor-icons/react'
 import { Paperclip, X } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
@@ -12,6 +11,14 @@ import { Toast } from '@/components/ui'
 import { getFileIcon, formatFileSize } from '@/lib/utils/attachment-utils'
 import type { Attachment } from '@/lib/types'
 
+interface PendingCapture {
+  id: string
+  title: string
+  files: File[]
+  saving: boolean
+  error?: string
+}
+
 const MAX_CHARS = 500
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 
@@ -20,9 +27,10 @@ interface QuickCaptureBarProps {
 }
 
 export function QuickCaptureBar({ onFocusChange }: QuickCaptureBarProps) {
-  const router = useRouter()
   const [value, setValue] = useState('')
-  const [isPending, startTransition] = useTransition()
+  const [captures, setCaptures] = useState<PendingCapture[]>([])
+  const inFlight = useRef(new Set<string>())
+  const isPending = captures.some((capture) => capture.saving)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isFocused, setIsFocused] = useState(false)
   const [stagedFiles, setStagedFiles] = useState<File[]>([])
@@ -109,55 +117,64 @@ export function QuickCaptureBar({ onFocusChange }: QuickCaptureBarProps) {
     }
   }
 
+  async function saveCapture(capture: PendingCapture) {
+    if (inFlight.current.has(capture.id)) return
+    inFlight.current.add(capture.id)
+    setCaptures((prev) => prev.map((item) => item.id === capture.id
+      ? { ...item, saving: true, error: undefined } : item))
+    let taskSaved = false
+    try {
+      const { id: taskId } = await captureTask(capture.title, capture.id)
+      taskSaved = true
+      if (capture.files.length > 0) {
+        const supabase = createClient()
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) throw new Error('Please sign in again to upload attachments.')
+        const attachments: Attachment[] = []
+        // Bound upload concurrency; stable paths make a retry safe after a lost response.
+        for (let offset = 0; offset < capture.files.length; offset += 3) {
+          const results = await Promise.all(capture.files.slice(offset, offset + 3).map(async (file, i) => {
+            const filePath = `${user.id}/${taskId}/${offset + i}-${file.name}`
+            const { error } = await supabase.storage.from('attachments')
+              .upload(filePath, file, { upsert: false })
+            // A previous attempt may have uploaded this exact immutable file.
+            const alreadyUploaded = error && (
+              ['409', 'Duplicate', 'ResourceAlreadyExists', 'already_exists'].includes(String(error.statusCode)) ||
+              (String(error.statusCode) === '400' && /already exists/i.test(error.message))
+            )
+            if (error && !alreadyUploaded) throw new Error(`Could not upload "${file.name}".`)
+            return { name: file.name, path: filePath, type: file.type || 'application/octet-stream', size: file.size }
+          }))
+          attachments.push(...results)
+        }
+        await updateTaskAttachments(taskId, attachments)
+      }
+      setCaptures((prev) => prev.filter((item) => item.id !== capture.id))
+    } catch {
+      setCaptures((prev) => prev.map((item) => item.id === capture.id ? {
+        ...item,
+        saving: false,
+        error: taskSaved
+          ? 'Task saved. Attachments could not be saved. Retry to finish uploading.'
+          : 'Could not confirm saving. Your capture is kept here. Retry safely.',
+      } : item))
+    } finally {
+      inFlight.current.delete(capture.id)
+    }
+  }
+
   function handleCapture() {
     const trimmed = value.trim()
     if (!trimmed) return
-
-    // Snapshot files before clearing so async upload uses the right list
-    const filesToUpload = [...stagedFiles]
-
-    // Clear and refocus immediately — don't wait for the server (Any.do style)
+    const capture: PendingCapture = {
+      id: crypto.randomUUID(), title: trimmed, files: [...stagedFiles], saving: true,
+    }
+    // Keep each capture separately so a failed request never overwrites new input.
+    setCaptures((prev) => [...prev, capture])
     setValue('')
     setStagedFiles([])
     requestAnimationFrame(() => inputRef.current?.focus())
-
-    startTransition(async () => {
-      try {
-        const { id: taskId } = await captureTask(trimmed)
-
-        if (filesToUpload.length > 0) {
-          const supabase = createClient()
-          const { data: { user } } = await supabase.auth.getUser()
-          if (user) {
-            const attachments: Attachment[] = []
-
-            for (const file of filesToUpload) {
-              const filePath = `${user.id}/${taskId}/${Date.now()}-${file.name}`
-              const { error: uploadError } = await supabase.storage
-                .from('attachments')
-                .upload(filePath, file, { upsert: false })
-
-              if (!uploadError) {
-                attachments.push({
-                  name: file.name,
-                  path: filePath,
-                  type: file.type || 'application/octet-stream',
-                  size: file.size,
-                })
-              }
-            }
-
-            if (attachments.length > 0) {
-              await updateTaskAttachments(taskId, attachments)
-            }
-          }
-        }
-
-        router.refresh()
-      } catch {
-        setErrorMessage('Failed to capture task. Please try again.')
-      }
-    })
+    void saveCapture(capture)
   }
 
   const active = isFocused || dragOver
@@ -189,6 +206,27 @@ export function QuickCaptureBar({ onFocusChange }: QuickCaptureBarProps) {
             boxShadow: active ? 'var(--capture-shadow-focus)' : 'var(--capture-shadow)',
           }}
         >
+          {captures.length > 0 && (
+            <div className="px-5 pt-3 flex flex-col gap-2 max-h-40 overflow-y-auto" aria-live="polite">
+              {captures.map((capture) => (
+                <div key={capture.id} className="text-xs flex items-start gap-3" role={capture.error ? 'alert' : undefined}>
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate" style={{ color: 'var(--text-secondary)' }}>{capture.title}</p>
+                    <p style={{ color: 'var(--text-muted)' }}>
+                      {capture.error ?? 'Saving…'}
+                      {capture.files.length > 0 && ` (${capture.files.length} attachments)`}
+                    </p>
+                  </div>
+                  {!capture.saving && (
+                    <button type="button" className="text-[#3ECF8E]" onClick={() => void saveCapture(capture)}>
+                      Retry
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Main input row */}
           <div className="flex items-start gap-3 px-5 py-3">
             {isPending ? (

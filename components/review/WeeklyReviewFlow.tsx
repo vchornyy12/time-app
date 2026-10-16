@@ -14,11 +14,12 @@ import { ReviewStep3Projects } from './ReviewStep3Projects'
 import { ReviewStep4NextActions } from './ReviewStep4NextActions'
 import { ReviewStep5SomedayMaybe } from './ReviewStep5SomedayMaybe'
 import { ReviewStep6Summary } from './ReviewStep6Summary'
+import { useWeeklyReviewProgress } from '@/lib/hooks/useWeeklyReviewProgress'
 import type { ReviewItemSelection } from '@/lib/types'
 
 const STEP_NAMES: Record<number, string> = {
-  1: 'Get Clear',
-  2: 'Mind Sweep',
+  1: 'Mind Sweep',
+  2: 'Process Inbox',
   3: 'Review Waiting For',
   4: 'Review Projects',
   5: 'Review Next Actions',
@@ -27,8 +28,8 @@ const STEP_NAMES: Record<number, string> = {
 }
 
 const STEP_DESCRIPTIONS: Record<number, string> = {
-  1: 'Process all inbox items to zero',
-  2: "Empty your head — capture what's still floating",
+  1: "Collect loose thoughts and review your calendar",
+  2: 'Process everything you collected',
   3: 'Follow up on delegated tasks',
   4: 'Ensure each project has a next action',
   5: 'Prune and update your action list',
@@ -37,17 +38,18 @@ const STEP_DESCRIPTIONS: Record<number, string> = {
 }
 
 interface WeeklyReviewFlowProps {
-  inboxCount: number
+  userId: string
   lastReviewDate: string | null
 }
 
-export function WeeklyReviewFlow({ inboxCount, lastReviewDate }: WeeklyReviewFlowProps) {
+export function WeeklyReviewFlow({ userId, lastReviewDate }: WeeklyReviewFlowProps) {
   const router = useRouter()
-  const [step, setStep] = useState(0)  // 0 = intro, 1-7 = steps
+  const [step, setStep] = useWeeklyReviewProgress(userId)
+  const [projectRevision, setProjectRevision] = useState(0)
   const [selectedItem, setSelectedItem] = useState<ReviewItemSelection | null>(null)
 
   function advance() {
-    setStep((s) => s + 1)
+    setStep(Math.min(step + 1, 7))
   }
 
   const handleItemSelect = useCallback((item: ReviewItemSelection) => {
@@ -56,6 +58,7 @@ export function WeeklyReviewFlow({ inboxCount, lastReviewDate }: WeeklyReviewFlo
 
   const handleOverlayClose = useCallback(() => {
     setSelectedItem(null)
+    setProjectRevision((value) => value + 1)
   }, [])
 
   // ── Intro screen ──────────────────────────────────────────
@@ -133,7 +136,8 @@ export function WeeklyReviewFlow({ inboxCount, lastReviewDate }: WeeklyReviewFlo
           <p className="text-sm mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{STEP_DESCRIPTIONS[step]}</p>
         </div>
 
-        {/* Exit — hide on final summary step */}
+        {step > 1 && <button onClick={() => setStep(step - 1)} className="text-sm">Back</button>}
+        {/* Leaving preserves the current step for this user. */}
         {step < 7 && (
           <button
             onClick={() => router.push('/inbox')}
@@ -144,20 +148,20 @@ export function WeeklyReviewFlow({ inboxCount, lastReviewDate }: WeeklyReviewFlo
             aria-label="Exit weekly review"
           >
             <X className="w-4 h-4" />
-            Exit
+            Save and exit
           </button>
         )}
       </div>
 
       {/* Step content — keyed so each step starts fresh */}
       <div key={step}>
-        {step === 1 && <ReviewStep1Inbox inboxCount={inboxCount} onNext={advance} />}
-        {step === 2 && <ReviewStep2MindSweep onNext={advance} />}
-        {step === 3 && <ReviewStep2WaitingFor onNext={advance} onItemSelect={handleItemSelect} />}
-        {step === 4 && <ReviewStep3Projects onNext={advance} onItemSelect={handleItemSelect} />}
-        {step === 5 && <ReviewStep4NextActions onNext={advance} onItemSelect={handleItemSelect} />}
-        {step === 6 && <ReviewStep5SomedayMaybe onNext={advance} onItemSelect={handleItemSelect} />}
-        {step === 7 && <ReviewStep6Summary />}
+        {step === 1 && <ReviewStep2MindSweep userId={userId} onNext={advance} />}
+        {step === 2 && <ReviewStep1Inbox onNext={advance} />}
+        {step === 3 && <ReviewStep2WaitingFor key={projectRevision} onNext={advance} onItemSelect={handleItemSelect} />}
+        {step === 4 && <ReviewStep3Projects refreshKey={projectRevision} onNext={advance} onItemSelect={handleItemSelect} />}
+        {step === 5 && <ReviewStep4NextActions key={projectRevision} onNext={advance} onItemSelect={handleItemSelect} />}
+        {step === 6 && <ReviewStep5SomedayMaybe key={projectRevision} onNext={advance} onItemSelect={handleItemSelect} />}
+        {step === 7 && <ReviewStep6Summary onComplete={() => { setStep(0); router.push('/inbox') }} />}
       </div>
 
       {/* Detail overlay — task or project */}

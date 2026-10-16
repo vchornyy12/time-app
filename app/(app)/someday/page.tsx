@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import { SomedayList } from '@/components/tasks/SomedayList'
 
 export const metadata: Metadata = { title: 'Someday / Maybe' }
@@ -9,7 +9,7 @@ export default async function SomedayPage() {
   const supabase = await createClient()
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await getUser()
 
   if (!user) redirect('/login')
 

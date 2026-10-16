@@ -1,7 +1,7 @@
 'use client'
 
 import { useOptimistic, useTransition, useState, useCallback } from 'react'
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { cn } from '@/lib/utils/cn'
 import type { Task } from '@/lib/types'
 import { markTaskDone } from '@/lib/actions/tasks'
@@ -16,7 +16,6 @@ export type TaskWithProject = Task & {
 interface TaskListProps {
   tasks: TaskWithProject[]
   userContexts?: string[]
-  initialContext?: string | null
   emptyTitle?: string
   emptyDescription?: string
   emptyIcon?: string
@@ -25,20 +24,17 @@ interface TaskListProps {
 export function TaskList({
   tasks,
   userContexts = [],
-  initialContext = null,
   emptyTitle = "You're all caught up.",
   emptyDescription = 'Enjoy the calm — nothing left to do right now.',
   emptyIcon = '⚡',
 }: TaskListProps) {
-  const router = useRouter()
   const [, startTransition] = useTransition()
-  const [activeContext, setActiveContext] = useState<string | null>(initialContext ?? null)
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const activeContext = searchParams.get('context')
 
   const setContextFilter = useCallback(
     (ctx: string | null) => {
-      setActiveContext(ctx)
       const params = new URLSearchParams(searchParams.toString())
       if (ctx) {
         params.set('context', ctx)
@@ -46,9 +42,9 @@ export function TaskList({
         params.delete('context')
       }
       const qs = params.toString()
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+      window.history.pushState(null, '', `${qs ? `${pathname}?${qs}` : pathname}${window.location.hash}`)
     },
-    [router, pathname, searchParams]
+    [pathname, searchParams]
   )
 
   const [optimisticTasks, applyOptimistic] = useOptimistic(
@@ -79,7 +75,6 @@ export function TaskList({
     startTransition(async () => {
       applyOptimistic(task.id)
       await markTaskDone(task.id)
-      router.refresh()
     })
   }
 
