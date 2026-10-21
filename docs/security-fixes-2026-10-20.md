@@ -2,7 +2,7 @@
 
 ## Стан production
 
-Вебреліз опубліковано 20.10.2026 о 12:45 UTC. Netlify deployment: `6ad760c6d5dc180992200086`, [логи](https://app.netlify.com/projects/time2go/deploys/6ad760c6d5dc180992200086). Той самий незмінний артефакт спочатку перевірено на draft URL, потім опубліковано на https://time24.pro. Завершальні read-only перевірки після Vault lockdown пройшли.
+Вебреліз опубліковано 20.10.2026 о 12:45 UTC. Netlify deployment: `6ad760c6d5dc180992200086`, [логи](https://app.netlify.com/projects/time2go/deploys/6ad760c6d5dc180992200086). Той самий незмінний артефакт спочатку перевірено на draft URL, потім опубліковано на https://time24.pro. Завершальні read-only перевірки після Vault lockdown пройшли. Код збережено в GitHub main. Старе Netlify ignore rule могло пропускати перший Git build після ручного деплою за відсутності CACHED_COMMIT_REF; правило замінено на перевірку двох валідних commit refs із безпечним fallback до build.
 
 Міграції `20261020000000`–`20261020000006` застосовано й записано у Supabase migration history. Аналітичний SQL спочатку застосував власник; анонімний виклик після цього повертає 401/42501. Решту security migrations виконано через SQL Editor.
 
