@@ -11,7 +11,7 @@
 ## Що виправлено
 
 - **Аналітика:** збережено наявний return type, застосовано SECURITY INVOKER та явні EXECUTE grants. Анонімний доступ закрито.
-- **Google OAuth:** 256-бітний випадковий state і PKCE verifier, захищена `__Host-` HttpOnly/Secure/SameSite=Lax cookie з TTL 10 хвилин, прив'язка до перевіреного user.id. Cookie очищується на callback, включно з помилками. next допускає лише безпечний внутрішній шлях. Веб auth callback повторно зберігає тільки Supabase access/refresh tokens, не provider credentials, перед перенесенням Google refresh token у Vault.
+- **Google OAuth:** 256-бітний випадковий state і PKCE verifier, захищена `__Host-` HttpOnly/Secure/SameSite=Lax cookie з TTL 10 хвилин, прив'язка до перевіреного user.id. Cookie очищується на callback, включно з помилками. next допускає лише безпечний внутрішній шлях. Веб auth callback повторно зберігає тільки Supabase access/refresh tokens, не provider credentials, перед перенесенням Google refresh token у Vault. Middleware також очищує provider credentials зі старих перевірених сесій при наступному запиті; refresh/logout cookies зберігаються й на редиректах.
 - **Google credentials:** Supabase Vault шифрує токени. Читання/запис/очищення — лише через service-role RPC із pinned search_path. Серверний helper позначено server-only; усі його callers беруть user.id із перевіреної сесії. Клієнт бачить тільки власний статус інтеграції. Disconnect відкликає Google token; auth deletion очищує Vault secret через trigger.
 - **Grants:** прибрано anon/PUBLIC доступ до приватних таблиць і authenticated TRUNCATE/REFERENCES/TRIGGER. Для user_integrations після lockdown клієнту дозволено лише SELECT безпечних колонок.
 - **Data API:** валідовані DB constraints обмежують title, contexts, attachments, delegated_to, project plan, custom contexts, diary content і clarity text. Перевіряється owner prefix вкладень. Це працює й при прямих запитах до Supabase, не лише через Zod. Існуючі записи не переписувалися й не обрізалися.
@@ -23,7 +23,7 @@
 
 ## Перевірки
 
-- 421 web unit/component tests у 31 файлі; 9 mobile security tests.
+- 424 web unit/component tests у 32 файлах; 9 mobile security tests.
 - Web і mobile TypeScript; цільовий ESLint; production Webpack build.
 - Ізольовані PostgreSQL перевірки analytics mitigation, named grants, owner RLS, Data API bounds та Vault permissions/lifecycle. Vault stub перевіряє контроль доступу, не криптографію; production migration використала native Supabase Vault.
 - Draft і production HTTP: HTML 200, CSP nonce відповідає всім script tags, сторонні analytics scripts відсутні, cache-control private/no-store. Inbox, Settings, Calendar повертають 200 під тестовою сесією.
@@ -38,7 +38,7 @@
 1. **Нова native APK/AAB.** Мобільні зміни підготовлено й перевірено кодом, але новий бінарник не створено/не опубліковано. SecureStore потребує native rebuild; не доставляти цей JS як OTA на старий APK без модуля. Запитати новий magic link на тому самому пристрої: старі implicit/token-hash посилання навмисно більше не приймаються. APK runtime, verified App Links і підпис не проходили повторного аудиту.
 2. **Планове оновлення Expo SDK/React Native.** Сумісні оновлення прибрали critical findings. Залишилося 39 позначених mobile dependency packages (23 high, 16 moderate), переважно в дереві Expo/Metro/CLI/Jest. Це не 39 підтверджених runtime exploits APK. Повний web audit також ще має 5 high у dev-only ESLint/glob tree; production web audit — 0. Не застосовувати запропоновані npm downgrade/--force без окремої міграції й native перевірки.
 3. **Квоти й anti-abuse.** Обмежено розмір одного запису/metadata та лишається bucket limit 10 MiB. Загальні ліміти кількості задач/файлів на акаунт, write rate, signup CAPTCHA та billing alerts потребують окремого продуктового/інфраструктурного налаштування. Наявні constraints не замінюють ці механізми.
-4. **Контроль інтеграції й ретроспектива.** Варто один раз перевірити реальне Google reconnect після випуску. Історичні копії раніше доступних provider tokens неможливо прибрати з чужих копій/старих browser sessions одним перенесенням у Vault; за підозри на компрометацію потрібне окреме відкликання/перепідключення. Ознак попереднього використання витоку не шукали в журналах.
+4. **Контроль інтеграції й ретроспектива.** Варто один раз перевірити реальне Google reconnect після випуску. Middleware очищує поточні cookie при наступному запиті; історичні зовнішні копії раніше доступних provider tokens неможливо відкликати одним перенесенням у Vault; за підозри на компрометацію потрібне окреме відкликання/перепідключення. Ознак попереднього використання витоку не шукали в журналах.
 
 ## Обережність із відкатом
 

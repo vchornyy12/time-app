@@ -1,3 +1,4 @@
+import { stripProviderCredentials } from './strip-provider-credentials'
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -27,8 +28,21 @@ export async function updateSession(request: NextRequest, requestHeaders = new H
   )
 
   const {
-    data: { user },
+    data: { user: verifiedUser },
   } = await supabase.auth.getUser()
+
+  let user = verifiedUser
+  if (user) {
+    try { await stripProviderCredentials(supabase) } catch {
+      await supabase.auth.signOut({ scope: 'local' })
+      user = null
+    }
+  }
+  const redirectWithCookies = (url: URL) => {
+    const response = NextResponse.redirect(url)
+    for (const cookie of supabaseResponse.cookies.getAll()) response.cookies.set(cookie)
+    return response
+  }
 
   const pathname = request.nextUrl.pathname
   const isPublicRoute = new Set([
@@ -40,13 +54,13 @@ export async function updateSession(request: NextRequest, requestHeaders = new H
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.search = ''
-    return NextResponse.redirect(url)
+    return redirectWithCookies(url)
   }
 
   if (user && (pathname === '/login' || pathname === '/register')) {
     const url = request.nextUrl.clone()
     url.pathname = '/inbox'
-    return NextResponse.redirect(url)
+    return redirectWithCookies(url)
   }
 
   return supabaseResponse
