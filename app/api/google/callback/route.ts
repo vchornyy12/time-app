@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { saveGoogleIntegration } from '@/lib/google/integration'
+import { cookies } from 'next/headers'
+import { GOOGLE_OAUTH_COOKIE, verifyGoogleOAuthState } from '@/lib/google/oauth-state'
 import { createClient } from '@/lib/supabase/server'
 
 const CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.events'
@@ -6,30 +9,21 @@ const CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.events'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const rawState = searchParams.get('state') ?? ''
-  const error = searchParams.get('error')
-
-  // State format: "{userId}|{encodedNext}"
-  const pipeIndex = rawState.indexOf('|')
-  const stateUserId = pipeIndex !== -1 ? rawState.slice(0, pipeIndex) : rawState
-  const nextPath = pipeIndex !== -1 ? decodeURIComponent(rawState.slice(pipeIndex + 1)) : '/settings'
-
   const settingsUrl = `${origin}/settings`
-
-  if (error || !code) {
-    // User declined — if they were being onboarded, send to inbox anyway
-    const fallback = nextPath.startsWith('/settings') ? settingsUrl : `${origin}${nextPath}`
-    return NextResponse.redirect(`${fallback}?error=google_auth_denied`)
-  }
-
-  // Verify the session is still valid and state matches the authenticated user
+  const jar = await cookies()
+  const pendingCookie = jar.get(GOOGLE_OAUTH_COOKIE)?.value
+  // Consume the browser binding on every callback, including cancellation/errors.
+  jar.set(GOOGLE_OAUTH_COOKIE, '', { path: '/', maxAge: 0, httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', sameSite: 'lax' })
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user || user.id !== stateUserId) {
-    return NextResponse.redirect(`${settingsUrl}?error=invalid_state`)
+  const { data: { user } } = await supabase.auth.getUser()
+  const pending = user ? verifyGoogleOAuthState(pendingCookie, searchParams.get('state'), user.id) : null
+  if (!user || !pending) return NextResponse.redirect(`${settingsUrl}?error=invalid_state`)
+  const nextPath = pending.next
+  if (searchParams.get('error') || !code) {
+    const fallback = new URL(nextPath, origin)
+    fallback.searchParams.set('error', 'google_auth_denied')
+    return NextResponse.redirect(fallback)
   }
 
   // Exchange authorization code for tokens
@@ -43,6 +37,7 @@ export async function GET(request: NextRequest) {
       client_secret: process.env.GOOGLE_CLIENT_SECRET!,
       redirect_uri: redirectUri,
       grant_type: 'authorization_code',
+      code_verifier: pending.verifier,
     }),
   })
 
@@ -62,25 +57,12 @@ export async function GET(request: NextRequest) {
   const grantedScopes: string = tokens.scope ?? ''
   const calendarConnected = grantedScopes.includes(CALENDAR_SCOPE)
 
-  // Upsert the integration row — one row per user
-  const { error: dbError } = await supabase
-    .from('user_integrations')
-    .upsert(
-      {
-        user_id: user.id,
-        google_refresh_token: refreshToken,
-        google_calendar_id: 'primary',
-        calendar_connected: calendarConnected,
-      },
-      { onConflict: 'user_id' }
-    )
-
-  if (dbError) {
+  try { await saveGoogleIntegration(user.id, refreshToken, calendarConnected) } catch {
     return NextResponse.redirect(`${settingsUrl}?error=db_error`)
   }
 
   // Redirect: settings gets the connected banner; other destinations go straight there
-  if (nextPath.startsWith('/settings')) {
+  if (new URL(nextPath, origin).pathname === '/settings') {
     return NextResponse.redirect(`${settingsUrl}?connected=1`)
   }
   return NextResponse.redirect(`${origin}${nextPath}`)

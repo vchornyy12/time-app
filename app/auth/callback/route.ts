@@ -1,10 +1,12 @@
+import { saveGoogleIntegration } from '@/lib/google/integration'
 import { createClient } from '@/lib/supabase/server'
+import { safeInternalPath } from '@/lib/google/oauth-state'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/inbox'
+  const next = safeInternalPath(searchParams.get('next'), '/inbox')
 
   if (code) {
     const supabase = await createClient()
@@ -12,22 +14,25 @@ export async function GET(request: Request) {
 
     if (!error) {
       const providerRefreshToken = data?.session?.provider_refresh_token
+      if (data.session && (providerRefreshToken || data.session.provider_token)) {
+        // Persist only the Supabase session. Provider credentials belong in Vault,
+        // not in browser-readable Supabase cookies.
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: data.session.access_token, refresh_token: data.session.refresh_token,
+        })
+        if (sessionError) {
+          await supabase.auth.signOut({ scope: 'local' })
+          return NextResponse.redirect(`${origin}/login?error=auth`)
+        }
+      }
 
       if (providerRefreshToken) {
         // Google granted calendar access alongside auth — store the token immediately.
         const userId = data.session?.user?.id
         if (userId) {
-          await supabase
-            .from('user_integrations')
-            .upsert(
-              {
-                user_id: userId,
-                google_refresh_token: providerRefreshToken,
-                google_calendar_id: 'primary',
-                calendar_connected: true,
-              },
-              { onConflict: 'user_id' }
-            )
+          try { await saveGoogleIntegration(userId, providerRefreshToken, true) } catch {
+            return NextResponse.redirect(`${origin}/settings?error=db_error`)
+          }
         }
         return NextResponse.redirect(`${origin}${next}`)
       }

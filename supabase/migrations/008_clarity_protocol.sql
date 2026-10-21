@@ -36,3 +36,8 @@ CREATE POLICY "clarity_sessions: insert own"
 CREATE POLICY "clarity_sessions: delete own"
   ON clarity_sessions FOR DELETE
   USING (user_id = auth.uid());
+
+-- Explicit Data API privileges; row access remains controlled by RLS.
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON public.clarity_sessions
+TO authenticated, service_role;

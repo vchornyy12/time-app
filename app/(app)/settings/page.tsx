@@ -30,11 +30,11 @@ export default async function SettingsPage({ searchParams }: PageProps) {
 
   const { data: integration } = await supabase
     .from('user_integrations')
-    .select('google_refresh_token, calendar_connected')
+    .select('google_connected, calendar_connected')
     .eq('user_id', user.id)
     .maybeSingle()
 
-  const isConnected = !!integration?.google_refresh_token
+  const isConnected = !!integration?.google_connected
   const calendarConnected = integration?.calendar_connected ?? false
 
   return (

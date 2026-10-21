@@ -56,6 +56,7 @@ export async function updateTaskAttachments(
 ) {
   const parsed = updateAttachmentsSchema.parse({ taskId, attachments })
   const { supabase, user } = await authedClient()
+  if (parsed.attachments.some(attachment => !attachment.path.startsWith(`${user.id}/`))) throw new Error('Unauthorized attachment path')
 
   const { error } = await supabase
     .from('tasks')
@@ -78,13 +79,6 @@ export async function deleteAttachment(taskId: string, filePath: string) {
     throw new Error('Unauthorized')
   }
 
-  // Remove from storage
-  const { error: storageError } = await supabase.storage
-    .from('attachments')
-    .remove([filePath])
-
-  if (storageError) throw storageError
-
   // Fetch current attachments and remove the deleted one
   const { data: task, error: fetchError } = await supabase
     .from('tasks')
@@ -94,6 +88,15 @@ export async function deleteAttachment(taskId: string, filePath: string) {
     .single()
 
   if (fetchError || !task) throw fetchError ?? new Error('Task not found')
+
+  if (!(task.attachments as Attachment[]).some(attachment => attachment.path === filePath)) throw new Error('Attachment not found')
+
+  // Remove from storage
+  const { error: storageError } = await supabase.storage
+    .from('attachments')
+    .remove([filePath])
+
+  if (storageError) throw storageError
 
   const current = (task.attachments ?? []) as Attachment[]
   const updated = current.filter((att) => att.path !== filePath)

@@ -35,3 +35,8 @@ on conflict (user_id, name) do nothing;
 -- Remove default contexts that were accidentally seeded
 delete from user_contexts
 where name in ('@home', '@office', '@phone', '@computer', '@errands', '@waiting');
+
+-- Explicit Data API privileges; row access remains controlled by RLS.
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON public.user_contexts
+TO authenticated, service_role;

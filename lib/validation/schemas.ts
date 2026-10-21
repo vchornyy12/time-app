@@ -123,7 +123,7 @@ export const attachmentSchema = z.object({
   name: z.string().min(1).max(255),
   path: z.string().min(1).max(1000),
   type: z.string().min(1).max(100),
-  size: z.number().int().nonnegative(),
+  size: z.number().int().nonnegative().max(10 * 1024 * 1024),
 })
 
 export const updateAttachmentsSchema = z.object({

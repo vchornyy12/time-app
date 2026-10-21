@@ -131,3 +131,8 @@ create policy "integrations: own row only"
   on user_integrations for all
   using  (user_id = auth.uid())
   with check (user_id = auth.uid());
+
+-- Explicit Data API privileges; row access remains controlled by RLS.
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON public.projects, public.tasks, public.user_integrations
+TO authenticated, service_role;

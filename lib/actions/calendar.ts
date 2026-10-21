@@ -1,10 +1,11 @@
 'use server'
 
+import { revokeGoogleToken } from '@/lib/google/revoke'
 import { revalidatePath } from 'next/cache'
 import { subDays, startOfDay, isBefore, isEqual, parseISO, format } from 'date-fns'
 import { authedClient } from '@/lib/actions/authed-action'
 import { cleanupWaitingForReminder } from '@/lib/google/reminders'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { getGoogleIntegration, clearGoogleIntegration } from '@/lib/google/integration'
 import {
   getAccessToken,
   createGCalEvent,
@@ -15,19 +16,11 @@ import {
   taskId as taskIdSchema,
   datetimeString,
   dateString,
+  title as titleSchema,
   rescheduleCalendarTaskSchema,
 } from '@/lib/validation/schemas'
 
 // ── Shared: fetch the user's Google Calendar integration ──────
-
-async function getUserIntegration(supabase: SupabaseClient, userId: string) {
-  const { data } = await supabase
-    .from('user_integrations')
-    .select('google_refresh_token, google_calendar_id')
-    .eq('user_id', userId)
-    .maybeSingle()
-  return data
-}
 
 // ── Creates a Google Calendar event and stores the event_id ───
 
@@ -38,14 +31,19 @@ export async function syncCreateCalendarEvent(
 ) {
   const id = taskIdSchema.parse(taskId)
   datetimeString.parse(scheduledAt)
+  titleSchema.parse(title)
   const { supabase, user } = await authedClient()
+  const { data: task, error: taskError } = await supabase.from('tasks')
+    .select('title, google_calendar_event_id').eq('id', id).eq('user_id', user.id).single()
+  if (taskError || !task) throw new Error('Task not found')
+  if (task.google_calendar_event_id) return
 
-  const integration = await getUserIntegration(supabase, user.id)
+  const integration = await getGoogleIntegration(user.id)
   if (!integration?.google_refresh_token) return // not connected — silently skip
 
   const accessToken = await getAccessToken(integration.google_refresh_token)
   const calendarId = integration.google_calendar_id ?? 'primary'
-  const eventId = await createGCalEvent(accessToken, calendarId, { summary: title, scheduledAt })
+  const eventId = await createGCalEvent(accessToken, calendarId, { summary: task.title, scheduledAt })
 
   await supabase
     .from('tasks')
@@ -72,7 +70,7 @@ export async function syncUpdateCalendarEvent(taskId: string, scheduledAt: strin
 
   if (!task?.google_calendar_event_id) return // no event to update
 
-  const integration = await getUserIntegration(supabase, user.id)
+  const integration = await getGoogleIntegration(user.id)
   if (!integration?.google_refresh_token) return
 
   const accessToken = await getAccessToken(integration.google_refresh_token)
@@ -97,7 +95,7 @@ export async function syncDeleteCalendarEvent(taskId: string) {
 
   if (!task?.google_calendar_event_id) return
 
-  const integration = await getUserIntegration(supabase, user.id)
+  const integration = await getGoogleIntegration(user.id)
   if (!integration?.google_refresh_token) return
 
   const accessToken = await getAccessToken(integration.google_refresh_token)
@@ -136,7 +134,7 @@ export async function removeCalendarTaskToTrash(taskId: string) {
 
   // Delete from Google Calendar (non-fatal)
   if (task?.google_calendar_event_id) {
-    const integration = await getUserIntegration(supabase, user.id)
+    const integration = await getGoogleIntegration(user.id)
     if (integration?.google_refresh_token) {
       try {
         const accessToken = await getAccessToken(integration.google_refresh_token)
@@ -175,7 +173,7 @@ export async function moveCalendarTaskToInbox(taskId: string) {
     .eq('user_id', user.id)
 
   if (task?.google_calendar_event_id) {
-    const integration = await getUserIntegration(supabase, user.id)
+    const integration = await getGoogleIntegration(user.id)
     if (integration?.google_refresh_token) {
       try {
         const accessToken = await getAccessToken(integration.google_refresh_token)
@@ -215,7 +213,7 @@ export async function rescheduleCalendarTask(taskId: string, scheduledAt: string
 
   if (!task) { revalidatePath('/calendar'); return }
 
-  const integration = await getUserIntegration(supabase, user.id)
+  const integration = await getGoogleIntegration(user.id)
   if (!integration?.google_refresh_token) { revalidatePath('/calendar'); return }
 
   try {
@@ -257,7 +255,7 @@ export async function syncNowCalendarTask(taskId: string) {
 
   if (!task || task.google_calendar_event_id || !task.scheduled_at) return
 
-  const integration = await getUserIntegration(supabase, user.id)
+  const integration = await getGoogleIntegration(user.id)
   if (!integration?.google_refresh_token) return
 
   const accessToken = await getAccessToken(integration.google_refresh_token)
@@ -308,7 +306,7 @@ export async function syncWaitingForReminder(
 
   if (!task) return
 
-  const integration = await getUserIntegration(supabase, user.id)
+  const integration = await getGoogleIntegration(user.id)
   if (!integration?.google_refresh_token) return
 
   const accessToken = await getAccessToken(integration.google_refresh_token)
@@ -343,12 +341,9 @@ export async function cleanupWFReminderIfNeeded(taskId: string): Promise<void> {
 // ── Disconnects Google Calendar (clears the stored token) ─────
 
 export async function disconnectGoogleCalendar() {
-  const { supabase, user } = await authedClient()
-
-  await supabase
-    .from('user_integrations')
-    .update({ google_refresh_token: null, google_calendar_id: null, calendar_connected: false })
-    .eq('user_id', user.id)
-
+  const { user } = await authedClient()
+  const integration = await getGoogleIntegration(user.id)
+  if (integration?.google_refresh_token) await revokeGoogleToken(integration.google_refresh_token)
+  await clearGoogleIntegration(user.id)
   revalidatePath('/settings')
 }

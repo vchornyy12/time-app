@@ -89,7 +89,7 @@ export interface ClaritySession {
 export interface UserIntegration {
   id: string
   user_id: string
-  google_refresh_token: string | null
+  google_connected: boolean
   google_calendar_id: string | null
   calendar_connected: boolean
   created_at: string

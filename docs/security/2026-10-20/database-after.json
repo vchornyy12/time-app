@@ -1,0 +1,10 @@
+{
+  "source": "Supabase SQL Editor security_check after applied migrations",
+  "anon_analytics": false,
+  "plaintext_tokens": 0,
+  "validated_bounds": 11,
+  "client_secret_rpc": false,
+  "client_token_access": false,
+  "missing_vault_secrets": 0,
+  "client_truncate_tables": 0
+}

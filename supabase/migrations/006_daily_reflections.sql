@@ -45,3 +45,8 @@ CREATE POLICY "daily_reflections: insert own"
 CREATE POLICY "daily_reflections: update own"
   ON daily_reflections FOR UPDATE
   USING (user_id = auth.uid());
+
+-- Explicit Data API privileges; row access remains controlled by RLS.
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON public.daily_reflections
+TO authenticated, service_role;

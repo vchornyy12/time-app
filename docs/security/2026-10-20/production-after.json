@@ -1,0 +1,70 @@
+[
+  {
+    "kind": "page",
+    "path": "/",
+    "status": 200,
+    "csp": true,
+    "noncePresent": true,
+    "allScriptsHaveMatchingNonce": true,
+    "noThirdPartyAnalytics": true,
+    "cacheControl": "private, no-store"
+  },
+  {
+    "kind": "page",
+    "path": "/login",
+    "status": 200,
+    "csp": true,
+    "noncePresent": true,
+    "allScriptsHaveMatchingNonce": true,
+    "noThirdPartyAnalytics": true,
+    "cacheControl": "private, no-store"
+  },
+  {
+    "kind": "oauth-start",
+    "status": 307,
+    "googleDestination": true,
+    "pkce": true,
+    "secureCookie": true
+  },
+  {
+    "kind": "oauth-start",
+    "status": 307,
+    "googleDestination": true,
+    "pkce": true,
+    "secureCookie": true
+  },
+  {
+    "kind": "state",
+    "unique": true,
+    "noUserId": true
+  },
+  {
+    "kind": "forged-callback",
+    "status": 307,
+    "error": "invalid_state"
+  },
+  {
+    "kind": "bound-cancellation",
+    "status": 307,
+    "error": "google_auth_denied",
+    "cookieConsumed": true
+  },
+  {
+    "kind": "authenticated-page",
+    "path": "/inbox",
+    "status": 200,
+    "privateCache": "private, no-store"
+  },
+  {
+    "kind": "authenticated-page",
+    "path": "/settings",
+    "status": 200,
+    "privateCache": "private, no-store"
+  },
+  {
+    "kind": "authenticated-page",
+    "path": "/calendar",
+    "status": 200,
+    "privateCache": "private, no-store"
+  }
+]

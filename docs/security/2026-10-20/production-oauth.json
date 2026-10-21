@@ -1,0 +1,24 @@
+[
+  {
+    "kind": "calendar-auth",
+    "status": 307,
+    "googleDestination": true,
+    "setsCookie": false
+  },
+  {
+    "kind": "calendar-auth",
+    "status": 307,
+    "googleDestination": true,
+    "setsCookie": false
+  },
+  {
+    "kind": "state-check",
+    "identicalAcrossRequests": true,
+    "startsWithUserId": true
+  },
+  {
+    "kind": "forged-state-invalid-code",
+    "status": 307,
+    "error": "token_exchange_failed"
+  }
+]

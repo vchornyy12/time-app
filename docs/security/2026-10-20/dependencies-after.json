@@ -1,0 +1,183 @@
+{
+  "web": {
+    "omit_dev": true,
+    "counts": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "remaining_packages": []
+  },
+  "mobile": {
+    "omit_dev": true,
+    "counts": {
+      "info": 0,
+      "low": 0,
+      "moderate": 16,
+      "high": 23,
+      "critical": 0,
+      "total": 39
+    },
+    "remaining_packages": [
+      {
+        "name": "@expo/cli",
+        "severity": "high"
+      },
+      {
+        "name": "@expo/code-signing-certificates",
+        "severity": "high"
+      },
+      {
+        "name": "@expo/config",
+        "severity": "moderate"
+      },
+      {
+        "name": "@expo/config-plugins",
+        "severity": "moderate"
+      },
+      {
+        "name": "@expo/metro",
+        "severity": "high"
+      },
+      {
+        "name": "@expo/metro-config",
+        "severity": "high"
+      },
+      {
+        "name": "@expo/prebuild-config",
+        "severity": "moderate"
+      },
+      {
+        "name": "@istanbuljs/load-nyc-config",
+        "severity": "moderate"
+      },
+      {
+        "name": "@jest/environment",
+        "severity": "high"
+      },
+      {
+        "name": "@jest/fake-timers",
+        "severity": "high"
+      },
+      {
+        "name": "@jest/transform",
+        "severity": "high"
+      },
+      {
+        "name": "@react-native/community-cli-plugin",
+        "severity": "high"
+      },
+      {
+        "name": "argparse",
+        "severity": "moderate"
+      },
+      {
+        "name": "babel-jest",
+        "severity": "high"
+      },
+      {
+        "name": "babel-plugin-istanbul",
+        "severity": "moderate"
+      },
+      {
+        "name": "braces",
+        "severity": "high"
+      },
+      {
+        "name": "decode-uri-component",
+        "severity": "moderate"
+      },
+      {
+        "name": "expo",
+        "severity": "high"
+      },
+      {
+        "name": "expo-asset",
+        "severity": "moderate"
+      },
+      {
+        "name": "expo-constants",
+        "severity": "moderate"
+      },
+      {
+        "name": "expo-linking",
+        "severity": "moderate"
+      },
+      {
+        "name": "expo-router",
+        "severity": "moderate"
+      },
+      {
+        "name": "image-size",
+        "severity": "high"
+      },
+      {
+        "name": "jest-environment-node",
+        "severity": "high"
+      },
+      {
+        "name": "jest-haste-map",
+        "severity": "high"
+      },
+      {
+        "name": "jest-message-util",
+        "severity": "high"
+      },
+      {
+        "name": "js-yaml",
+        "severity": "moderate"
+      },
+      {
+        "name": "metro",
+        "severity": "high"
+      },
+      {
+        "name": "metro-config",
+        "severity": "high"
+      },
+      {
+        "name": "metro-file-map",
+        "severity": "high"
+      },
+      {
+        "name": "metro-transform-worker",
+        "severity": "high"
+      },
+      {
+        "name": "micromatch",
+        "severity": "high"
+      },
+      {
+        "name": "node-forge",
+        "severity": "high"
+      },
+      {
+        "name": "postcss",
+        "severity": "high"
+      },
+      {
+        "name": "query-string",
+        "severity": "moderate"
+      },
+      {
+        "name": "react-native",
+        "severity": "high"
+      },
+      {
+        "name": "sprintf-js",
+        "severity": "moderate"
+      },
+      {
+        "name": "uuid",
+        "severity": "moderate"
+      },
+      {
+        "name": "xcode",
+        "severity": "moderate"
+      }
+    ]
+  }
+}

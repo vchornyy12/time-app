@@ -1,3 +1,4 @@
+import 'server-only'
 import { addHours } from 'date-fns'
 
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'

@@ -1,4 +1,5 @@
 import 'server-only'
+import { getGoogleIntegration } from '@/lib/google/integration'
 import type { authedClient } from '@/lib/actions/authed-action'
 import { getAccessToken, deleteGCalEvent } from '@/lib/google/calendar'
 
@@ -29,11 +30,7 @@ export async function cleanupWaitingForReminder(
     .eq('user_id', user.id)
 
   // Delete from Google Calendar (non-fatal)
-  const { data: integration } = await supabase
-    .from('user_integrations')
-    .select('google_refresh_token, google_calendar_id')
-    .eq('user_id', user.id)
-    .maybeSingle()
+  const integration = await getGoogleIntegration(user.id)
   if (!integration?.google_refresh_token) return
 
   try {

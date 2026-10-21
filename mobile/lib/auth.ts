@@ -25,28 +25,13 @@ export async function sendMagicLink(email: string): Promise<string | null> {
 export async function verifyMagicLink(url: string): Promise<string | null> {
   try {
     const parsed = new URL(url)
-    // Magic link params arrive as hash fragments or query params depending on Supabase version
-    const params = new URLSearchParams(
-      parsed.hash ? parsed.hash.slice(1) : parsed.search.slice(1)
-    )
-    const accessToken = params.get('access_token')
-    const refreshToken = params.get('refresh_token')
-
-    if (accessToken && refreshToken) {
-      const { error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      })
-      return error ? error.message : null
+    if (parsed.protocol !== 'timeapp:' || parsed.hostname !== 'auth' || (parsed.pathname !== '' && parsed.pathname !== '/') || parsed.username || parsed.password || parsed.port) {
+      return 'Invalid magic link URL'
     }
-
-    // Fallback: PKCE / token_hash flow
-    const tokenHash = params.get('token_hash')
-    if (tokenHash) {
-      const { error } = await supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type: 'magiclink',
-      })
+    // PKCE codes only: unsolicited bearer tokens cannot replace the session.
+    const code = parsed.searchParams.get('code')
+    if (code && !parsed.hash) {
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
       return error ? error.message : null
     }
 
@@ -56,7 +41,7 @@ export async function verifyMagicLink(url: string): Promise<string | null> {
   }
 }
 
-/** Signs the current user out and clears the session from AsyncStorage. */
+/** Signs the current user out and clears the encrypted session. */
 export async function signOut(): Promise<void> {
   await supabase.auth.signOut()
 }

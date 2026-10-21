@@ -1,0 +1,237 @@
+[
+  {
+    "kind": "http",
+    "path": "/",
+    "status": 200,
+    "headers": {
+      "location": null,
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "private,no-cache,no-store,max-age=0,must-revalidate",
+      "strict-transport-security": "max-age=31536000",
+      "content-security-policy": null,
+      "x-frame-options": "DENY",
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "permissions-policy": null,
+      "x-powered-by": null,
+      "access-control-allow-origin": null
+    }
+  },
+  {
+    "kind": "http",
+    "path": "/login",
+    "status": 200,
+    "headers": {
+      "location": null,
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "public,max-age=0,must-revalidate",
+      "strict-transport-security": "max-age=31536000",
+      "content-security-policy": null,
+      "x-frame-options": "DENY",
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "permissions-policy": null,
+      "x-powered-by": null,
+      "access-control-allow-origin": null
+    }
+  },
+  {
+    "kind": "http",
+    "path": "/inbox",
+    "status": 307,
+    "headers": {
+      "location": "/login",
+      "content-type": null,
+      "cache-control": null,
+      "strict-transport-security": "max-age=31536000",
+      "content-security-policy": null,
+      "x-frame-options": null,
+      "x-content-type-options": null,
+      "referrer-policy": null,
+      "permissions-policy": null,
+      "x-powered-by": null,
+      "access-control-allow-origin": null
+    }
+  },
+  {
+    "kind": "http",
+    "path": "/settings",
+    "status": 307,
+    "headers": {
+      "location": "/login",
+      "content-type": null,
+      "cache-control": null,
+      "strict-transport-security": "max-age=31536000",
+      "content-security-policy": null,
+      "x-frame-options": null,
+      "x-content-type-options": null,
+      "referrer-policy": null,
+      "permissions-policy": null,
+      "x-powered-by": null,
+      "access-control-allow-origin": null
+    }
+  },
+  {
+    "kind": "http",
+    "path": "/api/google/auth",
+    "status": 307,
+    "headers": {
+      "location": "/login",
+      "content-type": null,
+      "cache-control": null,
+      "strict-transport-security": "max-age=31536000",
+      "content-security-policy": null,
+      "x-frame-options": null,
+      "x-content-type-options": null,
+      "referrer-policy": null,
+      "permissions-policy": null,
+      "x-powered-by": null,
+      "access-control-allow-origin": null
+    }
+  },
+  {
+    "kind": "http",
+    "path": "/.env",
+    "status": 307,
+    "headers": {
+      "location": "/login",
+      "content-type": null,
+      "cache-control": null,
+      "strict-transport-security": "max-age=31536000",
+      "content-security-policy": null,
+      "x-frame-options": null,
+      "x-content-type-options": null,
+      "referrer-policy": null,
+      "permissions-policy": null,
+      "x-powered-by": null,
+      "access-control-allow-origin": null
+    }
+  },
+  {
+    "kind": "http",
+    "path": "/.git/config",
+    "status": 307,
+    "headers": {
+      "location": "/login",
+      "content-type": null,
+      "cache-control": null,
+      "strict-transport-security": "max-age=31536000",
+      "content-security-policy": null,
+      "x-frame-options": null,
+      "x-content-type-options": null,
+      "referrer-policy": null,
+      "permissions-policy": null,
+      "x-powered-by": null,
+      "access-control-allow-origin": null
+    }
+  },
+  {
+    "kind": "http",
+    "path": "/api/google/callback?error=access_denied&state=invalid%7C%252Finbox",
+    "status": 307,
+    "headers": {
+      "location": "/login?error=access_denied&state=invalid%7C%252Finbox",
+      "content-type": null,
+      "cache-control": null,
+      "strict-transport-security": "max-age=31536000",
+      "content-security-policy": null,
+      "x-frame-options": null,
+      "x-content-type-options": null,
+      "referrer-policy": null,
+      "permissions-policy": null,
+      "x-powered-by": null,
+      "access-control-allow-origin": null
+    }
+  },
+  {
+    "kind": "http",
+    "path": "/inbox.png",
+    "status": 404,
+    "headers": {
+      "location": null,
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "private,no-cache,no-store,max-age=0,must-revalidate",
+      "strict-transport-security": "max-age=31536000",
+      "content-security-policy": null,
+      "x-frame-options": "DENY",
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "permissions-policy": null,
+      "x-powered-by": null,
+      "access-control-allow-origin": null
+    }
+  },
+  {
+    "kind": "http",
+    "path": "/after-login.png",
+    "status": 404,
+    "headers": {
+      "location": null,
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "private,no-cache,no-store,max-age=0,must-revalidate",
+      "strict-transport-security": "max-age=31536000",
+      "content-security-policy": null,
+      "x-frame-options": "DENY",
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "permissions-policy": null,
+      "x-powered-by": null,
+      "access-control-allow-origin": null
+    }
+  },
+  {
+    "kind": "http-redirect",
+    "status": 301,
+    "location": "https://time24.pro/"
+  },
+  {
+    "kind": "anonymous-table",
+    "table": "tasks",
+    "status": 200,
+    "rows": 0
+  },
+  {
+    "kind": "anonymous-table",
+    "table": "projects",
+    "status": 200,
+    "rows": 0
+  },
+  {
+    "kind": "anonymous-table",
+    "table": "user_integrations",
+    "status": 401,
+    "code": "42501"
+  },
+  {
+    "kind": "anonymous-table",
+    "table": "user_contexts",
+    "status": 200,
+    "rows": 0
+  },
+  {
+    "kind": "anonymous-table",
+    "table": "daily_reflections",
+    "status": 200,
+    "rows": 0
+  },
+  {
+    "kind": "anonymous-table",
+    "table": "clarity_sessions",
+    "status": 200,
+    "rows": 0
+  },
+  {
+    "kind": "anonymous-table",
+    "table": "user_preferences",
+    "status": 401,
+    "code": "42501"
+  },
+  {
+    "kind": "auth-settings",
+    "status": 200,
+    "disable_signup": false,
+    "mailer_autoconfirm": false,
+    "phone_autoconfirm": false,
+    "external_email_enabled": true
+  }
+]

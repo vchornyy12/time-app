@@ -10,6 +10,8 @@ CREATE OR REPLACE FUNCTION get_analytics(
 RETURNS jsonb
 LANGUAGE sql
 STABLE
+SECURITY INVOKER
+SET search_path = public, pg_temp
 AS $$
   SELECT jsonb_build_object(
 
@@ -75,4 +77,5 @@ AS $$
 $$;
 
 -- Allow authenticated users to call the function
-GRANT EXECUTE ON FUNCTION get_analytics(uuid, timestamptz) TO authenticated;
+REVOKE ALL ON FUNCTION public.get_analytics(uuid, timestamptz) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_analytics(uuid, timestamptz) TO authenticated, service_role;

@@ -1,0 +1,103 @@
+[
+  {
+    "kind": "foreign-rows",
+    "table": "tasks",
+    "count": 0,
+    "error": null
+  },
+  {
+    "kind": "anonymous-select",
+    "table": "tasks",
+    "status": 401
+  },
+  {
+    "kind": "foreign-rows",
+    "table": "projects",
+    "count": 0,
+    "error": null
+  },
+  {
+    "kind": "anonymous-select",
+    "table": "projects",
+    "status": 401
+  },
+  {
+    "kind": "foreign-rows",
+    "table": "user_contexts",
+    "count": 0,
+    "error": null
+  },
+  {
+    "kind": "anonymous-select",
+    "table": "user_contexts",
+    "status": 401
+  },
+  {
+    "kind": "foreign-rows",
+    "table": "user_integrations",
+    "count": 0,
+    "error": null
+  },
+  {
+    "kind": "anonymous-select",
+    "table": "user_integrations",
+    "status": 401
+  },
+  {
+    "kind": "foreign-rows",
+    "table": "daily_reflections",
+    "count": 0,
+    "error": null
+  },
+  {
+    "kind": "anonymous-select",
+    "table": "daily_reflections",
+    "status": 401
+  },
+  {
+    "kind": "foreign-rows",
+    "table": "clarity_sessions",
+    "count": 0,
+    "error": null
+  },
+  {
+    "kind": "anonymous-select",
+    "table": "clarity_sessions",
+    "status": 401
+  },
+  {
+    "kind": "foreign-rows",
+    "table": "user_preferences",
+    "count": 0,
+    "error": null
+  },
+  {
+    "kind": "anonymous-select",
+    "table": "user_preferences",
+    "status": 401
+  },
+  {
+    "kind": "client-token-column",
+    "allowed": false,
+    "error": "42501"
+  },
+  {
+    "kind": "client-secret-rpc",
+    "allowed": false,
+    "error": "42501"
+  },
+  {
+    "kind": "client-connection-status",
+    "allowed": true
+  },
+  {
+    "kind": "context-bound",
+    "result": false,
+    "error": null
+  },
+  {
+    "kind": "plaintext-token-count",
+    "status": 200,
+    "contentRange": "*/0"
+  }
+]

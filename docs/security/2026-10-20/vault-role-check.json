@@ -1,0 +1,14 @@
+[
+  {
+    "role": "anon",
+    "status": 401,
+    "error": "42501",
+    "syntheticResultIsNull": false
+  },
+  {
+    "role": "service_role",
+    "status": 200,
+    "error": null,
+    "syntheticResultIsNull": true
+  }
+]
