@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   View,
   Text,
@@ -9,25 +9,31 @@ import {
   Platform,
   StyleSheet,
 } from 'react-native'
-import { sendMagicLink } from '../../lib/auth'
+import { sendMagicLink, signInWithPassword } from '../../lib/auth'
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [usePassword, setUsePassword] = useState(true)
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const sending = useRef(false)
+
   async function handleSend() {
-    if (!email.trim()) return
+    if (sending.current || !email.trim()) return
+    sending.current = true
     setLoading(true)
     setError(null)
-    const err = await sendMagicLink(email)
+    const err = usePassword ? await signInWithPassword(email, password) : await sendMagicLink(email)
+    sending.current = false
     setLoading(false)
     if (err) {
       setError(err)
-    } else {
+    } else if (!usePassword) {
       setSent(true)
-    }
+    } else setPassword('')
   }
 
   return (
@@ -53,6 +59,7 @@ export default function LoginScreen() {
           <>
             <TextInput
               style={styles.input}
+              accessibilityLabel="Email"
               placeholder="you@example.com"
               placeholderTextColor="rgba(255,255,255,0.40)"
               value={email}
@@ -60,22 +67,26 @@ export default function LoginScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="email-address"
-              returnKeyType="send"
-              onSubmitEditing={handleSend}
+              returnKeyType={usePassword ? 'next' : 'send'}
+              onSubmitEditing={usePassword ? undefined : handleSend}
               editable={!loading}
             />
+            {usePassword && <TextInput accessibilityLabel="Password" style={styles.input} placeholder="Password" placeholderTextColor="rgba(255,255,255,0.40)" value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoCorrect={false} textContentType="password" returnKeyType="go" onSubmitEditing={handleSend} editable={!loading} />}
             {error && <Text style={styles.error}>{error}</Text>}
             <TouchableOpacity
-              style={[styles.button, (!email.trim() || loading) && styles.buttonDisabled]}
+              accessibilityRole="button"
+              accessibilityLabel={usePassword ? 'Sign in' : 'Send magic link'}
+              style={[styles.button, (!email.trim() || (usePassword && !password) || loading) && styles.buttonDisabled]}
               onPress={handleSend}
-              disabled={!email.trim() || loading}
+              disabled={!email.trim() || (usePassword && !password) || loading}
             >
               {loading ? (
                 <ActivityIndicator color="#000" />
               ) : (
-                <Text style={styles.buttonText}>Send magic link</Text>
+                <Text style={styles.buttonText}>{usePassword ? 'Sign in' : 'Send magic link'}</Text>
               )}
             </TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" disabled={loading} style={{ paddingVertical: 16 }} onPress={() => { setUsePassword(!usePassword); setPassword(''); setError(null) }}><Text style={styles.link}>{usePassword ? 'Use an email magic link instead' : 'Use your password instead'}</Text></TouchableOpacity>
           </>
         )}
       </View>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { memo, useRef, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { Repeat } from 'lucide-react-native'
 
@@ -8,15 +8,19 @@ interface TaskRowProps {
   synced?: boolean
   context?: string | null
   isRecurring?: boolean
-  onComplete?: () => void
+  onComplete?: () => Promise<void>
+  onOpen?: () => void
 }
 
-export function TaskRow({ title, time, synced, context, isRecurring, onComplete }: TaskRowProps) {
+export const TaskRow = memo(function TaskRow({ title, time, synced, context, isRecurring, onComplete, onOpen }: TaskRowProps) {
   const [checked, setChecked] = useState(false)
+  const pending = useRef(false)
 
-  function handlePress() {
+  async function handlePress() {
+    if (pending.current) return
+    pending.current = true
     setChecked(true)
-    setTimeout(() => onComplete?.(), 150)
+    try { await onComplete?.() } finally { pending.current = false; setChecked(false) }
   }
 
   return (
@@ -24,6 +28,9 @@ export function TaskRow({ title, time, synced, context, isRecurring, onComplete 
       {onComplete !== undefined && (
         <TouchableOpacity
           onPress={handlePress}
+          accessibilityRole="checkbox"
+          accessibilityLabel={`Complete ${title}`}
+          accessibilityState={{ checked, disabled: checked }}
           disabled={checked}
           style={[styles.checkbox, checked && styles.checkboxChecked]}
           activeOpacity={0.7}
@@ -33,21 +40,21 @@ export function TaskRow({ title, time, synced, context, isRecurring, onComplete 
       {time !== undefined && (
         <Text style={styles.time}>{time ?? '—'}</Text>
       )}
-      <View style={styles.content}>
+      <TouchableOpacity style={styles.content} onPress={onOpen} disabled={!onOpen} accessibilityRole={onOpen ? 'button' : undefined} accessibilityLabel={onOpen ? `Open ${title}` : undefined}>
         <Text style={styles.title} numberOfLines={2}>{title}</Text>
         {(isRecurring || context) ? (
           <View style={styles.metaRow}>
             {isRecurring && <Repeat color="rgba(255,255,255,0.35)" size={13} />}
-            {context ? <Text style={styles.context}>@{context}</Text> : null}
+            {context ? <Text style={styles.context}>{context.startsWith('@') ? context : `@${context}`}</Text> : null}
           </View>
         ) : null}
-      </View>
+      </TouchableOpacity>
       {synced !== undefined && (
         <View style={[styles.dot, synced ? styles.dotSynced : styles.dotUnsynced]} />
       )}
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   row: {

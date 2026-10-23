@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { RECURRENCE_RULES } from '@/lib/types'
+import { RECURRENCE_RULES } from '../types'
 
 // ── Primitives ───────────────────────────────────────────────
 

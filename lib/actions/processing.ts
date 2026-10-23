@@ -19,12 +19,12 @@ function revalidateInbox() {
 
 export async function processToTrash(taskId: string) {
   const id = taskIdSchema.parse(taskId)
-  const { supabase, user } = await authedClient()
+  const { supabase, user, inboxVersion } = await authedClient()
   const { error } = await supabase
     .from('tasks')
     .update({ status: 'trash' })
     .eq('id', id)
-    .eq('user_id', user.id)
+    .eq('user_id', user.id).eq('status', 'inbox').match(inboxVersion ? { updated_at: inboxVersion } : {}).select('id').single()
   if (error) throw error
   revalidateInbox()
   revalidatePath('/trash')
@@ -32,12 +32,12 @@ export async function processToTrash(taskId: string) {
 
 export async function processToNotes(taskId: string) {
   const id = taskIdSchema.parse(taskId)
-  const { supabase, user } = await authedClient()
+  const { supabase, user, inboxVersion } = await authedClient()
   const { error } = await supabase
     .from('tasks')
     .update({ status: 'notes' })
     .eq('id', id)
-    .eq('user_id', user.id)
+    .eq('user_id', user.id).eq('status', 'inbox').match(inboxVersion ? { updated_at: inboxVersion } : {}).select('id').single()
   if (error) throw error
   revalidateInbox()
   revalidatePath('/notes')
@@ -50,7 +50,7 @@ export async function processToWaitingFor(
   contexts: string[] = []
 ) {
   const parsed = processToWaitingForSchema.parse({ taskId, delegatedTo, dueDate, contexts })
-  const { supabase, user } = await authedClient()
+  const { supabase, user, inboxVersion } = await authedClient()
 
   const update: Record<string, unknown> = {
     status: 'waiting_for',
@@ -63,7 +63,7 @@ export async function processToWaitingFor(
     .from('tasks')
     .update(update)
     .eq('id', parsed.taskId)
-    .eq('user_id', user.id)
+    .eq('user_id', user.id).eq('status', 'inbox').match(inboxVersion ? { updated_at: inboxVersion } : {}).select('id').single()
   if (error) throw error
 
   revalidateInbox()
@@ -81,7 +81,7 @@ export async function processToCalendar(
   recurrenceRule: RecurrenceRule | null = null
 ) {
   const parsed = processToCalendarSchema.parse({ taskId, scheduledAt, recurrenceRule })
-  const { supabase, user } = await authedClient()
+  const { supabase, user, inboxVersion } = await authedClient()
 
   // Fetch title before updating status (needed for Google Calendar event)
   const { data: task } = await supabase
@@ -99,7 +99,7 @@ export async function processToCalendar(
       recurrence_rule: parsed.recurrenceRule,
     })
     .eq('id', parsed.taskId)
-    .eq('user_id', user.id)
+    .eq('user_id', user.id).eq('status', 'inbox').match(inboxVersion ? { updated_at: inboxVersion } : {}).select('id').single()
   if (error) throw error
 
   revalidateInbox()
@@ -117,14 +117,14 @@ export async function processToCalendar(
 
 export async function processToSomedayMaybe(taskId: string, reviewDate?: string) {
   const parsed = processToSomedayMaybeSchema.parse({ taskId, reviewDate })
-  const { supabase, user } = await authedClient()
+  const { supabase, user, inboxVersion } = await authedClient()
   const update: Record<string, unknown> = { status: 'someday_maybe' }
   if (parsed.reviewDate) update.due_date = parsed.reviewDate
   const { error } = await supabase
     .from('tasks')
     .update(update)
     .eq('id', parsed.taskId)
-    .eq('user_id', user.id)
+    .eq('user_id', user.id).eq('status', 'inbox').match(inboxVersion ? { updated_at: inboxVersion } : {}).select('id').single()
   if (error) throw error
   revalidateInbox()
   revalidatePath('/someday')
@@ -137,7 +137,7 @@ export async function processToNextActions(
   recurrenceRule: RecurrenceRule | null = null
 ) {
   const parsed = processToNextActionsSchema.parse({ taskId, contexts, nextActionTitle, recurrenceRule })
-  const { supabase, user } = await authedClient()
+  const { supabase, user, inboxVersion } = await authedClient()
   const update: Record<string, unknown> = {
     status: 'next_actions',
     contexts: parsed.contexts,
@@ -148,7 +148,7 @@ export async function processToNextActions(
     .from('tasks')
     .update(update)
     .eq('id', parsed.taskId)
-    .eq('user_id', user.id)
+    .eq('user_id', user.id).eq('status', 'inbox').match(inboxVersion ? { updated_at: inboxVersion } : {}).select('id').single()
   if (error) throw error
   revalidateInbox()
   revalidatePath('/next-actions')
@@ -156,12 +156,12 @@ export async function processToNextActions(
 
 export async function processAsDone(taskId: string) {
   const id = taskIdSchema.parse(taskId)
-  const { supabase, user } = await authedClient()
+  const { supabase, user, inboxVersion } = await authedClient()
   const { error } = await supabase
     .from('tasks')
     .update({ status: 'done', completed_at: new Date().toISOString() })
     .eq('id', id)
-    .eq('user_id', user.id)
+    .eq('user_id', user.id).eq('status', 'inbox').match(inboxVersion ? { updated_at: inboxVersion } : {}).select('id').single()
   if (error) throw error
   revalidateInbox()
   revalidatePath('/analytics')

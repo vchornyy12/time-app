@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { randomUUID } from 'expo-crypto'
 import {
   Modal,
   View,
@@ -10,49 +11,52 @@ import {
   Platform,
   StyleSheet,
 } from 'react-native'
-import { supabase } from '../lib/supabase'
+import { saveCapture } from '../lib/tasks'
 
 interface CaptureModalProps {
   visible: boolean
   onClose: () => void
   userId: string
+  onCreated: () => void
 }
 
-export function CaptureModal({ visible, onClose, userId }: CaptureModalProps) {
+export function CaptureModal({ visible, onClose, onCreated, userId }: CaptureModalProps) {
   const [title, setTitle] = useState('')
   const [loading, setLoading] = useState(false)
-  const [confirmed, setConfirmed] = useState(false)
+  const pending = useRef(false)
+  const attempt = useRef<{ title: string; userId: string; id: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   async function handleCapture() {
-    if (!title.trim()) return
+    const value = title.trim()
+    if (pending.current || !value || !userId) return
+    if (Array.from(value).length > 500) { setError('Use at most 500 characters.'); return }
+    pending.current = true
     setLoading(true)
     setError(null)
 
-    const { error: insertError } = await supabase
-      .from('tasks')
-      .insert({ title: title.trim(), status: 'inbox', user_id: userId })
+    try {
+      if (!attempt.current || attempt.current.title !== value || attempt.current.userId !== userId) {
+        attempt.current = { title: value, userId, id: randomUUID() }
+      }
+      await saveCapture(attempt.current)
 
-    setLoading(false)
-
-    if (insertError) {
-      setError(insertError.message)
-      return
+      attempt.current = null
+      setTitle('')
+      onCreated()
+    } catch {
+      setError('Unable to save. Try again when connected.')
+    } finally {
+      pending.current = false
+      setLoading(false)
     }
-
-    setConfirmed(true)
-    setTitle('')
-    setTimeout(() => {
-      setConfirmed(false)
-      onClose()
-    }, 800)
   }
 
   function handleClose() {
+    if (pending.current) return
     setTitle('')
     setLoading(false)
     setError(null)
-    setConfirmed(false)
     onClose()
   }
 
@@ -74,38 +78,32 @@ export function CaptureModal({ visible, onClose, userId }: CaptureModalProps) {
           </TouchableOpacity>
         </View>
 
-        {confirmed ? (
-          <View style={styles.confirmed}>
-            <Text style={styles.confirmedText}>Added to Inbox</Text>
-          </View>
-        ) : (
-          <View style={styles.body}>
-            <TextInput
-              style={styles.input}
-              placeholder="What's on your mind?"
-              placeholderTextColor="rgba(255,255,255,0.40)"
-              value={title}
-              onChangeText={setTitle}
-              autoFocus
-              multiline
-              returnKeyType="done"
-              onSubmitEditing={handleCapture}
-              editable={!loading}
-            />
-            {error && <Text style={styles.error}>{error}</Text>}
-            <TouchableOpacity
-              style={[styles.button, (!title.trim() || loading) && styles.buttonDisabled]}
-              onPress={handleCapture}
-              disabled={!title.trim() || loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#000" />
-              ) : (
-                <Text style={styles.buttonText}>Add to Inbox</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
+        <View style={styles.body}>
+          <TextInput
+            style={styles.input}
+            placeholder="What's on your mind?"
+            placeholderTextColor="rgba(255,255,255,0.40)"
+            value={title}
+            onChangeText={setTitle}
+            autoFocus
+            multiline
+            returnKeyType="done"
+            onSubmitEditing={handleCapture}
+            editable={!loading}
+          />
+          {error && <Text style={styles.error}>{error}</Text>}
+          <TouchableOpacity
+            style={[styles.button, (!title.trim() || loading) && styles.buttonDisabled]}
+            onPress={handleCapture}
+            disabled={!title.trim() || loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text style={styles.buttonText}>Add to Inbox</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </KeyboardAvoidingView>
     </Modal>
   )
@@ -146,6 +144,4 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.5 },
   buttonText: { color: '#000', fontSize: 16, fontWeight: '600' },
-  confirmed: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  confirmedText: { color: '#3ECF8E', fontSize: 20, fontWeight: '600' },
 })

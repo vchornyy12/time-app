@@ -1,154 +1,77 @@
-import { useState, useEffect, useCallback } from 'react'
-import {
-  View,
-  SectionList,
-  TouchableOpacity,
-  Text,
-  RefreshControl,
-  StyleSheet,
-} from 'react-native'
+import { useState, useRef } from 'react'
+import { View, SectionList, TouchableOpacity, Text, RefreshControl, StyleSheet, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { supabase } from '../../lib/supabase'
 import { TaskRow } from '../../components/TaskRow'
 import { EmptyState } from '../../components/EmptyState'
 import { CaptureModal } from '../../components/CaptureModal'
-import type { Task } from '@shared/types'
-
-type Section = {
-  title: string
-  data: Task[]
-}
+import { TaskEditor } from '../../components/TaskEditor'
+import { useTaskList } from '../../lib/use-task-list'
+import { completeTask } from '../../lib/tasks'
 
 export default function TodayScreen() {
-  const [sections, setSections] = useState<Section[]>([])
-  const [userId, setUserId] = useState<string>('')
-  const [refreshing, setRefreshing] = useState(false)
+  const calendar = useTaskList('calendar')
+  const nextActions = useTaskList('next_actions')
   const [captureOpen, setCaptureOpen] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  async function fetchTasks() {
-    const { data: sessionData } = await supabase.auth.getSession()
-    const uid = sessionData.session?.user.id
-    if (!uid) return
-    setUserId(uid)
-
-    const startOfToday = new Date()
-    startOfToday.setHours(0, 0, 0, 0)
-    const endOfToday = new Date()
-    endOfToday.setHours(23, 59, 59, 999)
-
-    const [calendarResult, nextActionsResult] = await Promise.all([
-      supabase
-        .from('tasks')
-        .select('id, title, scheduled_at, google_calendar_event_id, contexts, recurrence_rule')
-        .eq('user_id', uid)
-        .eq('status', 'calendar')
-        .gte('scheduled_at', startOfToday.toISOString())
-        .lte('scheduled_at', endOfToday.toISOString())
-        .order('scheduled_at', { ascending: true }),
-      supabase
-        .from('tasks')
-        .select('id, title, contexts, recurrence_rule, created_at')
-        .eq('user_id', uid)
-        .eq('status', 'next_actions')
-        .order('created_at', { ascending: false }),
-    ])
-
-    if (calendarResult.error) {
-      setError(calendarResult.error.message)
-      return
-    }
-    if (nextActionsResult.error) {
-      setError(nextActionsResult.error.message)
-      return
-    }
-
-    const calendarTasks = (calendarResult.data as Task[]) ?? []
-    const nextActions = (nextActionsResult.data as Task[]) ?? []
-
-    const newSections: Section[] = []
-    if (calendarTasks.length > 0) {
-      newSections.push({ title: 'TODAY', data: calendarTasks })
-    }
-    if (nextActions.length > 0) {
-      newSections.push({ title: 'NEXT ACTIONS', data: nextActions })
-    }
-    setSections(newSections)
-    setError(null)
+  const [selected, setSelected] = useState<string | null>(null)
+  const [completionError, setCompletionError] = useState<string | null>(null)
+  const completing = useRef(new Set<string>())
+  const sections = [
+    { title: 'TODAY', data: calendar.tasks, remove: calendar.remove },
+    { title: 'NEXT ACTIONS', data: nextActions.tasks, remove: nextActions.remove },
+  ].filter(section => section.data.length > 0)
+  const error = completionError || calendar.error || nextActions.error
+  async function refresh() {
+    await Promise.all([calendar.reload(), nextActions.reload()])
   }
 
-  useEffect(() => { fetchTasks() }, [])
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true)
-    await fetchTasks()
-    setRefreshing(false)
-  }, [])
-
-  async function handleCompleteTask(taskId: string) {
-    setSections((prev) =>
-      prev
-        .map((s) => ({ ...s, data: s.data.filter((t) => t.id !== taskId) }))
-        .filter((s) => s.data.length > 0),
-    )
-    const { error: updateError } = await supabase
-      .from('tasks')
-      .update({ status: 'done' })
-      .eq('id', taskId)
-    if (updateError) {
-      setError(updateError.message)
-      fetchTasks()
-    }
-  }
-
-  function formatTime(iso: string): string {
-    return new Date(iso).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-    })
+  async function handleCompleteTask(taskId: string, remove: (id: string) => void) {
+    if (completing.current.has(taskId)) return
+    completing.current.add(taskId)
+    try {
+      await completeTask(calendar.userId, taskId)
+      remove(taskId)
+      setCompletionError(null)
+    } catch { setCompletionError('Unable to complete task. Please try again.') }
+    finally { completing.current.delete(taskId) }
   }
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       {error && <Text style={styles.errorBanner}>{error}</Text>}
-
       <SectionList
         sections={sections}
-        keyExtractor={(t) => t.id}
+        keyExtractor={task => task.id}
         contentContainerStyle={styles.list}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3ECF8E" />}
-        ListEmptyComponent={<EmptyState message="Nothing here yet." />}
-        renderSectionHeader={({ section }) => (
-          <Text style={styles.sectionHeader}>{section.title}</Text>
+        refreshControl={<RefreshControl refreshing={calendar.loading || nextActions.loading} onRefresh={refresh} tintColor="#3ECF8E" />}
+        onEndReached={() => { void calendar.loadMore(); void nextActions.loadMore() }}
+        onEndReachedThreshold={0.3}
+        initialNumToRender={12}
+        windowSize={7}
+        ListEmptyComponent={calendar.loading || nextActions.loading ? null : <EmptyState message="Nothing here yet." />}
+        ListFooterComponent={calendar.loading || nextActions.loading ? <ActivityIndicator color="#3ECF8E" /> : null}
+        renderSectionHeader={({ section }) => <Text style={styles.sectionHeader}>{section.title}</Text>}
+        renderItem={({ item, section }) => (
+          <TaskRow
+            title={item.title}
+            onOpen={() => setSelected(item.id)}
+            time={section.title === 'TODAY' && item.scheduled_at ? new Date(item.scheduled_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : undefined}
+            synced={section.title === 'TODAY' ? !!item.google_calendar_event_id : undefined}
+            context={item.contexts?.[0] ?? null}
+            isRecurring={!!item.recurrence_rule}
+            onComplete={() => handleCompleteTask(item.id, section.remove)}
+          />
         )}
-        renderItem={({ item, section }) => {
-          const isCalendar = section.title === 'TODAY'
-          return (
-            <TaskRow
-              title={item.title}
-              time={isCalendar && item.scheduled_at ? formatTime(item.scheduled_at) : undefined}
-              synced={isCalendar ? !!item.google_calendar_event_id : undefined}
-              context={item.contexts?.[0] ?? null}
-              isRecurring={!!item.recurrence_rule}
-              onComplete={() => handleCompleteTask(item.id)}
-            />
-          )
-        }}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         SectionSeparatorComponent={() => <View style={styles.sectionSeparator} />}
         stickySectionHeadersEnabled={false}
       />
-
-      {/* Floating action button */}
-      <TouchableOpacity style={styles.fab} onPress={() => setCaptureOpen(true)}>
+      <TouchableOpacity style={styles.fab} accessibilityRole="button" accessibilityLabel="Capture a task" disabled={!calendar.userId} onPress={() => setCaptureOpen(true)}>
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
-
-      <CaptureModal
-        visible={captureOpen}
-        onClose={() => { setCaptureOpen(false); fetchTasks() }}
-        userId={userId}
-      />
+      <CaptureModal visible={captureOpen} userId={calendar.userId}
+        onClose={() => setCaptureOpen(false)}
+        onCreated={() => { setCaptureOpen(false); void refresh() }} />
+      <TaskEditor taskId={selected} userId={calendar.userId} onClose={() => setSelected(null)} onSaved={() => { setSelected(null); void refresh() }} />
     </SafeAreaView>
   )
 }

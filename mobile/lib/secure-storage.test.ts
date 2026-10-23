@@ -3,7 +3,7 @@ const mocks = vi.hoisted(() => ({ secure: new Map<string,string>(), legacy: new 
 vi.mock('expo-secure-store', () => ({
   WHEN_UNLOCKED_THIS_DEVICE_ONLY: 'device-only',
   getItemAsync: async (key: string) => mocks.secure.get(key) ?? null,
-  setItemAsync: async (key: string, value: string) => { if (mocks.fail && !key.endsWith('secure-index')) throw new Error('locked'); mocks.secure.set(key,value) },
+  setItemAsync: async (key: string, value: string) => { if (mocks.fail && !key.endsWith('secure-index')) throw new Error('locked'); mocks.secure.set(key,Buffer.from(value, 'utf8').toString('utf8')) },
   deleteItemAsync: async (key: string) => { mocks.secure.delete(key) },
 }))
 vi.mock('@react-native-async-storage/async-storage', () => ({ default: {
@@ -13,6 +13,28 @@ vi.mock('@react-native-async-storage/async-storage', () => ({ default: {
 import { secureSessionStorage as storage } from './secure-storage'
 beforeEach(() => { mocks.secure.clear(); mocks.legacy.clear(); mocks.fail = false })
 describe('encrypted session storage lifecycle', () => {
+  it('preserves surrogate pairs across native UTF-8 boundaries and bounds each chunk', async () => {
+    const value = 'a' + '🙂'.repeat(1200) + 'ї'.repeat(1200)
+    await storage.setItem('unicode', value)
+    expect(await storage.getItem('unicode')).toBe(value)
+    for (const [key, part] of mocks.secure) {
+      if (!key.endsWith('secure-index')) expect(Buffer.byteLength(part, 'utf8')).toBeLessThanOrEqual(1800)
+    }
+  })
+  it('clears a corrupt manifest without adopting stale plaintext credentials and allows a new login', async () => {
+    mocks.secure.set('session.secure-index', '{bad json')
+    mocks.legacy.set('session', 'stale credentials')
+    expect(await storage.getItem('session')).toBeNull()
+    await storage.setItem('session', 'new session')
+    expect(await storage.getItem('session')).toBe('new session')
+  })
+  it('fails closed on a missing chunk and permits recovery', async () => {
+    await storage.setItem('session', 'x'.repeat(4000))
+    const manifest = JSON.parse(mocks.secure.get('session.secure-index')!)
+    mocks.secure.delete(`session.${manifest.generation}.1`)
+    expect(await storage.getItem('session')).toBeNull()
+    expect(mocks.secure.size).toBe(0)
+  })
   it('migrates a large unicode session out of plaintext and removes every encrypted chunk on logout', async () => {
     const value = 'synthetic-session-😀'.repeat(300)
     mocks.legacy.set('session',value)

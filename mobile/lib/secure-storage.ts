@@ -17,9 +17,28 @@ type Index = { version: 1; generation: string; count: number }
 async function readIndex(key: string): Promise<Index | null> {
   const raw = await SecureStore.getItemAsync(indexKey(key))
   if (!raw) return null
-  const value = JSON.parse(raw)
-  if (value.version !== 1 || !/^[a-z0-9-]+$/.test(value.generation) || !Number.isInteger(value.count) || value.count < 1 || value.count > 256) throw new Error('Invalid secure session')
-  return value
+  try {
+    const value = JSON.parse(raw)
+    if (!value || value.version !== 1 || typeof value.generation !== 'string' || !/^[a-z0-9-]+$/.test(value.generation) || !Number.isInteger(value.count) || value.count < 1 || value.count > 256) throw new Error('Invalid secure session')
+    return value
+  } catch {
+    // Corruption requires a new login; never fall back to an older plaintext session.
+    await AsyncStorage.removeItem(key)
+    await SecureStore.deleteItemAsync(indexKey(key))
+    return null
+  }
+}
+function chunks(value: string): string[] {
+  const result: string[] = []
+  let part = '', bytes = 0
+  for (const character of value) {
+    const point = character.codePointAt(0)!
+    const size = point <= 0x7f ? 1 : point <= 0x7ff ? 2 : point <= 0xffff ? 3 : 4
+    if (bytes + size > 1800) { result.push(part); part = ''; bytes = 0 }
+    part += character; bytes += size
+  }
+  result.push(part)
+  return result
 }
 const partKey = (key: string, index: Index, part: number) => `${key}.${index.generation}.${part}`
 async function removeParts(key: string, index: Index | null) {
@@ -27,11 +46,12 @@ async function removeParts(key: string, index: Index | null) {
 }
 async function write(key: string, value: string) {
   const previous = await readIndex(key)
-  const count = Math.max(1, Math.ceil(value.length / 400))
+  const parts = chunks(value)
+  const count = parts.length
   if (count > 256) throw new Error('Session exceeds secure storage limit')
   const index: Index = { version: 1, generation: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`, count }
   try {
-    for (let n = 0; n < count; n++) await SecureStore.setItemAsync(partKey(key, index, n), value.slice(n * 400, (n + 1) * 400), options)
+    for (let n = 0; n < count; n++) await SecureStore.setItemAsync(partKey(key, index, n), parts[n], options)
     await SecureStore.setItemAsync(indexKey(key), JSON.stringify(index), options)
   } catch (error) {
     await removeParts(key, index).catch(() => {})
@@ -49,7 +69,12 @@ export const secureSessionStorage = {
       return legacy
     }
     const parts = await Promise.all(Array.from({ length: index.count }, (_, n) => SecureStore.getItemAsync(partKey(key, index, n))))
-    if (parts.some(part => part === null)) throw new Error('Incomplete secure session')
+    if (parts.some(part => part === null)) {
+      await AsyncStorage.removeItem(key)
+      await SecureStore.deleteItemAsync(indexKey(key))
+      await removeParts(key, index)
+      return null
+    }
     return parts.join('')
   }),
   setItem: (key: string, value: string) => serialized(key, () => write(key, value)),
