@@ -306,6 +306,39 @@ a:focus-visible,
   }
 }
 
+/* The public landing page stays readable without hydration or animation APIs. */
+.landing-faq-summary::-webkit-details-marker {
+  display: none;
+}
+
+.landing-scroll-progress {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @media (hover: hover) and (pointer: fine) {
+    .landing-hover-lift {
+      transition: transform 180ms ease-out;
+    }
+    .landing-hover-lift:hover {
+      transform: translateY(-4px);
+    }
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .landing-scroll-progress {
+      display: block;
+      animation: landing-scroll-progress linear;
+      animation-timeline: scroll();
+    }
+  }
+}
+
+@keyframes landing-scroll-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
 /* ── Surface utilities ──────────────────────────────────── */
 
 @layer utilities {

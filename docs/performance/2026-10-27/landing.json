@@ -1,0 +1,762 @@
+[
+  {
+    "width": 320,
+    "status": 200,
+    "viewport": 320,
+    "documentWidth": 320,
+    "bodyWidth": 320,
+    "h1": {
+      "x": 24,
+      "y": 156,
+      "width": 272,
+      "height": 180,
+      "top": 156,
+      "right": 296,
+      "bottom": 336,
+      "left": 24
+    },
+    "horizontalOffenders": [],
+    "smallTargets": [
+      {
+        "text": "Sign in",
+        "width": 42.375,
+        "height": 20
+      },
+      {
+        "text": "Try it free →",
+        "width": 77.59375,
+        "height": 20
+      },
+      {
+        "text": "Start your diary →",
+        "width": 115.625,
+        "height": 20
+      },
+      {
+        "text": "Privacy Policy",
+        "width": 75.96875,
+        "height": 16
+      },
+      {
+        "text": "Terms of Service",
+        "width": 92.25,
+        "height": 16
+      }
+    ],
+    "lcp": 4640,
+    "cls": 0,
+    "longTasks": [],
+    "errors": [],
+    "faqWorks": null
+  },
+  {
+    "width": 360,
+    "status": 200,
+    "viewport": 360,
+    "documentWidth": 360,
+    "bodyWidth": 360,
+    "h1": {
+      "x": 24,
+      "y": 156,
+      "width": 312,
+      "height": 135,
+      "top": 156,
+      "right": 336,
+      "bottom": 291,
+      "left": 24
+    },
+    "horizontalOffenders": [],
+    "smallTargets": [
+      {
+        "text": "Sign in",
+        "width": 42.375,
+        "height": 20
+      },
+      {
+        "text": "Try it free →",
+        "width": 77.59375,
+        "height": 20
+      },
+      {
+        "text": "Start your diary →",
+        "width": 115.625,
+        "height": 20
+      },
+      {
+        "text": "Privacy Policy",
+        "width": 75.96875,
+        "height": 16
+      },
+      {
+        "text": "Terms of Service",
+        "width": 92.25,
+        "height": 16
+      }
+    ],
+    "lcp": 2712,
+    "cls": 0,
+    "longTasks": [],
+    "errors": [],
+    "faqWorks": null
+  },
+  {
+    "width": 390,
+    "status": 200,
+    "viewport": 390,
+    "documentWidth": 390,
+    "bodyWidth": 390,
+    "h1": {
+      "x": 24,
+      "y": 156,
+      "width": 342,
+      "height": 135,
+      "top": 156,
+      "right": 366,
+      "bottom": 291,
+      "left": 24
+    },
+    "horizontalOffenders": [],
+    "smallTargets": [
+      {
+        "text": "Sign in",
+        "width": 42.375,
+        "height": 20
+      },
+      {
+        "text": "Try it free →",
+        "width": 77.59375,
+        "height": 20
+      },
+      {
+        "text": "Start your diary →",
+        "width": 115.625,
+        "height": 20
+      },
+      {
+        "text": "Privacy Policy",
+        "width": 75.96875,
+        "height": 16
+      },
+      {
+        "text": "Terms of Service",
+        "width": 92.25,
+        "height": 16
+      }
+    ],
+    "lcp": 2460,
+    "cls": 0,
+    "longTasks": [],
+    "errors": [],
+    "faqWorks": null
+  },
+  {
+    "width": 430,
+    "status": 200,
+    "viewport": 430,
+    "documentWidth": 430,
+    "bodyWidth": 430,
+    "h1": {
+      "x": 24,
+      "y": 156,
+      "width": 382,
+      "height": 135,
+      "top": 156,
+      "right": 406,
+      "bottom": 291,
+      "left": 24
+    },
+    "horizontalOffenders": [],
+    "smallTargets": [
+      {
+        "text": "Sign in",
+        "width": 42.375,
+        "height": 20
+      },
+      {
+        "text": "Try it free →",
+        "width": 77.59375,
+        "height": 20
+      },
+      {
+        "text": "Start your diary →",
+        "width": 115.625,
+        "height": 20
+      },
+      {
+        "text": "Privacy Policy",
+        "width": 75.96875,
+        "height": 16
+      },
+      {
+        "text": "Terms of Service",
+        "width": 92.25,
+        "height": 16
+      }
+    ],
+    "lcp": 2332,
+    "cls": 0,
+    "longTasks": [],
+    "errors": [],
+    "faqWorks": null
+  },
+  {
+    "width": 768,
+    "status": 200,
+    "viewport": 768,
+    "documentWidth": 768,
+    "bodyWidth": 768,
+    "h1": {
+      "x": 24,
+      "y": 188,
+      "width": 720,
+      "height": 120,
+      "top": 188,
+      "right": 744,
+      "bottom": 308,
+      "left": 24
+    },
+    "horizontalOffenders": [],
+    "smallTargets": [
+      {
+        "text": "Sign in",
+        "width": 42.375,
+        "height": 20
+      },
+      {
+        "text": "Try it free →",
+        "width": 77.59375,
+        "height": 20
+      },
+      {
+        "text": "Start your diary →",
+        "width": 115.625,
+        "height": 20
+      },
+      {
+        "text": "Privacy Policy",
+        "width": 75.96875,
+        "height": 16
+      },
+      {
+        "text": "Terms of Service",
+        "width": 92.25,
+        "height": 16
+      }
+    ],
+    "lcp": 2016,
+    "cls": 0,
+    "longTasks": [],
+    "errors": [],
+    "faqWorks": null
+  },
+  {
+    "width": 1024,
+    "status": 200,
+    "viewport": 1024,
+    "documentWidth": 1024,
+    "bodyWidth": 1024,
+    "h1": {
+      "x": 24,
+      "y": 220,
+      "width": 456,
+      "height": 180,
+      "top": 220,
+      "right": 480,
+      "bottom": 400,
+      "left": 24
+    },
+    "horizontalOffenders": [],
+    "smallTargets": [
+      {
+        "text": "Sign in",
+        "width": 42.375,
+        "height": 20
+      },
+      {
+        "text": "Try it free →",
+        "width": 77.59375,
+        "height": 20
+      },
+      {
+        "text": "Start your diary →",
+        "width": 115.625,
+        "height": 20
+      },
+      {
+        "text": "Privacy Policy",
+        "width": 75.96875,
+        "height": 16
+      },
+      {
+        "text": "Terms of Service",
+        "width": 92.25,
+        "height": 16
+      }
+    ],
+    "lcp": 2180,
+    "cls": 0,
+    "longTasks": [],
+    "errors": [],
+    "faqWorks": null
+  },
+  {
+    "width": 1440,
+    "status": 200,
+    "viewport": 1440,
+    "documentWidth": 1440,
+    "bodyWidth": 1440,
+    "h1": {
+      "x": 168,
+      "y": 220,
+      "width": 520,
+      "height": 120,
+      "top": 220,
+      "right": 688,
+      "bottom": 340,
+      "left": 168
+    },
+    "horizontalOffenders": [],
+    "smallTargets": [
+      {
+        "text": "Sign in",
+        "width": 42.375,
+        "height": 20
+      },
+      {
+        "text": "Try it free →",
+        "width": 77.59375,
+        "height": 20
+      },
+      {
+        "text": "Start your diary →",
+        "width": 115.625,
+        "height": 20
+      },
+      {
+        "text": "Privacy Policy",
+        "width": 75.96875,
+        "height": 16
+      },
+      {
+        "text": "Terms of Service",
+        "width": 92.25,
+        "height": 16
+      }
+    ],
+    "lcp": 2496,
+    "cls": 0,
+    "longTasks": [],
+    "errors": [],
+    "faqWorks": null
+  },
+  {
+    "width": 1920,
+    "status": 200,
+    "viewport": 1920,
+    "documentWidth": 1920,
+    "bodyWidth": 1920,
+    "h1": {
+      "x": 408,
+      "y": 220,
+      "width": 520,
+      "height": 120,
+      "top": 220,
+      "right": 928,
+      "bottom": 340,
+      "left": 408
+    },
+    "horizontalOffenders": [],
+    "smallTargets": [
+      {
+        "text": "Sign in",
+        "width": 42.375,
+        "height": 20
+      },
+      {
+        "text": "Try it free →",
+        "width": 77.59375,
+        "height": 20
+      },
+      {
+        "text": "Start your diary →",
+        "width": 115.625,
+        "height": 20
+      },
+      {
+        "text": "Privacy Policy",
+        "width": 75.96875,
+        "height": 16
+      },
+      {
+        "text": "Terms of Service",
+        "width": 92.25,
+        "height": 16
+      }
+    ],
+    "lcp": 1620,
+    "cls": 0,
+    "longTasks": [],
+    "errors": [],
+    "faqWorks": null
+  },
+  {
+    "sample": 0,
+    "profile": "mobile-4xCPU-1.6Mbps-150ms",
+    "transferred": 314135,
+    "ttfb": 399.5,
+    "fcp": 2432,
+    "domContentLoaded": 829.5999999999767,
+    "lcp": 3284,
+    "cls": 0,
+    "longTasks": [
+      65
+    ],
+    "resources": [
+      {
+        "name": "https://time24.pro/_next/static/media/7d4881bb7e1bf84d-s.p.woff2",
+        "encoded": 23108,
+        "transfer": 23408,
+        "type": "link"
+      },
+      {
+        "name": "https://time24.pro/_next/static/css/dd7717a82a8116b4.css",
+        "encoded": 12010,
+        "transfer": 12310,
+        "type": "link"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/webpack-fd201933dd7a3824.js",
+        "encoded": 1727,
+        "transfer": 2027,
+        "type": "link"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/4bd1b696-8cd12253b448cc13.js",
+        "encoded": 61509,
+        "transfer": 61809,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/3794-04350b0fcecd82e5.js",
+        "encoded": 63413,
+        "transfer": 63713,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/main-app-2afa104d73434118.js",
+        "encoded": 529,
+        "transfer": 829,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/app/layout-2d8f456ee330b1b2.js",
+        "encoded": 1560,
+        "transfer": 1860,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/44530001-0393003bbddf7a02.js",
+        "encoded": 13768,
+        "transfer": 14068,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/5686-0d82c2ec6b20db09.js",
+        "encoded": 52609,
+        "transfer": 52909,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/8500-63a4afbeacab3b52.js",
+        "encoded": 3157,
+        "transfer": 3457,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/7223-777c9b8f2626a56f.js",
+        "encoded": 48586,
+        "transfer": 48886,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/5201-c72232d6511406eb.js",
+        "encoded": 5525,
+        "transfer": 5825,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/app/page-cddd5a86199902f4.js",
+        "encoded": 9266,
+        "transfer": 9566,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/login?_rsc=5CB68i4pnAekjehf",
+        "encoded": 163,
+        "transfer": 463,
+        "type": "fetch"
+      },
+      {
+        "name": "https://time24.pro/register?_rsc=5CB68i4pnAekjehf",
+        "encoded": 165,
+        "transfer": 465,
+        "type": "fetch"
+      },
+      {
+        "name": "https://time24.pro/login?_rsc=tXyZJ52UQVBCVsD3",
+        "encoded": 832,
+        "transfer": 1132,
+        "type": "fetch"
+      },
+      {
+        "name": "https://time24.pro/register?_rsc=tXyZJ52UQVBCVsD3",
+        "encoded": 831,
+        "transfer": 1131,
+        "type": "fetch"
+      }
+    ],
+    "bodyTextVisible": "1"
+  },
+  {
+    "sample": 1,
+    "profile": "mobile-4xCPU-1.6Mbps-150ms",
+    "transferred": 314004,
+    "ttfb": 623.5,
+    "fcp": 2660,
+    "domContentLoaded": 1092.1999999999534,
+    "lcp": 3508,
+    "cls": 0,
+    "longTasks": [
+      64
+    ],
+    "resources": [
+      {
+        "name": "https://time24.pro/_next/static/media/7d4881bb7e1bf84d-s.p.woff2",
+        "encoded": 23108,
+        "transfer": 23408,
+        "type": "link"
+      },
+      {
+        "name": "https://time24.pro/_next/static/css/dd7717a82a8116b4.css",
+        "encoded": 12009,
+        "transfer": 12309,
+        "type": "link"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/webpack-fd201933dd7a3824.js",
+        "encoded": 1727,
+        "transfer": 2027,
+        "type": "link"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/4bd1b696-8cd12253b448cc13.js",
+        "encoded": 61386,
+        "transfer": 61686,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/main-app-2afa104d73434118.js",
+        "encoded": 529,
+        "transfer": 829,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/app/layout-2d8f456ee330b1b2.js",
+        "encoded": 1611,
+        "transfer": 1911,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/3794-04350b0fcecd82e5.js",
+        "encoded": 63208,
+        "transfer": 63508,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/44530001-0393003bbddf7a02.js",
+        "encoded": 13777,
+        "transfer": 14077,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/5686-0d82c2ec6b20db09.js",
+        "encoded": 52497,
+        "transfer": 52797,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/8500-63a4afbeacab3b52.js",
+        "encoded": 3157,
+        "transfer": 3457,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/5201-c72232d6511406eb.js",
+        "encoded": 5424,
+        "transfer": 5724,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/7223-777c9b8f2626a56f.js",
+        "encoded": 48769,
+        "transfer": 49069,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/app/page-cddd5a86199902f4.js",
+        "encoded": 9228,
+        "transfer": 9528,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/login?_rsc=5CB68i4pnAekjehf",
+        "encoded": 163,
+        "transfer": 463,
+        "type": "fetch"
+      },
+      {
+        "name": "https://time24.pro/register?_rsc=5CB68i4pnAekjehf",
+        "encoded": 165,
+        "transfer": 465,
+        "type": "fetch"
+      },
+      {
+        "name": "https://time24.pro/login?_rsc=tXyZJ52UQVBCVsD3",
+        "encoded": 828,
+        "transfer": 1128,
+        "type": "fetch"
+      },
+      {
+        "name": "https://time24.pro/register?_rsc=tXyZJ52UQVBCVsD3",
+        "encoded": 829,
+        "transfer": 1129,
+        "type": "fetch"
+      }
+    ],
+    "bodyTextVisible": "1"
+  },
+  {
+    "sample": 2,
+    "profile": "mobile-4xCPU-1.6Mbps-150ms",
+    "transferred": 314009,
+    "ttfb": 591.5,
+    "fcp": 3140,
+    "domContentLoaded": 1055.9000000000233,
+    "lcp": 3488,
+    "cls": 0,
+    "longTasks": [
+      64
+    ],
+    "resources": [
+      {
+        "name": "https://time24.pro/_next/static/media/7d4881bb7e1bf84d-s.p.woff2",
+        "encoded": 23108,
+        "transfer": 23408,
+        "type": "link"
+      },
+      {
+        "name": "https://time24.pro/_next/static/css/dd7717a82a8116b4.css",
+        "encoded": 11960,
+        "transfer": 12260,
+        "type": "link"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/webpack-fd201933dd7a3824.js",
+        "encoded": 1726,
+        "transfer": 2026,
+        "type": "link"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/4bd1b696-8cd12253b448cc13.js",
+        "encoded": 61443,
+        "transfer": 61743,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/main-app-2afa104d73434118.js",
+        "encoded": 529,
+        "transfer": 829,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/app/layout-2d8f456ee330b1b2.js",
+        "encoded": 1592,
+        "transfer": 1892,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/3794-04350b0fcecd82e5.js",
+        "encoded": 63441,
+        "transfer": 63741,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/44530001-0393003bbddf7a02.js",
+        "encoded": 13720,
+        "transfer": 14020,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/5686-0d82c2ec6b20db09.js",
+        "encoded": 52511,
+        "transfer": 52811,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/8500-63a4afbeacab3b52.js",
+        "encoded": 3157,
+        "transfer": 3457,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/7223-777c9b8f2626a56f.js",
+        "encoded": 48589,
+        "transfer": 48889,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/5201-c72232d6511406eb.js",
+        "encoded": 5418,
+        "transfer": 5718,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/_next/static/chunks/app/page-cddd5a86199902f4.js",
+        "encoded": 9228,
+        "transfer": 9528,
+        "type": "script"
+      },
+      {
+        "name": "https://time24.pro/login?_rsc=5CB68i4pnAekjehf",
+        "encoded": 163,
+        "transfer": 463,
+        "type": "fetch"
+      },
+      {
+        "name": "https://time24.pro/register?_rsc=5CB68i4pnAekjehf",
+        "encoded": 165,
+        "transfer": 465,
+        "type": "fetch"
+      },
+      {
+        "name": "https://time24.pro/login?_rsc=tXyZJ52UQVBCVsD3",
+        "encoded": 832,
+        "transfer": 1132,
+        "type": "fetch"
+      },
+      {
+        "name": "https://time24.pro/register?_rsc=tXyZJ52UQVBCVsD3",
+        "encoded": 833,
+        "transfer": 1133,
+        "type": "fetch"
+      }
+    ],
+    "bodyTextVisible": "1"
+  },
+  {
+    "noJavaScript": {
+      "h1Opacity": "0",
+      "hiddenMainElements": 76
+    }
+  }
+]

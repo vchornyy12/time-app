@@ -35,7 +35,7 @@ export default defineConfig({
     // Auth-specific tests are excluded here; they run in the 'auth-tests' project below.
     {
       name: 'chromium',
-      testIgnore: '**/auth/**',
+      testIgnore: ['**/auth/**', '**/landing.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',

@@ -1,0 +1,45 @@
+{
+  "faq": {
+    "opens": true,
+    "closes": true,
+    "ariaExpanded": null,
+    "ariaControls": null
+  },
+  "reducedMotion": {
+    "requested": true,
+    "ctaShadowStillChanges": true
+  },
+  "font": {
+    "h1": "-apple-system, \"system-ui\", \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
+    "loadedFonts": [
+      {
+        "family": "Geist Mono",
+        "status": "unloaded"
+      },
+      {
+        "family": "Geist Mono",
+        "status": "unloaded"
+      },
+      {
+        "family": "Geist Mono",
+        "status": "unloaded"
+      },
+      {
+        "family": "Geist Mono",
+        "status": "unloaded"
+      },
+      {
+        "family": "Geist Mono",
+        "status": "unloaded"
+      },
+      {
+        "family": "Geist Mono",
+        "status": "unloaded"
+      },
+      {
+        "family": "Geist Mono Fallback",
+        "status": "unloaded"
+      }
+    ]
+  }
+}

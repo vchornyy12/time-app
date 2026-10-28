@@ -7,6 +7,8 @@ import "./globals.css";
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  // Marketing pages use system fonts; load monospace only when a page uses it.
+  preload: false,
 });
 
 export const dynamic = 'force-dynamic';
