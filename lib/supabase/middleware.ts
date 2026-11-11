@@ -8,7 +8,8 @@ export async function updateSession(request: NextRequest, requestHeaders = new H
   // errors. Cookie-only redirects would otherwise prevent native authentication.
   // Gmail's internal scheduler and worker routes use a service-key bearer
   // check, so they must not be intercepted by the cookie-only page redirect.
-  if (['/api/mobile/process-inbox', '/api/gmail/scan-worker', '/api/gmail/scheduler'].includes(request.nextUrl.pathname)) {
+  // Netlify invokes the background function through this reserved path.
+  if (['/api/mobile/process-inbox', '/api/gmail/scan-worker', '/api/gmail/scheduler', '/.netlify/functions/gmail-scan-worker-background'].includes(request.nextUrl.pathname)) {
     return supabaseResponse
   }
 
