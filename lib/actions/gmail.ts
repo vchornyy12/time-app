@@ -116,6 +116,7 @@ export async function startGmailScan(consent: boolean, batchSize: number): Promi
     const endpoint = new URL('/.netlify/functions/gmail-scan-worker-background', origin)
     const response = await fetch(endpoint, {
       method: 'POST', cache: 'no-store', signal: AbortSignal.timeout(8000),
+      redirect: 'manual',
       headers: { Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ runId }),
     })

@@ -27,6 +27,7 @@ export async function POST(request: Request) {
     try {
       const response = await fetch(endpoint, {
         method: 'POST', cache: 'no-store', signal: AbortSignal.timeout(8000),
+        redirect: 'manual',
         headers: { Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ runId: run_id }),
       })

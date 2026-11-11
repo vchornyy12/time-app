@@ -24,6 +24,7 @@ export default async function handler(request) {
       headers: { Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ runId, workerToken }),
       signal: AbortSignal.timeout(60000),
+      redirect: 'manual',
     })
     if (!response.ok) throw new Error(`Gmail scan worker request failed (${response.status}).`)
     const result = await response.json()

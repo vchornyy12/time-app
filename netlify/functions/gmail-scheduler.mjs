@@ -8,6 +8,7 @@ export default async function handler() {
     method: 'POST',
     headers: { Authorization: `Bearer ${serviceKey}` },
     signal: AbortSignal.timeout(25000),
+    redirect: 'manual',
   })
   if (!response.ok) throw new Error(`Gmail scheduler request failed (${response.status}).`)
   return new Response(null, { status: 202 })

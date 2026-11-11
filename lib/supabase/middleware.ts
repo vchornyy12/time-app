@@ -6,7 +6,11 @@ export async function updateSession(request: NextRequest, requestHeaders = new H
   let supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } })
   // This exact endpoint verifies a mobile bearer token itself and returns JSON
   // errors. Cookie-only redirects would otherwise prevent native authentication.
-  if (request.nextUrl.pathname === '/api/mobile/process-inbox') return supabaseResponse
+  // Gmail's internal scheduler and worker routes use a service-key bearer
+  // check, so they must not be intercepted by the cookie-only page redirect.
+  if (['/api/mobile/process-inbox', '/api/gmail/scan-worker', '/api/gmail/scheduler'].includes(request.nextUrl.pathname)) {
+    return supabaseResponse
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
