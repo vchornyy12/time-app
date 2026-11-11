@@ -3,6 +3,10 @@ import { redirect } from 'next/navigation'
 import { createClient, getUser } from '@/lib/supabase/server'
 import { GoogleCalendarCard } from '@/components/settings/GoogleCalendarCard'
 import { AccountCard } from '@/components/settings/AccountCard'
+import { GmailInboxCard } from '@/components/settings/GmailInboxCard'
+import { gmailAvailable } from '@/lib/gmail/config'
+import type { GmailSettings } from '@/lib/gmail/settings'
+import { LLMKeyCard } from '@/components/settings/LLMKeyCard'
 
 export const metadata: Metadata = { title: 'Settings' }
 
@@ -15,11 +19,11 @@ const ERROR_MESSAGES: Record<string, string> = {
 }
 
 interface PageProps {
-  searchParams: Promise<{ connected?: string; error?: string }>
+  searchParams: Promise<{ connected?: string; error?: string; gmail?: string }>
 }
 
 export default async function SettingsPage({ searchParams }: PageProps) {
-  const { connected, error } = await searchParams
+  const { connected, error, gmail } = await searchParams
 
   const supabase = await createClient()
   const {
@@ -36,6 +40,18 @@ export default async function SettingsPage({ searchParams }: PageProps) {
 
   const isConnected = !!integration?.google_connected
   const calendarConnected = integration?.calendar_connected ?? false
+  const { data: llmSettings } = await supabase.from('user_llm_settings')
+    .select('connected, model').eq('user_id', user.id).maybeSingle()
+  const gmailEnabled = gmailAvailable()
+  // Feature gate keeps existing deployments working before the migration runs.
+  let gmailSettings: GmailSettings | null = null
+  let gmailLoadError = false
+  if (gmailEnabled) {
+    const result = await supabase.from('gmail_integrations')
+      .select('account_email, connected, scan_frequency, scan_time, scan_timezone, scan_batch_size, auto_scan_consent').eq('user_id', user.id).maybeSingle()
+    gmailSettings = result.data as GmailSettings | null
+    gmailLoadError = !!result.error
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -54,6 +70,13 @@ export default async function SettingsPage({ searchParams }: PageProps) {
           errorMessage={error ? (ERROR_MESSAGES[error] ?? 'Something went wrong.') : undefined}
           justConnected={connected === '1'}
         />
+        <GmailInboxCard key={`${gmailSettings?.account_email}:${gmailSettings?.connected}`}
+          settings={gmailSettings} available={gmailEnabled} loadError={gmailLoadError} result={gmail} />
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-xs font-medium uppercase tracking-wide mb-3" style={{ color: 'var(--text-tertiary)' }}>AI</h2>
+        <LLMKeyCard connected={!!llmSettings?.connected} model={llmSettings?.model ?? 'gpt-4o-mini'} />
       </section>
 
       <section className="mt-10">

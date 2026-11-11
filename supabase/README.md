@@ -1,5 +1,31 @@
 # Data API privileges
 
+## Gmail inbox foundation
+
+`20261106000000_gmail_inbox_foundation.sql` adds Gmail connection settings,
+service-only Vault credential RPCs, and an owner-readable processing ledger.
+Apply it before enabling `GMAIL_INBOX_ENABLED`. See
+[`docs/gmail-inbox.md`](../docs/gmail-inbox.md) for OAuth configuration and rollout.
+This step does not schedule scans or run AI analysis.
+
+## Gmail scan controls
+
+Apply `20261112000000_gmail_scan_preferences.sql` after the Gmail connection and
+suggestion migrations. It adds owner-readable cadence, local-time, timezone,
+batch-size, and automatic-scan consent preferences. Then apply
+`20261113000000_gmail_scan_runs.sql` to add the durable queue, leases, progress,
+and scheduled run calculation. Automatic schedules execute from the published
+Netlify deploy; branch deploys support manual scans but do not run the schedule
+automatically.
+
+Run its isolated RLS, deduplication, and credential lifecycle checks with:
+
+```sh
+node scripts/test-gmail-foundation.mjs /path/to/@electric-sql/pglite/dist/index.js
+```
+
+## Table privileges
+
 Every new public table must enable RLS, define its policies, and include explicit table grants in the same migration. Do not rely on Supabase automatic grants or grant access to all tables in the schema.
 
 For private user data, use:

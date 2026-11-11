@@ -916,3 +916,163 @@ GRANT EXECUTE ON FUNCTION public.add_project_plan_step(uuid, uuid, text) TO auth
 GRANT EXECUTE ON FUNCTION public.complete_project_step(uuid, uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.complete_project(uuid) TO authenticated;
 COMMIT;
+
+-- Gmail inbox foundation (20261106000000)
+-- Step 1 only: connection, filter and processing ledger. No scans are scheduled.
+-- Requires Supabase Vault from 20261020000004_private_google_tokens.sql.
+BEGIN;
+
+CREATE TABLE public.gmail_integrations (
+  user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  account_email text NOT NULL CHECK (length(account_email) BETWEEN 3 AND 320),
+  connected boolean NOT NULL DEFAULT false,
+  label_name text NOT NULL DEFAULT 'AI Inbox'
+    CHECK (length(btrim(label_name)) BETWEEN 1 AND 100 AND label_name !~ '[[:cntrl:]]'),
+  start_at timestamptz NOT NULL DEFAULT now(),
+  scan_frequency text NOT NULL DEFAULT 'manual' CHECK (scan_frequency IN ('manual', 'daily', 'twice_daily')),
+  scan_time time NOT NULL DEFAULT '08:00',
+  scan_timezone text NOT NULL DEFAULT 'UTC' CHECK (length(scan_timezone) BETWEEN 1 AND 64),
+  scan_batch_size integer NOT NULL DEFAULT 50 CHECK (scan_batch_size IN (25, 50, 100, 500)),
+  auto_scan_consent boolean NOT NULL DEFAULT false,
+  token_secret_id uuid,
+  CHECK (connected = (token_secret_id IS NOT NULL))
+);
+
+-- User-owned LLM provider settings. API credentials stay in Supabase Vault.
+CREATE TABLE IF NOT EXISTS public.user_llm_settings (
+  user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  provider text NOT NULL DEFAULT 'openai' CHECK (provider = 'openai'),
+  model text NOT NULL DEFAULT 'gpt-4o-mini' CHECK (length(model) BETWEEN 1 AND 100),
+  connected boolean NOT NULL DEFAULT false,
+  secret_id uuid,
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  CHECK (connected = (secret_id IS NOT NULL))
+);
+ALTER TABLE public.user_llm_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY user_llm_settings_owner_read ON public.user_llm_settings FOR SELECT TO authenticated
+  USING (user_id = (SELECT auth.uid()));
+REVOKE ALL ON public.user_llm_settings FROM PUBLIC, anon, authenticated;
+GRANT SELECT (user_id, provider, model, connected, updated_at) ON public.user_llm_settings TO authenticated;
+GRANT ALL ON public.user_llm_settings TO service_role;
+ALTER TABLE public.gmail_integrations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY gmail_owner_read ON public.gmail_integrations FOR SELECT TO authenticated
+  USING (user_id = (SELECT auth.uid()));
+CREATE POLICY gmail_owner_label ON public.gmail_integrations FOR UPDATE TO authenticated
+  USING (user_id = (SELECT auth.uid())) WITH CHECK (user_id = (SELECT auth.uid()));
+REVOKE ALL ON public.gmail_integrations FROM PUBLIC, anon, authenticated;
+GRANT SELECT (user_id, account_email, connected, label_name, start_at, scan_frequency, scan_time, scan_timezone, scan_batch_size, auto_scan_consent)
+  ON public.gmail_integrations TO authenticated;
+GRANT UPDATE (label_name, scan_frequency, scan_time, scan_timezone, scan_batch_size, auto_scan_consent) ON public.gmail_integrations TO authenticated;
+GRANT ALL ON public.gmail_integrations TO service_role;
+
+-- No email bodies or credentials in the ledger. Preserve rows on disconnect so
+-- reconnecting or relabeling an email cannot silently process it a second time.
+CREATE TABLE public.gmail_processed_messages (
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  account_email text NOT NULL CHECK (length(account_email) BETWEEN 3 AND 320),
+  message_id text NOT NULL CHECK (length(message_id) BETWEEN 1 AND 256),
+  status text NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'processing', 'processed', 'failed')),
+  attempts integer NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  processed_at timestamptz,
+  PRIMARY KEY (user_id, account_email, message_id),
+  CHECK ((status = 'processed') = (processed_at IS NOT NULL))
+);
+CREATE INDEX gmail_pending_messages ON public.gmail_processed_messages (user_id, created_at)
+  WHERE status IN ('pending', 'failed');
+ALTER TABLE public.gmail_processed_messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY gmail_message_owner_read ON public.gmail_processed_messages FOR SELECT TO authenticated
+  USING (user_id = (SELECT auth.uid()));
+REVOKE ALL ON public.gmail_processed_messages FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON public.gmail_processed_messages TO authenticated;
+GRANT ALL ON public.gmail_processed_messages TO service_role;
+
+-- Persist only suggested task text and minimal source metadata; never store email bodies.
+CREATE TABLE public.gmail_task_suggestions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  account_email text NOT NULL CHECK (length(account_email) BETWEEN 3 AND 320),
+  message_id text NOT NULL CHECK (length(message_id) BETWEEN 1 AND 256),
+  title text NOT NULL CHECK (length(btrim(title)) BETWEEN 1 AND 500),
+  subject text NOT NULL DEFAULT '' CHECK (length(subject) <= 500),
+  sender text NOT NULL DEFAULT '' CHECK (length(sender) <= 500),
+  received_at timestamptz,
+  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'dismissed')),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  decided_at timestamptz,
+  UNIQUE (user_id, account_email, message_id),
+  CHECK ((status = 'pending') = (decided_at IS NULL))
+);
+CREATE INDEX gmail_pending_task_suggestions ON public.gmail_task_suggestions (user_id, created_at) WHERE status = 'pending';
+ALTER TABLE public.gmail_task_suggestions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY gmail_suggestions_owner_read ON public.gmail_task_suggestions FOR SELECT TO authenticated
+  USING (user_id = (SELECT auth.uid()));
+REVOKE ALL ON public.gmail_task_suggestions FROM PUBLIC, anon, authenticated;
+GRANT SELECT (id, user_id, message_id, title, subject, sender, received_at, created_at) ON public.gmail_task_suggestions TO authenticated;
+GRANT ALL ON public.gmail_task_suggestions TO service_role;
+
+CREATE FUNCTION public.set_gmail_integration_secret(p_user_id uuid, p_account_email text, p_refresh_token text)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE secret_id uuid;
+BEGIN
+  IF p_refresh_token IS NULL OR length(p_refresh_token) NOT BETWEEN 1 AND 10000
+    OR p_account_email IS NULL OR length(p_account_email) NOT BETWEEN 3 AND 320 THEN
+    RAISE EXCEPTION 'Invalid Gmail integration';
+  END IF;
+  -- Insert and lock the user's row, serializing initial connection and rotation.
+  INSERT INTO public.gmail_integrations(user_id, account_email)
+    VALUES (p_user_id, lower(p_account_email)) ON CONFLICT (user_id) DO NOTHING;
+  SELECT token_secret_id INTO secret_id FROM public.gmail_integrations
+    WHERE user_id = p_user_id FOR UPDATE;
+  IF secret_id IS NULL THEN
+    secret_id := vault.create_secret(p_refresh_token);
+  ELSE
+    PERFORM vault.update_secret(secret_id, p_refresh_token);
+  END IF;
+  UPDATE public.gmail_integrations SET
+    start_at = CASE WHEN account_email = lower(p_account_email) THEN start_at ELSE now() END,
+    account_email = lower(p_account_email), token_secret_id = secret_id, connected = true
+    WHERE user_id = p_user_id;
+END;
+$$;
+
+CREATE FUNCTION public.get_gmail_integration_secret(p_user_id uuid)
+RETURNS text LANGUAGE sql SECURITY DEFINER SET search_path = '' AS $$
+  SELECT s.decrypted_secret FROM public.gmail_integrations i
+  JOIN vault.decrypted_secrets s ON s.id = i.token_secret_id
+  WHERE i.user_id = p_user_id AND i.connected;
+$$;
+
+CREATE FUNCTION public.clear_gmail_integration_secret(p_user_id uuid)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE secret_id uuid;
+BEGIN
+  SELECT token_secret_id INTO secret_id FROM public.gmail_integrations
+    WHERE user_id = p_user_id FOR UPDATE;
+  UPDATE public.gmail_integrations SET token_secret_id = NULL, connected = false
+    WHERE user_id = p_user_id;
+  IF secret_id IS NOT NULL THEN DELETE FROM vault.secrets WHERE id = secret_id; END IF;
+END;
+$$;
+
+CREATE FUNCTION public.cleanup_gmail_integration_secret()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+BEGIN
+  IF OLD.token_secret_id IS NOT NULL THEN
+    DELETE FROM vault.secrets WHERE id = OLD.token_secret_id;
+  END IF;
+  RETURN OLD;
+END;
+$$;
+CREATE TRIGGER cleanup_gmail_secret BEFORE DELETE ON public.gmail_integrations
+  FOR EACH ROW EXECUTE FUNCTION public.cleanup_gmail_integration_secret();
+
+REVOKE ALL ON FUNCTION public.set_gmail_integration_secret(uuid,text,text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.get_gmail_integration_secret(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.clear_gmail_integration_secret(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.cleanup_gmail_integration_secret() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.set_gmail_integration_secret(uuid,text,text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.get_gmail_integration_secret(uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.clear_gmail_integration_secret(uuid) TO service_role;
+COMMIT;

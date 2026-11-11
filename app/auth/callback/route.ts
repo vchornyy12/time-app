@@ -2,9 +2,12 @@ import { saveGoogleIntegration } from '@/lib/google/integration'
 import { createClient } from '@/lib/supabase/server'
 import { safeInternalPath } from '@/lib/google/oauth-state'
 import { NextResponse } from 'next/server'
+import { authOrigin } from '@/lib/supabase/origin'
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url)
+  const requestUrl = new URL(request.url)
+  const { searchParams } = requestUrl
+  const origin = authOrigin(requestUrl.origin)
   const code = searchParams.get('code')
   const next = safeInternalPath(searchParams.get('next'), '/inbox')
 
