@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { acceptGmailSuggestion, dismissGmailSuggestion, getGmailScanRun, startGmailScan, type GmailScanRun, type GmailTaskSuggestion } from '@/lib/actions/gmail'
+import { Toast } from '@/components/ui'
 
 const batches = [25, 50, 100, 500] as const
 
@@ -17,6 +18,9 @@ export function GmailInboxScanner({ connected, batchSize: initialBatchSize = 50,
   const [consent, setConsent] = useState(false)
   const [run, setRun] = useState<GmailScanRun | null>(initialRun)
   const [message, setMessage] = useState('')
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const [actingSuggestion, setActingSuggestion] = useState<{ id: string; action: 'accept' | 'dismiss' } | null>(null)
+  const [exitingSuggestionId, setExitingSuggestionId] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const router = useRouter()
 
@@ -55,6 +59,31 @@ export function GmailInboxScanner({ connected, batchSize: initialBatchSize = 50,
     })
   }
 
+  function decideSuggestion(suggestion: GmailTaskSuggestion, action: 'accept' | 'dismiss') {
+    if (pending || actingSuggestion) return
+    setActingSuggestion({ id: suggestion.id, action })
+    startTransition(async () => {
+      const response = action === 'accept'
+        ? await acceptGmailSuggestion(suggestion.id, suggestion.title)
+        : await dismissGmailSuggestion(suggestion.id)
+      if (response.error) {
+        setMessage(response.error)
+        setActingSuggestion(null)
+        return
+      }
+
+      setMessage('')
+      setToastMessage(action === 'accept' ? 'Task added to your Inbox.' : 'Suggestion dismissed.')
+      setExitingSuggestionId(suggestion.id)
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      if (!reducedMotion) await new Promise(resolve => setTimeout(resolve, 280))
+      setSuggestions(items => items.filter(item => item.id !== suggestion.id))
+      setExitingSuggestionId(null)
+      setActingSuggestion(null)
+      if (action === 'accept') router.refresh()
+    })
+  }
+
   const scanning = !!run && ['queued', 'running'].includes(run.status)
 
   return <section className="mb-6 rounded-xl p-5" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
@@ -70,12 +99,20 @@ export function GmailInboxScanner({ connected, batchSize: initialBatchSize = 50,
     </>}
     {!!message && <p className="text-sm mt-3" role="status" aria-live="polite" style={{ color: 'var(--text-muted)' }}>{message}</p>}
     {!!suggestions.length && <div className="mt-5 space-y-3"><h3 className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Review suggested tasks</h3>
-      {suggestions.map(suggestion => <article key={suggestion.id} className="rounded-lg p-4" style={{ background: 'var(--bg-surface-hover)' }}>
+      {suggestions.map(suggestion => {
+        const exiting = exitingSuggestionId === suggestion.id
+        const actionInProgress = actingSuggestion?.id === suggestion.id ? actingSuggestion.action : null
+        return <article key={suggestion.id} aria-busy={actionInProgress !== null} className={`rounded-lg p-4 border transition-[opacity,transform,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-opacity ${exiting ? 'opacity-0 -translate-y-1 scale-[0.99]' : 'opacity-100 translate-y-0 scale-100'}`} style={{ background: 'var(--bg-surface-hover)', borderColor: 'var(--border-subtle)' }}>
         <h4 className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{suggestion.title}</h4>
         <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>From {suggestion.from} · {suggestion.date} · {suggestion.subject || '(no subject)'}</p>
-        <a className="text-xs underline mt-2 inline-block" href={`https://mail.google.com/mail/u/0/#all/${encodeURIComponent(suggestion.messageId)}`} target="_blank" rel="noopener noreferrer">Open source email</a>
-        <div className="flex gap-2 mt-3"><button type="button" disabled={pending} onClick={() => startTransition(async () => { const response = await acceptGmailSuggestion(suggestion.id, suggestion.title); setMessage(response.error ?? 'Task added to your inbox.'); if (!response.error) setSuggestions(items => items.filter(item => item.id !== suggestion.id)) })} className="text-xs rounded-md px-3 py-1.5" style={{ background: 'var(--accent)', color: 'white' }}>Accept and add task</button><button type="button" disabled={pending} onClick={() => startTransition(async () => { const response = await dismissGmailSuggestion(suggestion.id); setMessage(response.error ?? 'Suggestion dismissed.'); if (!response.error) setSuggestions(items => items.filter(item => item.id !== suggestion.id)) })} className="text-xs rounded-md px-3 py-1.5" style={{ background: 'var(--bg-surface)', color: 'var(--text-secondary)' }}>Dismiss</button></div>
-      </article>)}
+        <a className="text-xs underline underline-offset-2 mt-2 inline-block transition-colors duration-300 hover:text-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] rounded-sm" href={`https://mail.google.com/mail/u/0/#all/${encodeURIComponent(suggestion.messageId)}`} target="_blank" rel="noopener noreferrer">Open source email</a>
+        <div className="flex flex-wrap gap-2 mt-3">
+          <button type="button" disabled={pending || !!actingSuggestion} onClick={() => decideSuggestion(suggestion, 'accept')} className="text-xs rounded-md px-3 py-1.5 font-medium border border-transparent transition-[background-color,transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 disabled:opacity-50 disabled:transform-none" style={{ background: 'var(--accent)', color: '#07130D' }}>{actionInProgress === 'accept' ? 'Adding…' : 'Accept and add task'}</button>
+          <button type="button" disabled={pending || !!actingSuggestion} onClick={() => decideSuggestion(suggestion, 'dismiss')} className="text-xs rounded-md px-3 py-1.5 font-medium border transition-[background-color,color,border-color,transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 disabled:opacity-50 disabled:transform-none" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}>{actionInProgress === 'dismiss' ? 'Dismissing…' : 'Dismiss'}</button>
+        </div>
+      </article>
+      })}
     </div>}
+    {toastMessage && <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />}
   </section>
 }
