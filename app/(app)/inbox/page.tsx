@@ -5,7 +5,7 @@ import { InboxList } from '@/components/tasks/InboxList'
 import { getUserContexts } from '@/lib/actions/contexts'
 import { gmailAvailable } from '@/lib/gmail/config'
 import { GmailInboxScanner } from '@/components/tasks/GmailInboxScanner'
-import type { GmailScanRun } from '@/lib/actions/gmail'
+import { getGmailTaskSuggestions, type GmailScanRun } from '@/lib/actions/gmail'
 
 export const metadata: Metadata = { title: 'Inbox' }
 
@@ -30,7 +30,7 @@ export default async function InboxPage() {
 
   const list = tasks ?? []
   const [gmailSuggestions, latestRun] = gmail?.data?.connected
-    ? await Promise.all([loadSuggestions(supabase, user.id), loadLatestRun(supabase, user.id)])
+    ? await Promise.all([getGmailTaskSuggestions(), loadLatestRun(supabase, user.id)])
     : [[], null]
 
   return (
@@ -49,14 +49,6 @@ export default async function InboxPage() {
       <InboxList tasks={list} userContexts={userContexts} />
     </div>
   )
-}
-
-async function loadSuggestions(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
-  const { data } = await supabase.from('gmail_task_suggestions')
-    .select('id,message_id,subject,sender,received_at,title').eq('user_id', userId).eq('status', 'pending')
-    .order('created_at', { ascending: true }).limit(50)
-  return (data ?? []).map(row => ({ id: row.id, messageId: row.message_id, subject: row.subject,
-    from: row.sender, date: row.received_at ?? '', title: row.title }))
 }
 
 async function loadLatestRun(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<GmailScanRun | null> {
