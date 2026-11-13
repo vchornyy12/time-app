@@ -3,7 +3,7 @@ import 'server-only'
 import { getUserLLMKey } from '@/lib/llm/integration'
 import { suggestEmailTasks } from '@/lib/llm/openai'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { retrieveInboxMessages } from './messages'
+import { retrieveInboxScanMessages } from './messages'
 
 export async function analyzeGmailBatch(userId: string, batchSize = 5): Promise<{ analyzed: number; suggestions: number }> {
   const admin = createAdminClient()
@@ -16,7 +16,7 @@ export async function analyzeGmailBatch(userId: string, batchSize = 5): Promise<
   const key = await getUserLLMKey(userId)
   if (!key || (provider.model !== 'gpt-4o-mini' && provider.model !== 'gpt-4o')) throw new Error('Your OpenAI connection is unavailable. Reconnect your key.')
 
-  const messages = await retrieveInboxMessages(userId, Math.max(1, Math.min(5, Math.floor(batchSize))))
+  const messages = await retrieveInboxScanMessages(userId, Math.max(1, Math.min(5, Math.floor(batchSize))))
   const eligible = messages.filter(message => message.text.trim()).slice(0, 5)
   if (!eligible.length) {
     await markGmailMessagesProcessed(userId, integration.account_email, messages.map(message => message.id))

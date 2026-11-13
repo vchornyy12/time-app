@@ -926,6 +926,7 @@ CREATE TABLE public.gmail_integrations (
   user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   account_email text NOT NULL CHECK (length(account_email) BETWEEN 3 AND 320),
   connected boolean NOT NULL DEFAULT false,
+  scan_cursor_at timestamptz,
   label_name text NOT NULL DEFAULT 'AI Inbox'
     CHECK (length(btrim(label_name)) BETWEEN 1 AND 100 AND label_name !~ '[[:cntrl:]]'),
   start_at timestamptz NOT NULL DEFAULT now(),
@@ -972,7 +973,8 @@ CREATE TABLE public.gmail_processed_messages (
   account_email text NOT NULL CHECK (length(account_email) BETWEEN 3 AND 320),
   message_id text NOT NULL CHECK (length(message_id) BETWEEN 1 AND 256),
   status text NOT NULL DEFAULT 'pending'
-    CHECK (status IN ('pending', 'processing', 'processed', 'failed')),
+    CHECK (status IN ('pending', 'processing', 'processed', 'failed', 'skipped')),
+  incremental_eligible boolean NOT NULL DEFAULT false,
   attempts integer NOT NULL DEFAULT 0 CHECK (attempts >= 0),
   created_at timestamptz NOT NULL DEFAULT now(),
   processed_at timestamptz,
@@ -981,6 +983,8 @@ CREATE TABLE public.gmail_processed_messages (
 );
 CREATE INDEX gmail_pending_messages ON public.gmail_processed_messages (user_id, created_at)
   WHERE status IN ('pending', 'failed');
+CREATE INDEX gmail_incremental_pending_messages ON public.gmail_processed_messages (user_id, account_email, created_at)
+  WHERE incremental_eligible AND status IN ('pending', 'failed');
 ALTER TABLE public.gmail_processed_messages ENABLE ROW LEVEL SECURITY;
 CREATE POLICY gmail_message_owner_read ON public.gmail_processed_messages FOR SELECT TO authenticated
   USING (user_id = (SELECT auth.uid()));
@@ -1032,6 +1036,7 @@ BEGIN
   END IF;
   UPDATE public.gmail_integrations SET
     start_at = CASE WHEN account_email = lower(p_account_email) THEN start_at ELSE now() END,
+    scan_cursor_at = CASE WHEN account_email = lower(p_account_email) THEN scan_cursor_at ELSE NULL END,
     account_email = lower(p_account_email), token_secret_id = secret_id, connected = true
     WHERE user_id = p_user_id;
 END;

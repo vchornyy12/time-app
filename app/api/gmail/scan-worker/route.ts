@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { analyzeGmailBatch } from '@/lib/gmail/analyzer'
+import { saveScanCursor } from '@/lib/gmail/messages'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export const runtime = 'nodejs'
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
       p_processed: batch.analyzed, p_suggestions: batch.suggestions, p_done: done,
     })
     if (error || !updated) throw new Error('Could not save scan progress.')
+    if (updated.status === 'completed') await saveScanCursor(run.user_id, run.created_at)
     return NextResponse.json(updated)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Gmail scan failed.'
