@@ -1,15 +1,16 @@
-import { timingSafeEqual } from 'node:crypto'
+import { createHash, timingSafeEqual } from 'node:crypto'
 
 export const config = { background: true }
 
 export default async function handler(request) {
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  // Keep in sync with lib/gmail/worker.ts: prefer the dedicated worker secret
+  // so the database service-role key is not used as an HTTP bearer token.
+  const secret = process.env.GMAIL_WORKER_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY
   const origin = process.env.APP_ORIGIN || process.env.GMAIL_APP_ORIGIN || process.env.URL
-  if (!serviceKey || !origin) throw new Error('Gmail worker environment is incomplete.')
+  if (!secret || !origin) throw new Error('Gmail worker environment is incomplete.')
   const supplied = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? ''
-  const expectedBytes = Buffer.from(serviceKey)
-  const suppliedBytes = Buffer.from(supplied)
-  if (expectedBytes.length !== suppliedBytes.length || !timingSafeEqual(expectedBytes, suppliedBytes)) {
+  const digest = value => createHash('sha256').update(value).digest()
+  if (!supplied || !timingSafeEqual(digest(secret), digest(supplied))) {
     return new Response(null, { status: 401 })
   }
 
@@ -21,7 +22,7 @@ export default async function handler(request) {
   for (let batch = 0; batch < 101; batch++) {
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ runId, workerToken }),
       signal: AbortSignal.timeout(60000),
       redirect: 'manual',

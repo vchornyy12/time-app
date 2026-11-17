@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { GmailInboxCard } from './GmailInboxCard'
+import type { GmailSettings } from '@/lib/gmail/settings'
 
 const mocks = vi.hoisted(() => ({ disconnect: vi.fn(), refresh: vi.fn() }))
 vi.mock('@/lib/actions/gmail', () => ({ disconnectGmail: mocks.disconnect }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: mocks.refresh }) }))
 
-const settings = {
-  account_email: 'owner@example.test', connected: true, label_name: 'AI Inbox',
-  start_at: '2026-11-06T10:00:00Z', scan_frequency: 'manual' as const,
+const settings: GmailSettings = {
+  account_email: 'owner@example.test', connected: true, scan_frequency: 'manual',
   scan_time: '08:00:00', scan_timezone: 'UTC', scan_batch_size: 50, auto_scan_consent: false,
 }
 

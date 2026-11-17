@@ -7,6 +7,7 @@ import { GmailInboxCard } from '@/components/settings/GmailInboxCard'
 import { gmailAvailable } from '@/lib/gmail/config'
 import type { GmailSettings } from '@/lib/gmail/settings'
 import { LLMKeyCard } from '@/components/settings/LLMKeyCard'
+import { LLM_CATALOG, isLLMProvider } from '@/lib/llm/models'
 
 export const metadata: Metadata = { title: 'Settings' }
 
@@ -41,7 +42,9 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const isConnected = !!integration?.google_connected
   const calendarConnected = integration?.calendar_connected ?? false
   const { data: llmSettings } = await supabase.from('user_llm_settings')
-    .select('connected, model').eq('user_id', user.id).maybeSingle()
+    .select('connected, provider, model').eq('user_id', user.id).maybeSingle()
+  const llmProvider = isLLMProvider(llmSettings?.provider) ? llmSettings.provider : 'openai'
+  const llmLabel = llmSettings?.connected ? LLM_CATALOG[llmProvider].label : undefined
   const gmailEnabled = gmailAvailable()
   // Feature gate keeps existing deployments working before the migration runs.
   let gmailSettings: GmailSettings | null = null
@@ -71,12 +74,13 @@ export default async function SettingsPage({ searchParams }: PageProps) {
           justConnected={connected === '1'}
         />
         <GmailInboxCard key={`${gmailSettings?.account_email}:${gmailSettings?.connected}`}
-          settings={gmailSettings} available={gmailEnabled} loadError={gmailLoadError} result={gmail} />
+          settings={gmailSettings} providerLabel={llmLabel} available={gmailEnabled} loadError={gmailLoadError} result={gmail} />
       </section>
 
       <section className="mt-10">
         <h2 className="text-xs font-medium uppercase tracking-wide mb-3" style={{ color: 'var(--text-tertiary)' }}>AI</h2>
-        <LLMKeyCard connected={!!llmSettings?.connected} model={llmSettings?.model ?? 'gpt-4o-mini'} />
+        <LLMKeyCard key={`${llmProvider}:${llmSettings?.connected}:${llmSettings?.model}`} connected={!!llmSettings?.connected}
+          provider={llmProvider} model={llmSettings?.model ?? ''} />
       </section>
 
       <section className="mt-10">

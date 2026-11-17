@@ -5,6 +5,7 @@ import { InboxList } from '@/components/tasks/InboxList'
 import { getUserContexts } from '@/lib/actions/contexts'
 import { gmailAvailable } from '@/lib/gmail/config'
 import { GmailInboxScanner } from '@/components/tasks/GmailInboxScanner'
+import { LLM_CATALOG, isLLMProvider } from '@/lib/llm/models'
 import { getGmailTaskSuggestions, type GmailScanRun } from '@/lib/actions/gmail'
 
 export const metadata: Metadata = { title: 'Inbox' }
@@ -29,9 +30,11 @@ export default async function InboxPage() {
   ])
 
   const list = tasks ?? []
-  const [gmailSuggestions, latestRun] = gmail?.data?.connected
-    ? await Promise.all([getGmailTaskSuggestions(), loadLatestRun(supabase, user.id)])
-    : [[], null]
+  const [gmailSuggestions, latestRun, llm] = gmail?.data?.connected
+    ? await Promise.all([getGmailTaskSuggestions(), loadLatestRun(supabase, user.id),
+      supabase.from('user_llm_settings').select('provider,connected').eq('user_id', user.id).maybeSingle()])
+    : [[], null, null]
+  const providerLabel = llm?.data?.connected && isLLMProvider(llm.data.provider) ? LLM_CATALOG[llm.data.provider].label : undefined
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -45,7 +48,7 @@ export default async function InboxPage() {
         )}
       </div>
 
-      {gmail?.data?.connected && <GmailInboxScanner connected batchSize={gmail.data.scan_batch_size ?? 50} suggestions={gmailSuggestions} initialRun={latestRun} />}
+      {gmail?.data?.connected && <GmailInboxScanner connected providerLabel={providerLabel} accountEmail={gmail.data.account_email} batchSize={gmail.data.scan_batch_size ?? 50} suggestions={gmailSuggestions} initialRun={latestRun} />}
       <InboxList tasks={list} userContexts={userContexts} />
     </div>
   )

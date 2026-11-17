@@ -18,8 +18,9 @@ const mocks = vi.hoisted(() => ({
   runs: [] as ScanRun[],
   ledger: [] as LedgerRow[],
   listPages: [] as Array<{ ids: string[]; nextPageToken?: string }>,
-  gmailMessages: {} as Record<string, { internalDate: string; subject: string; from: string; text: string; labelIds?: string[] }>,
+  gmailMessages: {} as Record<string, { internalDate: string; subject: string; from: string; text: string; html?: string; labelIds?: string[] }>,
   requests: [] as URL[],
+  missingStatus: 404,
   from: vi.fn(),
   rpc: vi.fn(),
 }))
@@ -88,8 +89,8 @@ function email(id: string, receivedAt = '2026-11-13T09:00:00.000Z') {
   return { internalDate: String(new Date(receivedAt).getTime()), subject: `Subject ${id}`, from: `${id}@example.test`, text: `Body ${id}`, labelIds: ['INBOX'] }
 }
 
-function response(body: unknown, ok = true) {
-  return new Response(JSON.stringify(body), { status: ok ? 200 : 500, headers: { 'Content-Type': 'application/json' } })
+function response(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 }
 
 beforeEach(() => {
@@ -100,6 +101,7 @@ beforeEach(() => {
   mocks.listPages = []
   mocks.gmailMessages = {}
   mocks.requests = []
+  mocks.missingStatus = 404
   mocks.from.mockImplementation((table: string) => makeQuery(table))
   mocks.rpc.mockResolvedValue({ data: 'refresh-token', error: null })
   vi.stubEnv('GMAIL_CLIENT_ID', 'test-client')
@@ -115,13 +117,17 @@ beforeEach(() => {
     }
     const id = decodeURIComponent(url.pathname.split('/').pop() ?? '')
     const message = mocks.gmailMessages[id]
-    if (!message) return response({}, false)
+    if (!message) return response({}, mocks.missingStatus)
     if (url.searchParams.get('format') === 'metadata') return response({ id, internalDate: message.internalDate, labelIds: message.labelIds })
-    const data = Buffer.from(message.text).toString('base64url')
-    return response({ id, internalDate: message.internalDate, payload: {
-      headers: [{ name: 'subject', value: message.subject }, { name: 'from', value: message.from }],
-      mimeType: 'text/plain', body: { data },
-    } })
+    const headers = [{ name: 'subject', value: message.subject }, { name: 'from', value: message.from }]
+    const encode = (value: string) => Buffer.from(value).toString('base64url')
+    if (message.html !== undefined) {
+      return response({ id, internalDate: message.internalDate, payload: { headers, mimeType: 'multipart/mixed', parts: [
+        { mimeType: 'text/html', body: { data: encode(message.html) } },
+        { mimeType: 'text/html', filename: 'attachment.html', body: { attachmentId: 'attachment-1' } },
+      ] } })
+    }
+    return response({ id, internalDate: message.internalDate, payload: { headers, mimeType: 'text/plain', body: { data: encode(message.text) } } })
   }))
 })
 
@@ -130,7 +136,7 @@ describe('incremental Gmail scans', () => {
     mocks.listPages = [{ ids: ['newest', 'next', 'older'] }]
     mocks.gmailMessages = { newest: email('newest'), next: email('next'), older: email('older') }
 
-    const messages = await retrieveInboxScanMessages('user-1', 2)
+    const { messages } = await retrieveInboxScanMessages('user-1', 2)
 
     expect(messages.map(message => message.id)).toEqual(['newest', 'next'])
     expect(mocks.ledger.map(row => row.message_id)).toEqual(['newest', 'next'])
@@ -147,7 +153,7 @@ describe('incremental Gmail scans', () => {
     mocks.listPages = [{ ids: ['already-scanned', 'newest', 'next-new'] }]
     mocks.gmailMessages = { 'already-scanned': email('already-scanned', cursor), newest: email('newest'), 'next-new': email('next-new') }
 
-    const messages = await retrieveInboxScanMessages('user-1', 1)
+    const { messages } = await retrieveInboxScanMessages('user-1', 1)
 
     expect(messages.map(message => message.id)).toEqual(['newest'])
     expect(mocks.ledger.map(row => row.message_id)).toEqual(['already-scanned', 'newest', 'next-new'])
@@ -165,7 +171,7 @@ describe('incremental Gmail scans', () => {
     mocks.ledger = [{ user_id: 'user-1', account_email: 'user@example.test', message_id: 'historical-pending', status: 'pending', attempts: 0, incremental_eligible: false, created_at: cursor }]
     mocks.listPages = [{ ids: [] }]
 
-    const messages = await retrieveInboxScanMessages('user-1', 5)
+    const { messages } = await retrieveInboxScanMessages('user-1', 5)
 
     expect(messages).toEqual([])
     expect(mocks.ledger).toHaveLength(1)
@@ -181,5 +187,49 @@ describe('incremental Gmail scans', () => {
     await retrieveInboxScanMessages('user-1', 5)
 
     expect(mocks.integration?.scan_cursor_at).toBe(cursor)
+  })
+
+  it('drops a queued message that was deleted from Gmail instead of failing every later scan', async () => {
+    mocks.listPages = [{ ids: ['deleted', 'kept'] }]
+    mocks.gmailMessages = { kept: email('kept') }
+
+    const batch = await retrieveInboxScanMessages('user-1', 2)
+
+    expect(batch.messages.map(message => message.id)).toEqual(['kept'])
+    expect(batch.skipped).toBe(1)
+    expect(mocks.ledger.find(row => row.message_id === 'deleted')?.status).toBe('skipped')
+    expect(mocks.ledger.find(row => row.message_id === 'kept')?.status).toBe('pending')
+  })
+
+  it('fails the batch on a transient Gmail error and keeps the message queued', async () => {
+    mocks.missingStatus = 503
+    mocks.listPages = [{ ids: ['unavailable'] }]
+
+    await expect(retrieveInboxScanMessages('user-1', 1)).rejects.toThrow('Gmail request failed.')
+    expect(mocks.ledger.find(row => row.message_id === 'unavailable')?.status).toBe('pending')
+  })
+
+  it('reads HTML-only bodies as text and never reads attachments', async () => {
+    mocks.listPages = [{ ids: ['html-only'] }]
+    mocks.gmailMessages = { 'html-only': { ...email('html-only'), html: '<style>p{color:red}</style><p>Please send the Q3 report&nbsp;by Friday &amp; confirm.</p><script>alert(1)</script>' } }
+
+    const { messages } = await retrieveInboxScanMessages('user-1', 1)
+
+    expect(messages[0].text).toBe('Please send the Q3 report by Friday & confirm.')
+  })
+
+  it('lists new mail only when asked to discover, then just drains the queue', async () => {
+    const cursor = '2026-11-12T10:00:00.000Z'
+    mocks.integration!.scan_cursor_at = cursor
+    mocks.runs.push({ user_id: 'user-1', account_email: 'user@example.test', status: 'completed', created_at: cursor })
+    mocks.ledger = [{ user_id: 'user-1', account_email: 'user@example.test', message_id: 'queued', status: 'pending', attempts: 0, incremental_eligible: true, created_at: cursor }]
+    mocks.listPages = [{ ids: ['not-listed'] }]
+    mocks.gmailMessages = { queued: email('queued'), 'not-listed': email('not-listed') }
+
+    const { messages } = await retrieveInboxScanMessages('user-1', 5, { discover: false })
+
+    expect(messages.map(message => message.id)).toEqual(['queued'])
+    expect(mocks.requests.some(url => url.pathname.endsWith('/messages'))).toBe(false)
+    expect(mocks.ledger).toHaveLength(1)
   })
 })

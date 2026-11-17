@@ -1,17 +1,24 @@
 import 'server-only'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { htmlToText } from './text'
 
 const GMAIL = 'https://gmail.googleapis.com/gmail/v1/users/me'
-const MAX_RESULTS = 500
 const MAX_PAGES = 100
 const MAX_TEXT = 12000
+
+export class GmailApiError extends Error {
+  constructor(readonly status: number) {
+    super('Gmail request failed.')
+    this.name = 'GmailApiError'
+  }
+}
 
 async function gmailFetch(path: string, token: string, init?: RequestInit) {
   const response = await fetch(`${GMAIL}${path}`, {
     ...init, cache: 'no-store', signal: AbortSignal.timeout(15000),
     headers: { Authorization: `Bearer ${token}`, ...init?.headers },
   })
-  if (!response.ok) throw new Error('Gmail request failed.')
+  if (!response.ok) throw new GmailApiError(response.status)
   return response.json()
 }
 
@@ -41,14 +48,27 @@ interface GmailPart {
   parts?: GmailPart[]
 }
 
-function plainText(payload: GmailPart | undefined): string {
+// Collect inline body parts of one MIME type; attachments are never read.
+function collectParts(payload: GmailPart | undefined, mimeType: string): string {
   if (!payload || payload.filename || payload.body?.attachmentId) return ''
-  if (payload.mimeType === 'text/plain') return decodeText(payload.body?.data)
+  if (payload.mimeType === mimeType) return decodeText(payload.body?.data)
   if (!Array.isArray(payload.parts)) return ''
-  return payload.parts.map(part => plainText(part)).filter(Boolean).join('\n').slice(0, MAX_TEXT)
+  return payload.parts.map(part => collectParts(part, mimeType)).filter(Boolean).join('\n')
+}
+
+// Prefer the sender's plain-text alternative; fall back to HTML-only bodies.
+function bodyText(payload: GmailPart | undefined): string {
+  const plain = collectParts(payload, 'text/plain')
+  return (plain.trim() ? plain : htmlToText(collectParts(payload, 'text/html'))).slice(0, MAX_TEXT)
 }
 
 export interface GmailMessagePreview { id: string; subject: string; from: string; date: string; text: string }
+
+export interface GmailScanBatch {
+  messages: GmailMessagePreview[]
+  /** Queued messages that no longer exist in Gmail and were dropped from the queue. */
+  skipped: number
+}
 
 interface GmailScanQueueRow {
   message_id: string
@@ -92,20 +112,26 @@ async function queueIncrementalInboxIds(
     for (const row of (data ?? []) as GmailScanQueueRow[]) existing.set(row.message_id, row)
   }
 
+  // Rows left over from before incremental scans are only reactivated when
+  // Gmail confirms the message really arrived after the cursor.
   const legacyIds = messageIds.filter(id => {
     const row = existing.get(id)
     return !!row && !row.incremental_eligible && ['pending', 'failed', 'skipped'].includes(row.status)
       && row.attempts < 3
   })
-  const freshLegacyIds = new Set<string>()
+  const freshLegacyIds: string[] = []
   for (let offset = 0; offset < legacyIds.length; offset += 10) {
-    const ids = legacyIds.slice(offset, offset + 10)
-    const checks = await Promise.all(ids.map(async id => {
-      const message = await gmailFetch(`/messages/${encodeURIComponent(id)}?format=metadata&fields=id,internalDate,labelIds`, token)
-      const internalDate = Number(message.internalDate)
-      return Number.isFinite(internalDate) && internalDate > cursorTime && (message.labelIds ?? []).includes('INBOX') ? id : null
+    const checks = await Promise.all(legacyIds.slice(offset, offset + 10).map(async id => {
+      try {
+        const message = await gmailFetch(`/messages/${encodeURIComponent(id)}?format=metadata&fields=id,internalDate,labelIds`, token)
+        const internalDate = Number(message.internalDate)
+        return Number.isFinite(internalDate) && internalDate > cursorTime && (message.labelIds ?? []).includes('INBOX') ? id : null
+      } catch (error) {
+        if (error instanceof GmailApiError && error.status === 404) return null
+        throw error
+      }
     }))
-    for (const id of checks) if (id) freshLegacyIds.add(id)
+    for (const id of checks) if (id) freshLegacyIds.push(id)
   }
 
   const now = Date.now()
@@ -118,23 +144,11 @@ async function queueIncrementalInboxIds(
     if (error) throw new Error('Could not queue new Gmail messages.')
   }
 
-  const toReactivate = [...freshLegacyIds]
-  if (toReactivate.length) {
+  if (freshLegacyIds.length) {
     const { error } = await admin.from('gmail_processed_messages').update({
       status: 'pending', incremental_eligible: true,
-    }).eq('user_id', userId).eq('account_email', accountEmail).in('message_id', toReactivate)
+    }).eq('user_id', userId).eq('account_email', accountEmail).in('message_id', freshLegacyIds)
     if (error) throw new Error('Could not queue new Gmail messages.')
-  }
-
-  const toMarkIncremental = messageIds.filter(id => {
-    const row = existing.get(id)
-    return !!row && row.incremental_eligible && ['pending', 'failed'].includes(row.status)
-      && (row.status !== 'failed' || row.attempts < 3)
-  })
-  if (toMarkIncremental.length) {
-    const { error } = await admin.from('gmail_processed_messages').update({ incremental_eligible: true })
-      .eq('user_id', userId).eq('account_email', accountEmail).in('message_id', toMarkIncremental)
-    if (error) throw new Error('Could not update new Gmail messages.')
   }
 }
 
@@ -149,31 +163,18 @@ async function queueInitialInboxMessages(userId: string, accountEmail: string, t
     const pageIds: string[] = (list.messages ?? []).map((message: { id: string }) => message.id)
     if (!pageIds.length) break
     const { data: prior, error } = await admin.from('gmail_processed_messages')
-      .select('message_id,status,attempts').eq('user_id', userId).eq('account_email', accountEmail)
+      .select('message_id').eq('user_id', userId).eq('account_email', accountEmail)
       .in('message_id', pageIds)
     if (error) throw new Error('Could not check previously scanned Gmail messages.')
-    const priorById = new Map((prior ?? []).map(row => [row.message_id, row]))
-    const newIds = pageIds.filter(id => {
-      const row = priorById.get(id)
-      if (!row) return true
-      return false
-    }).slice(0, remaining)
+    const known = new Set((prior ?? []).map(row => row.message_id))
+    const newIds = pageIds.filter(id => !known.has(id)).slice(0, remaining)
     if (newIds.length) {
       const now = Date.now()
-      const toInsert = newIds.filter(id => !priorById.has(id)).map((message_id, index) => ({
+      const { error: insertError } = await admin.from('gmail_processed_messages').insert(newIds.map((message_id, index) => ({
         user_id: userId, account_email: accountEmail, message_id, status: 'pending', incremental_eligible: false,
         created_at: new Date(now - newIds.length + index).toISOString(),
-      }))
-      if (toInsert.length) {
-        const { error: insertError } = await admin.from('gmail_processed_messages').insert(toInsert)
-        if (insertError) throw new Error('Could not reserve Gmail messages for processing.')
-      }
-      const skippedIds = newIds.filter(id => priorById.get(id)?.status === 'skipped')
-      if (skippedIds.length) {
-        const { error: updateError } = await admin.from('gmail_processed_messages').update({ status: 'pending', incremental_eligible: false })
-          .eq('user_id', userId).eq('account_email', accountEmail).in('message_id', skippedIds).eq('status', 'skipped')
-        if (updateError) throw new Error('Could not reserve Gmail messages for processing.')
-      }
+      })))
+      if (insertError) throw new Error('Could not reserve Gmail messages for processing.')
       remaining -= newIds.length
     }
     pageToken = list.nextPageToken
@@ -181,21 +182,51 @@ async function queueInitialInboxMessages(userId: string, accountEmail: string, t
   }
 }
 
-async function retrieveFullMessages(token: string, ids: string[]): Promise<GmailMessagePreview[]> {
-  if (!ids.length) return []
-  const retrieved = await Promise.all(ids.map(async id => {
+async function retrieveFullMessages(token: string, ids: string[]): Promise<{ messages: GmailMessagePreview[]; goneIds: string[] }> {
+  const settled = await Promise.allSettled(ids.map(async id => {
     const message = await gmailFetch(`/messages/${encodeURIComponent(id)}?format=full`, token)
     const headers = message.payload?.headers ?? []
     const header = (name: string) => headers.find((item: { name: string }) => item.name.toLowerCase() === name)?.value ?? ''
     const timestamp = Number(message.internalDate)
-    return { id, subject: header('subject').slice(0, 500), from: header('from').slice(0, 500), timestamp,
-      date: Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : '',
-      text: plainText(message.payload).slice(0, MAX_TEXT) }
+    if (!Number.isFinite(timestamp)) return null
+    return { id, subject: header('subject').slice(0, 500), from: header('from').slice(0, 500),
+      date: new Date(timestamp).toISOString(), text: bodyText(message.payload) }
   }))
-  return retrieved.filter(message => Number.isFinite(message.timestamp))
+  const messages: GmailMessagePreview[] = []
+  const goneIds: string[] = []
+  settled.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      if (result.value) messages.push(result.value)
+      else goneIds.push(ids[index])
+    } else if (result.reason instanceof GmailApiError && result.reason.status === 404) {
+      // Deleted after it was queued. Without this, the same ID would be picked
+      // first by every later scan and fail it.
+      goneIds.push(ids[index])
+    } else {
+      throw result.reason
+    }
+  })
+  return { messages, goneIds }
 }
 
-export async function retrieveInboxScanMessages(userId: string, limit = 5): Promise<GmailMessagePreview[]> {
+async function loadBatch(userId: string, accountEmail: string, token: string, ids: string[]): Promise<GmailScanBatch> {
+  if (!ids.length) return { messages: [], skipped: 0 }
+  const { messages, goneIds } = await retrieveFullMessages(token, ids)
+  if (goneIds.length) {
+    const { error } = await createAdminClient().from('gmail_processed_messages').update({ status: 'skipped' })
+      .eq('user_id', userId).eq('account_email', accountEmail).in('message_id', goneIds)
+      .in('status', ['pending', 'failed'])
+    if (error) throw new Error('Could not update Gmail processing status.')
+  }
+  return { messages, skipped: goneIds.length }
+}
+
+/**
+ * Load the next batch of queued messages for the user's running scan.
+ * `discover` lists new Inbox mail since the cursor; later batches of the same
+ * run pass `false` and only drain the queue the first batch built.
+ */
+export async function retrieveInboxScanMessages(userId: string, limit = 5, { discover = true }: { discover?: boolean } = {}): Promise<GmailScanBatch> {
   const batchLimit = Math.max(1, Math.min(5, Math.floor(limit)))
   const admin = createAdminClient()
   const [{ data: integration, error: integrationError }, { data: activeRun, error: activeRunError }] = await Promise.all([
@@ -211,76 +242,29 @@ export async function retrieveInboxScanMessages(userId: string, limit = 5): Prom
   if (completedError) throw new Error('Could not check the previous Gmail scan.')
 
   const token = await getGmailAccessToken(userId)
-  const firstScan = !latestCompleted?.created_at
-  if (firstScan) {
-    const pending = await loadPendingIds(userId, integration.account_email, batchLimit, false)
-    if (pending.length < batchLimit) await queueInitialInboxMessages(userId, integration.account_email, token, batchLimit - pending.length)
-    const ids = await loadPendingIds(userId, integration.account_email, batchLimit, false)
-    return retrieveFullMessages(token, ids)
+  const accountEmail: string = integration.account_email
+  if (!latestCompleted?.created_at) {
+    // First scan: walk the Inbox newest-first, queueing only what this batch needs.
+    const pending = await loadPendingIds(userId, accountEmail, batchLimit, false)
+    if (pending.length < batchLimit) await queueInitialInboxMessages(userId, accountEmail, token, batchLimit - pending.length)
+    return loadBatch(userId, accountEmail, token, await loadPendingIds(userId, accountEmail, batchLimit, false))
   }
 
-  const cursorAt = integration.scan_cursor_at || latestCompleted.created_at
-  const ids: string[] = []
-  let pageToken: string | undefined
-  for (let page = 0; page < MAX_PAGES; page++) {
+  if (discover) {
+    const cursorAt = integration.scan_cursor_at || latestCompleted.created_at
     const after = Math.floor(new Date(cursorAt).getTime() / 1000)
-    const query = new URLSearchParams({ maxResults: '100', q: `in:inbox after:${after}` })
-    if (pageToken) query.set('pageToken', pageToken)
-    const list = await gmailFetch(`/messages?${query}`, token)
-    ids.push(...(list.messages ?? []).map((message: { id: string }) => message.id))
-    pageToken = list.nextPageToken
-    if (!pageToken) break
-  }
-  if (pageToken) throw new Error('Too many new Gmail messages to sync in one pass. Retry the scan to continue.')
-  await queueIncrementalInboxIds(userId, integration.account_email, ids, token, cursorAt)
-  const pending = await loadPendingIds(userId, integration.account_email, batchLimit, true)
-  return retrieveFullMessages(token, pending)
-}
-
-export async function retrieveInboxMessages(userId: string, limit = 20): Promise<GmailMessagePreview[]> {
-  const batchLimit = Math.max(1, Math.min(MAX_RESULTS, Math.floor(limit)))
-  const db = createAdminClient()
-  const { data: settings, error } = await db.from('gmail_integrations')
-    .select('account_email,connected').eq('user_id', userId).maybeSingle()
-  if (error || !settings?.connected) throw new Error('Connect Gmail before retrieving messages.')
-  const token = await getGmailAccessToken(userId)
-
-  let { data: pending, error: pendingError } = await db.from('gmail_processed_messages')
-    .select('message_id').eq('user_id', userId).eq('account_email', settings.account_email)
-    .or('status.eq.pending,and(status.eq.failed,attempts.lt.3)')
-    .order('created_at', { ascending: true }).limit(batchLimit)
-  if (pendingError) throw new Error('Could not load pending Gmail messages.')
-
-  let pageToken: string | undefined
-  for (let page = 0; !(pending?.length) && page < MAX_PAGES; page++) {
-    const query = new URLSearchParams({ maxResults: '100', q: 'in:inbox' })
-    if (pageToken) query.set('pageToken', pageToken)
-    const list = await gmailFetch(`/messages?${query}`, token)
-    const pageIds: string[] = (list.messages ?? []).map((message: { id: string }) => message.id)
-    if (!pageIds.length) break
-    const { data: prior, error: priorError } = await db.from('gmail_processed_messages')
-      .select('message_id,status,attempts').eq('user_id', userId).eq('account_email', settings.account_email)
-      .in('message_id', pageIds)
-    if (priorError) throw new Error('Could not check processed Gmail messages.')
-    const seen = new Set((prior ?? []).filter(row => row.status === 'processed' || row.status === 'processing' || (row.status === 'failed' && row.attempts >= 3)).map(row => row.message_id))
-    const newIds = pageIds.filter(id => !seen.has(id))
-    if (newIds.length) {
-      const ledger = await db.from('gmail_processed_messages').upsert(
-        newIds.map((message_id, index) => ({ user_id: userId, account_email: settings.account_email, message_id, status: 'pending',
-          created_at: new Date(Date.now() + index).toISOString() })),
-        { onConflict: 'user_id,account_email,message_id', ignoreDuplicates: true },
-      )
-      if (ledger.error) throw new Error('Could not reserve Gmail messages for processing.')
-      const result = await db.from('gmail_processed_messages').select('message_id')
-        .eq('user_id', userId).eq('account_email', settings.account_email)
-        .or('status.eq.pending,and(status.eq.failed,attempts.lt.3)')
-        .order('created_at', { ascending: true }).limit(batchLimit)
-      if (result.error) throw new Error('Could not load pending Gmail messages.')
-      pending = result.data
+    const ids: string[] = []
+    let pageToken: string | undefined
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const query = new URLSearchParams({ maxResults: '100', q: `in:inbox after:${after}` })
+      if (pageToken) query.set('pageToken', pageToken)
+      const list = await gmailFetch(`/messages?${query}`, token)
+      ids.push(...(list.messages ?? []).map((message: { id: string }) => message.id))
+      pageToken = list.nextPageToken
+      if (!pageToken) break
     }
-    pageToken = list.nextPageToken
-    if (!pageToken) break
+    if (pageToken) throw new Error('Too many new Gmail messages to sync in one pass. Retry the scan to continue.')
+    await queueIncrementalInboxIds(userId, accountEmail, ids, token, cursorAt)
   }
-
-  return retrieveFullMessages(token, (pending ?? []).map(row => row.message_id))
+  return loadBatch(userId, accountEmail, token, await loadPendingIds(userId, accountEmail, batchLimit, true))
 }

@@ -18,7 +18,14 @@ and scheduled run calculation. Automatic schedules execute from the published
 Netlify deploy; branch deploys support manual scans but do not run the schedule
 automatically.
 
-Run its isolated RLS, deduplication, and credential lifecycle checks with:
+`20261114000000_gmail_incremental_scans.sql` adds the scan cursor, and
+`20261116000001_llm_providers.sql` allows `anthropic` as a provider, adds a four-argument `set_user_llm_secret` (the three-argument form remains for the previous build), and lets scans run with either provider. Not applied anywhere yet.
+
+`20261116000000_gmail_claim_recovery.sql` adds `claimed_at` so claims abandoned
+by an interrupted worker are retried. Apply the latter while no scan is running
+and before deploying code that depends on it.
+
+Run the foundation migration's isolated RLS, deduplication, and credential lifecycle checks with:
 
 ```sh
 node scripts/test-gmail-foundation.mjs /path/to/@electric-sql/pglite/dist/index.js

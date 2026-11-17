@@ -1,49 +1,40 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { updateGmailLabel, disconnectGmail } from './gmail'
+import { disconnectGmail, startGmailScan } from './gmail'
 
 const mocks = vi.hoisted(() => ({
-  auth: vi.fn(), update: vi.fn(), eq: vi.fn(), select: vi.fn(), single: vi.fn(),
-  getToken: vi.fn(), revoke: vi.fn(), clear: vi.fn(), revalidate: vi.fn(),
+  auth: vi.fn(), getToken: vi.fn(), revoke: vi.fn(), clear: vi.fn(), revalidate: vi.fn(),
+  rpc: vi.fn(), dispatch: vi.fn(), runLookup: vi.fn(),
 }))
 vi.mock('@/lib/actions/authed-action', () => ({ authedClient: mocks.auth }))
 vi.mock('@/lib/gmail/config', () => ({ gmailAvailable: () => true }))
 vi.mock('@/lib/gmail/integration', () => ({ getGmailRefreshToken: mocks.getToken, clearGmailIntegration: mocks.clear }))
+vi.mock('@/lib/gmail/worker', () => ({ dispatchScanWorker: mocks.dispatch }))
 vi.mock('@/lib/google/revoke', () => ({ revokeGoogleToken: mocks.revoke }))
+vi.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: () => ({
+    rpc: mocks.rpc,
+    from: () => ({ select: () => ({ eq: () => ({ maybeSingle: mocks.runLookup }) }) }),
+  }),
+}))
 vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidate }))
+
+const RUN_ID = '0b0f6a52-6f0e-4c53-9d0a-3a8b1f2c4d5e'
 
 beforeEach(() => {
   vi.resetAllMocks()
-  const chain = { update: mocks.update, eq: mocks.eq, select: mocks.select, maybeSingle: mocks.single }
-  mocks.update.mockReturnValue(chain)
-  mocks.eq.mockReturnValue(chain)
-  mocks.select.mockReturnValue(chain)
-  mocks.single.mockResolvedValue({ data: { user_id: 'alice' }, error: null })
-  mocks.auth.mockResolvedValue({ user: { id: 'alice' }, supabase: { from: () => chain } })
+  mocks.auth.mockResolvedValue({ user: { id: 'alice' } })
   mocks.getToken.mockResolvedValue('synthetic')
+  mocks.rpc.mockResolvedValue({ data: RUN_ID, error: null })
+  mocks.runLookup.mockResolvedValue({ data: { id: RUN_ID, status: 'queued' }, error: null })
 })
 
-describe('Gmail settings actions', () => {
-  it('trims labels and scopes updates to the verified user and connected row', async () => {
-    expect(await updateGmailLabel('  AI Inbox  ')).toEqual({})
-    expect(mocks.update).toHaveBeenCalledWith({ label_name: 'AI Inbox' })
-    expect(mocks.eq).toHaveBeenCalledWith('user_id', 'alice')
-    expect(mocks.eq).toHaveBeenCalledWith('connected', true)
-  })
-  it.each(['', '   ', 'x'.repeat(101), 'AI\nInbox'])('rejects invalid label %j', async label => {
-    expect(await updateGmailLabel(label)).toHaveProperty('error')
-    expect(mocks.update).not.toHaveBeenCalled()
-  })
-  it('reports missing/disconnected rows as failures', async () => {
-    mocks.single.mockResolvedValue({ data: null, error: null })
-    expect(await updateGmailLabel('AI Inbox')).toHaveProperty('error')
-    expect(mocks.revalidate).not.toHaveBeenCalled()
-  })
-  it('rejects unauthenticated changes before accessing tokens or settings', async () => {
+describe('Gmail connection actions', () => {
+  it('rejects unauthenticated changes before accessing tokens', async () => {
     mocks.auth.mockRejectedValue(new Error('Unauthorized'))
-    await expect(updateGmailLabel('AI Inbox')).rejects.toThrow('Unauthorized')
     await expect(disconnectGmail()).rejects.toThrow('Unauthorized')
+    await expect(startGmailScan(true, 25)).rejects.toThrow('Unauthorized')
     expect(mocks.getToken).not.toHaveBeenCalled()
-    expect(mocks.update).not.toHaveBeenCalled()
+    expect(mocks.rpc).not.toHaveBeenCalled()
   })
   it('revokes access before clearing local credentials', async () => {
     expect(await disconnectGmail()).toEqual({})
@@ -56,5 +47,29 @@ describe('Gmail settings actions', () => {
     mocks.revoke.mockRejectedValue(new Error('network error'))
     expect(await disconnectGmail()).toHaveProperty('error')
     expect(mocks.clear).not.toHaveBeenCalled()
+  })
+})
+
+describe('starting a Gmail scan', () => {
+  it.each([[false, 25], [true, 7], [true, 1000]])('rejects consent=%j batch=%j without creating a run', async (consent, batchSize) => {
+    expect(await startGmailScan(consent, batchSize)).toHaveProperty('error')
+    expect(mocks.rpc).not.toHaveBeenCalled()
+    expect(mocks.dispatch).not.toHaveBeenCalled()
+  })
+  it('creates the run for the verified user and dispatches the worker', async () => {
+    expect(await startGmailScan(true, 50)).toEqual({ run: { id: RUN_ID, status: 'queued' } })
+    expect(mocks.rpc).toHaveBeenCalledWith('create_gmail_scan_run', { p_user_id: 'alice', p_batch_size: 50 })
+    expect(mocks.dispatch).toHaveBeenCalledWith(RUN_ID)
+  })
+  it('shows known preconditions but never raw database errors', async () => {
+    mocks.rpc.mockResolvedValue({ data: null, error: { message: 'Connect an AI provider key before scanning' } })
+    expect(await startGmailScan(true, 50)).toEqual({ error: 'Connect an AI provider key before scanning.' })
+    mocks.rpc.mockResolvedValue({ data: null, error: { message: 'relation "gmail_scan_runs" does not exist' } })
+    expect(await startGmailScan(true, 50)).toEqual({ error: 'Could not start Gmail scan.' })
+    expect(mocks.dispatch).not.toHaveBeenCalled()
+  })
+  it('reports a worker dispatch failure', async () => {
+    mocks.dispatch.mockRejectedValue(new Error('Background worker rejected the scan.'))
+    expect(await startGmailScan(true, 50)).toHaveProperty('error')
   })
 })

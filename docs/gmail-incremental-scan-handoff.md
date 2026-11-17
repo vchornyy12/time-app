@@ -1,6 +1,6 @@
 # Gmail incremental scan handoff
 
-Updated: 2026-11-13
+Updated: 2026-11-16
 
 This is the current handoff for agents continuing Gmail scan work. It describes
 the incremental-scan implementation and release state; earlier notes in
@@ -22,6 +22,29 @@ the incremental-scan implementation and release state; earlier notes in
 - Gmail content is still sent to the user's connected OpenAI API key only after
   the scan consent checkbox is selected. Suggestions remain review-only until
   the user accepts them.
+
+## 2026-11-16 reliability pass (not deployed)
+
+Local changes only; nothing was deployed and no migration was applied.
+
+- **Pending migration (provider choice):** `supabase/migrations/20261116000001_llm_providers.sql`
+  allows Anthropic as well as OpenAI keys and current models (GPT-6 family, Claude 5.5
+  family). It is backward compatible with the deployed build; apply it before deploying.
+  Switching provider clears saved automatic-scan consent. Google verification material
+  (privacy policy, consent screens, demo video) must name both possible recipients.
+- **Pending migration:** `supabase/migrations/20261116000000_gmail_claim_recovery.sql`
+  adds `gmail_processed_messages.claimed_at` and settles legacy rows stuck in
+  `processing`. The new worker code requires it: without the column, claims
+  fail and scans end with "Could not reserve Gmail messages." Apply it while
+  no scan is running, then deploy.
+- **New env var:** `GMAIL_WORKER_SECRET` (long random value) on every deploy
+  context that runs scans. Until it is set, worker auth falls back to the
+  service-role key.
+- Deleted-in-Gmail messages are skipped instead of failing every later scan;
+  provider failures no longer consume message retry attempts; abandoned claims
+  are requeued; HTML-only mail is analyzed; new mail is listed once per run.
+- Removed the unused label and preview server actions. `label_name` remains
+  in the database, unused.
 
 ## Implementation map
 

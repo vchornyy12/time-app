@@ -17,8 +17,9 @@ const statusMessages: Record<string, string> = {
   unavailable: 'Gmail is not configured on this server.',
 }
 
-export function GmailInboxCard({ settings, available, loadError, result }: {
+export function GmailInboxCard({ settings, providerLabel, available, loadError, result }: {
   settings: GmailSettings | null
+  providerLabel?: string
   available: boolean
   loadError?: boolean
   result?: string
@@ -53,7 +54,7 @@ export function GmailInboxCard({ settings, available, loadError, result }: {
       {available && !loadError && connected && <button className={styles['button-sm']} type="button" disabled={pending} onClick={disconnect}>
         {pending ? <Loader2 className={styles.spin} size={14} aria-hidden="true" /> : <Link2Off size={14} aria-hidden="true" />} Disconnect Gmail
       </button>}
-      {available && !loadError && connected && <GmailScanSchedule initial={{
+      {available && !loadError && connected && <GmailScanSchedule providerLabel={providerLabel} initial={{
         frequency: settings?.scan_frequency ?? 'manual', time: settings?.scan_time?.slice(0, 5) ?? '08:00',
         timezone: settings?.scan_timezone ?? 'UTC', batchSize: settings?.scan_batch_size ?? 50,
         autoConsent: settings?.auto_scan_consent ?? false,
