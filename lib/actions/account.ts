@@ -6,6 +6,7 @@ import { getGoogleIntegration } from '@/lib/google/integration'
 import { deleteUserAttachments } from '@/lib/storage/delete-user-files'
 import { revokeGoogleToken } from '@/lib/google/revoke'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getGmailRefreshToken } from '@/lib/gmail/integration'
 
 export async function signOut(): Promise<void> {
   const { supabase } = await authedClient()
@@ -36,6 +37,11 @@ export async function deleteAccount(
   try {
     const integration = await getGoogleIntegration(user.id)
     if (integration?.google_refresh_token) await revokeGoogleToken(integration.google_refresh_token)
+    // Only query the new table after its migration has been enabled on this server.
+    if (process.env.GMAIL_INBOX_ENABLED === 'true') {
+      const gmailToken = await getGmailRefreshToken(user.id)
+      if (gmailToken) await revokeGoogleToken(gmailToken)
+    }
     await deleteUserAttachments(admin, user.id)
   } catch {
     return { error: 'Could not finish account cleanup. Your account is still active; please retry.' }
