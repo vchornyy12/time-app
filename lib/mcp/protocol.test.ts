@@ -48,15 +48,20 @@ describe('MCP protocol', () => {
     expect((await handleMessage({ id: 1, method: 'ping' }, ctxWith(db)))?.error?.code).toBe(-32600)
   })
 
-  it('exposes capture plus read-only tools, and nothing that processes or deletes', async () => {
+  it('exposes capture, proposals and read tools, and nothing that processes, moves or deletes tasks', async () => {
     const res = await handleMessage({ jsonrpc: '2.0', id: 2, method: 'tools/list' }, ctxWith(db))
     const tools = (res?.result as { tools: { name: string; annotations: { readOnlyHint: boolean }; inputSchema: { type: string } }[] }).tools
     expect(tools.map((t) => t.name).sort()).toEqual([
-      'capture_inbox_item', 'get_source_cursor', 'get_task', 'list_inbox', 'list_next_actions', 'list_waiting_for', 'set_source_cursor',
+      'capture_inbox_item', 'chat_list_messages', 'chat_messages_since', 'chat_recent_conversations',
+      'complete_approved_action', 'filter_unprocessed', 'get_agent_profile', 'get_source_cursor', 'get_task',
+      'list_approved_actions', 'list_inbox', 'list_next_actions', 'list_recent_outcomes', 'list_suggestions',
+      'list_waiting_for', 'mark_processed', 'notify_user', 'propose_task_update', 'set_source_cursor',
     ])
-    expect(tools.filter((t) => !t.annotations.readOnlyHint).map((t) => t.name).sort()).toEqual(['capture_inbox_item', 'set_source_cursor'])
+    expect(tools.filter((t) => !t.annotations.readOnlyHint).map((t) => t.name).sort()).toEqual([
+      'capture_inbox_item', 'complete_approved_action', 'mark_processed', 'notify_user', 'propose_task_update', 'set_source_cursor',
+    ])
     for (const t of tools) expect(t.inputSchema.type).toBe('object')
-    expect(tools.some((t) => /delete|process|complete|update|move/.test(t.name))).toBe(false)
+    expect(tools.some((t) => /delete|process_|move|_task$/.test(t.name) && t.name !== 'get_task')).toBe(false)
   })
 
   it('returns unknown methods and tools as errors', async () => {

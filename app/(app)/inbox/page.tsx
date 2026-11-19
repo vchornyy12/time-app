@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { createClient, getUser } from '@/lib/supabase/server'
 import { InboxList } from '@/components/tasks/InboxList'
 import { getUserContexts } from '@/lib/actions/contexts'
+import { SuggestionsPanel } from '@/components/tasks/SuggestionsPanel'
+import type { AgentSuggestion } from '@/lib/types'
 
 export const metadata: Metadata = { title: 'Inbox' }
 
@@ -14,7 +16,7 @@ export default async function InboxPage() {
 
   if (!user) redirect('/login')
 
-  const [{ data: tasks }, userContexts] = await Promise.all([
+  const [{ data: tasks }, userContexts, { data: suggestions }] = await Promise.all([
     supabase
       .from('tasks')
       .select('*')
@@ -22,6 +24,13 @@ export default async function InboxPage() {
       .eq('status', 'inbox')
       .order('created_at', { ascending: false }),
     getUserContexts(),
+    supabase
+      .from('agent_suggestions')
+      .select('id, task_id, kind, reason, evidence_url, evidence_quote, draft_message, payload, status, external_ref, created_at, task:tasks(title, status, delegated_to, due_date)')
+      .eq('user_id', user.id)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(50),
   ])
 
   const list = tasks ?? []
@@ -37,6 +46,8 @@ export default async function InboxPage() {
           </span>
         )}
       </div>
+
+      <SuggestionsPanel suggestions={(suggestions ?? []) as unknown as AgentSuggestion[]} />
 
       <InboxList tasks={list} userContexts={userContexts} />
     </div>
