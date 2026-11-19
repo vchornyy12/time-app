@@ -73,7 +73,7 @@ export function AssistantCard(props: AssistantCardProps) {
             </button>
           </div>
         ) : (
-          <a href="/api/google-chat/auth" className="btn-glass !px-3 !py-2 text-sm self-start">Connect Google Chat</a>
+          <a href="/api/google-chat/auth" className="btn-glass !w-auto shrink-0 !px-3 !py-2 text-sm self-start">Connect Google Chat</a>
         )}
       </Row>
 
@@ -106,8 +106,8 @@ export function AssistantCard(props: AssistantCardProps) {
             })
           }}>
             <input type="url" required value={webhook} onChange={(e) => setWebhook(e.target.value)} autoComplete="off"
-              placeholder="https://chat.googleapis.com/v1/spaces/…" className="glass-input text-sm flex-1 min-w-0" aria-label="Google Chat webhook URL" />
-            <button type="submit" disabled={pending} className="btn-glass !px-3 !py-2 text-sm">Save</button>
+              placeholder="https://chat.googleapis.com/v1/spaces/…" className="glass-input text-sm flex-1 min-w-0 !py-2" aria-label="Google Chat webhook URL" />
+            <button type="submit" disabled={pending} className="btn-glass !w-auto shrink-0 !px-3 !py-2 text-sm">Save</button>
           </form>
         )}
       </Row>
@@ -130,7 +130,7 @@ export function AssistantCard(props: AssistantCardProps) {
           <label className="text-xs" style={{ color: 'var(--text-tertiary)' }} htmlFor="assistant-muted">Muted conversations (one per line, part of the name is enough)</label>
           <textarea id="assistant-muted" value={muted} onChange={(e) => setMuted(e.target.value)} rows={4}
             className="glass-input text-sm" placeholder={'Celebrating Together\nKudos Hub\nBinariks site monitoring'} />
-          <button type="submit" disabled={pending} className="btn-glass !px-3 !py-2 text-sm self-start">Save instructions</button>
+          <button type="submit" disabled={pending} className="btn-glass !w-auto shrink-0 !px-3 !py-2 text-sm self-start">Save instructions</button>
         </form>
       </Row>
 
