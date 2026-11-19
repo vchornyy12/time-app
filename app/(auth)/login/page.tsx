@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { safeInternalPath } from '@/lib/utils/safe-internal-path'
+
+// Where to go after sign-in, e.g. back to an AI connector's consent page.
+function nextPath() {
+  return safeInternalPath(new URLSearchParams(window.location.search).get('next'), '/inbox')
+}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -27,7 +33,7 @@ export default function LoginPage() {
       setError(error.message)
       setLoading(false)
     } else {
-      router.push('/inbox')
+      router.push(nextPath())
       router.refresh()
     }
   }
@@ -40,7 +46,8 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        // Keep the plain callback URL unless a return path is needed (Supabase redirect allowlist).
+        redirectTo: `${window.location.origin}/auth/callback${nextPath() === '/inbox' ? '' : `?next=${encodeURIComponent(nextPath())}`}`,
         scopes: 'https://www.googleapis.com/auth/calendar.events',
       },
     })

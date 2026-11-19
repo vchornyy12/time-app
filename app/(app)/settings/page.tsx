@@ -3,6 +3,10 @@ import { redirect } from 'next/navigation'
 import { createClient, getUser } from '@/lib/supabase/server'
 import { GoogleCalendarCard } from '@/components/settings/GoogleCalendarCard'
 import { AccountCard } from '@/components/settings/AccountCard'
+import { AIAssistantsCard } from '@/components/settings/AIAssistantsCard'
+import { headers } from 'next/headers'
+import { mcpEnabled } from '@/lib/mcp/auth'
+import { agentActivity } from '@/lib/mcp/activity'
 
 export const metadata: Metadata = { title: 'Settings' }
 
@@ -34,6 +38,13 @@ export default async function SettingsPage({ searchParams }: PageProps) {
     .eq('user_id', user.id)
     .maybeSingle()
 
+  let agent: { connectorUrl: string; lastActivityAt: string | null; capturedLast7Days: number } | null = null
+  if (mcpEnabled()) {
+    const h = await headers()
+    const requestUrl = `${h.get('x-forwarded-proto') ?? 'https'}://${h.get('host') ?? 'localhost'}`
+    agent = await agentActivity(supabase, user.id, requestUrl)
+  }
+
   const isConnected = !!integration?.google_connected
   const calendarConnected = integration?.calendar_connected ?? false
 
@@ -54,6 +65,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
           errorMessage={error ? (ERROR_MESSAGES[error] ?? 'Something went wrong.') : undefined}
           justConnected={connected === '1'}
         />
+        {agent && <div className="mt-4"><AIAssistantsCard {...agent} /></div>}
       </section>
 
       <section className="mt-10">

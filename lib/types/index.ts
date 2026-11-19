@@ -43,6 +43,29 @@ export interface Task {
   completed_at: string | null
   attachments: Attachment[]
   recurrence_rule: RecurrenceRule | null
+  /** Set only on tasks an AI agent captured through the MCP connector. */
+  source?: TaskSource | null
+  source_ref?: string | null
+  source_url?: string | null
+  source_quote?: string | null
+  agent_proposal?: AgentProposal | null
+  captured_by?: string | null
+}
+
+export const TASK_SOURCES = ['gmail', 'bluedot', 'google_chat', 'slack', 'jira', 'calendar', 'meeting', 'other'] as const
+export type TaskSource = (typeof TASK_SOURCES)[number]
+
+export const PROPOSED_TYPES = ['next_action', 'waiting_for', 'calendar', 'project', 'someday_maybe', 'reference'] as const
+export type ProposedType = (typeof PROPOSED_TYPES)[number]
+
+/** The agent's suggestion for how to process the item. The human decides. */
+export interface AgentProposal {
+  type?: ProposedType
+  owner?: string
+  due?: string
+  contexts?: string[]
+  confidence?: number
+  notes?: string
 }
 
 export interface Project {

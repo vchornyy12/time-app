@@ -1,3 +1,4 @@
+import { safeInternalPath } from '@/lib/utils/safe-internal-path'
 import { stripProviderCredentials } from './strip-provider-credentials'
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
@@ -6,7 +7,12 @@ export async function updateSession(request: NextRequest, requestHeaders = new H
   let supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } })
   // This exact endpoint verifies a mobile bearer token itself and returns JSON
   // errors. Cookie-only redirects would otherwise prevent native authentication.
-  if (request.nextUrl.pathname === '/api/mobile/process-inbox') return supabaseResponse
+  // The MCP endpoint and its OAuth discovery document authenticate AI connectors
+  // with bearer tokens (or are public), so they must not get the login redirect.
+  const bearerRoutes = request.nextUrl.pathname === '/api/mobile/process-inbox'
+    || request.nextUrl.pathname === '/api/mcp'
+    || request.nextUrl.pathname.startsWith('/.well-known/oauth-protected-resource')
+  if (bearerRoutes) return supabaseResponse
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -57,13 +63,14 @@ export async function updateSession(request: NextRequest, requestHeaders = new H
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.search = ''
+    // An AI connector sends the user to the consent page; bring them back after sign-in.
+    if (pathname === '/oauth/consent') url.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
     return redirectWithCookies(url)
   }
 
   if (user && (pathname === '/login' || pathname === '/register')) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/inbox'
-    return redirectWithCookies(url)
+    const next = safeInternalPath(request.nextUrl.searchParams.get('next'), '/inbox')
+    return redirectWithCookies(new URL(next, request.nextUrl.origin))
   }
 
   return supabaseResponse

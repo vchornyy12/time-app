@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils/cn'
 import { createClient } from '@/lib/supabase/client'
 import { Spinner } from '@/components/ui'
 import { AttachmentSection } from '@/components/tasks/AttachmentSection'
+import { SourceDetails } from '@/components/tasks/TaskSource'
 import { updateTaskTitle } from '@/lib/actions/tasks'
 import type { Task, Attachment } from '@/lib/types'
 
@@ -199,6 +200,8 @@ export function TaskDetailPanel({ taskId }: TaskDetailPanelProps) {
           </MetaRow>
         )}
       </div>
+
+      <SourceDetails task={task} />
 
       {/* Attachments */}
       {userId && (

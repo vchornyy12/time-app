@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils/cn'
 import { updateTaskTitle } from '@/lib/actions/tasks'
 import { useOverflowing } from '@/lib/hooks/useOverflowing'
 import type { Task } from '@/lib/types'
+import { SourceBadge } from '@/components/tasks/TaskSource'
 
 const DBLCLICK_DELAY = 220 // ms
 
@@ -103,7 +104,10 @@ export function InboxItem({ task, onDelete, onProcess, onTitleClick, isNew }: In
             {task.title}
           </button>
         )}
-        <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>{timeAgo}</p>
+        <p className="text-sm mt-0.5 flex items-center gap-2 flex-wrap" style={{ color: 'var(--text-secondary)' }}>
+          <span>{timeAgo}</span>
+          <SourceBadge task={task} />
+        </p>
       </div>
 
       {/* Actions — visible on hover or keyboard focus within */}
