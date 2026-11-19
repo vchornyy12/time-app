@@ -60,7 +60,7 @@ export function AIAssistantsCard({ connectorUrl, lastActivityAt, capturedLast7Da
         >
           {connectorUrl}
         </code>
-        <button type="button" onClick={copy} className="btn-glass !px-3 !py-2" aria-label="Copy connector URL">
+        <button type="button" onClick={copy} className="btn-glass !w-auto shrink-0 !px-3 !py-2" aria-label="Copy connector URL">
           {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
         </button>
       </div>
