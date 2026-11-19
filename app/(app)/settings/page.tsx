@@ -7,6 +7,8 @@ import { AIAssistantsCard } from '@/components/settings/AIAssistantsCard'
 import { headers } from 'next/headers'
 import { mcpEnabled } from '@/lib/mcp/auth'
 import { agentActivity } from '@/lib/mcp/activity'
+import { AssistantCard } from '@/components/settings/AssistantCard'
+import { chatOAuthConfigured } from '@/lib/google-chat/client'
 
 export const metadata: Metadata = { title: 'Settings' }
 
@@ -16,14 +18,17 @@ const ERROR_MESSAGES: Record<string, string> = {
   token_exchange_failed: 'Could not complete Google sign-in. Please try again.',
   no_refresh_token: 'No refresh token returned. Try disconnecting and reconnecting.',
   db_error: 'Failed to save connection. Please try again.',
+  chat_auth_denied: 'Google Chat connection was cancelled.',
+  chat_scopes_missing: 'Google Chat needs read access to spaces and messages. Please allow both.',
+  chat_not_configured: 'Google Chat is not configured on this server.',
 }
 
 interface PageProps {
-  searchParams: Promise<{ connected?: string; error?: string }>
+  searchParams: Promise<{ connected?: string; error?: string; chat_connected?: string }>
 }
 
 export default async function SettingsPage({ searchParams }: PageProps) {
-  const { connected, error } = await searchParams
+  const { connected, error, chat_connected } = await searchParams
 
   const supabase = await createClient()
   const {
@@ -39,10 +44,19 @@ export default async function SettingsPage({ searchParams }: PageProps) {
     .maybeSingle()
 
   let agent: { connectorUrl: string; lastActivityAt: string | null; capturedLast7Days: number } | null = null
+  let assistant: { chat_connected: boolean; chat_account_email: string | null; notify_connected: boolean } | null = null
+  let profile: { instructions: string; muted: string[] } | null = null
   if (mcpEnabled()) {
     const h = await headers()
     const requestUrl = `${h.get('x-forwarded-proto') ?? 'https'}://${h.get('host') ?? 'localhost'}`
-    agent = await agentActivity(supabase, user.id, requestUrl)
+    const [activity, integrationRow, profileRow] = await Promise.all([
+      agentActivity(supabase, user.id, requestUrl),
+      supabase.from('assistant_integrations').select('chat_connected, chat_account_email, notify_connected').eq('user_id', user.id).maybeSingle(),
+      supabase.from('agent_profiles').select('instructions, muted').eq('user_id', user.id).maybeSingle(),
+    ])
+    agent = activity
+    assistant = integrationRow.data
+    profile = profileRow.data
   }
 
   const isConnected = !!integration?.google_connected
@@ -66,6 +80,19 @@ export default async function SettingsPage({ searchParams }: PageProps) {
           justConnected={connected === '1'}
         />
         {agent && <div className="mt-4"><AIAssistantsCard {...agent} /></div>}
+        {agent && (
+          <div className="mt-4">
+            <AssistantCard
+              chatConfigured={chatOAuthConfigured()}
+              chatConnected={assistant?.chat_connected ?? false}
+              chatEmail={assistant?.chat_account_email ?? null}
+              notifyConnected={assistant?.notify_connected ?? false}
+              instructions={profile?.instructions ?? ''}
+              muted={profile?.muted ?? []}
+              justConnectedChat={chat_connected === '1'}
+            />
+          </div>
+        )}
       </section>
 
       <section className="mt-10">

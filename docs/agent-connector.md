@@ -21,9 +21,13 @@ Claude / ChatGPT ──(OAuth 2.1, DCR)──► Supabase Auth OAuth server ─�
 - **Tokens.** Access tokens are Supabase JWTs with a `client_id` claim. The
   endpoint accepts only tokens with that claim, so ordinary app sessions cannot
   call it. Queries run with the user's token, so RLS applies.
-- **Tools.** `capture_inbox_item`, `list_inbox`, `list_next_actions`,
-  `list_waiting_for`, `get_task`, `get_source_cursor`, `set_source_cursor`.
-  No tool processes, completes, moves or deletes a task.
+- **Tools.** Capture: `capture_inbox_item`. Read: `list_inbox`, `list_next_actions`,
+  `list_waiting_for`, `get_task`, `get_agent_profile`, `list_suggestions`,
+  `list_recent_outcomes`. Run state: `get_source_cursor`, `set_source_cursor`,
+  `filter_unprocessed`, `mark_processed`. Proposals: `propose_task_update`,
+  `list_approved_actions`, `complete_approved_action`. Notify: `notify_user`.
+  Google Chat (read-only): `chat_messages_since`, `chat_list_messages`,
+  `chat_recent_conversations`. No tool processes, completes, moves or deletes a task.
 - **Database limits** (migration `20261119000000_agent_capture.sql`): restrictive
   RLS policies make any token with a `client_id` claim insert-only, and only
   for Inbox tasks; every other user table is read-only for it. This holds even
@@ -96,3 +100,55 @@ Both need the Gmail/Bluedot connectors enabled in the same account.
 - `npx vitest run lib/mcp app/api/mcp --no-file-parallelism`
 - `node scripts/test-agent-capture-migration.mjs /path/to/@electric-sql/pglite/dist/index.js`
   (applies the migration to in-memory Postgres and checks the RLS limits).
+
+## PM assistant (migration `20261120000000_pm_assistant.sql`)
+
+The user lives by GTD: the agent collects, the user decides.
+
+| Piece | What it does |
+| --- | --- |
+| `agent_processed_items` | Ledger of source items already handled (captured, noise, closed, duplicate). Hourly runs call `filter_unprocessed` and analyse only new IDs. Captures are recorded automatically. |
+| `agent_suggestions` | Agent proposals on existing tasks: `close`, `follow_up` (with a draft message), `jira_issue`. Shown at the top of the Inbox; the user accepts or dismisses. Accepting `close` marks the task done; accepting `jira_issue` queues it, and the agent creates the issue on its next run and records the key through `complete_agent_suggestion` (the only state change an agent token can make). |
+| `agent_profiles` | The user's standing instructions and muted conversations, edited in Settings → Assistant. Read-only for agents. |
+| `assistant_integrations` + Vault | Google Chat refresh token and the notification webhook URL, encrypted; readable only by the service role. Users see connection flags only. |
+
+### Google Chat source (REST API)
+
+Google's hosted Chat MCP needs Developer Preview access, so Time24 reads Chat
+through the generally available Chat REST API with the user's own grant.
+
+1. Google Cloud project with **Google Chat API** and **People API** enabled.
+2. OAuth client (Web application). Authorized redirect URIs:
+   `https://time24.pro/api/google-chat/callback` (and `http://localhost:3000/api/google-chat/callback` for development).
+3. OAuth consent screen: Internal (Workspace). Scopes: `chat.spaces.readonly`,
+   `chat.messages.readonly`, `chat.memberships.readonly`, `directory.readonly`, `openid`, `email`.
+4. Server env: `GOOGLE_CHAT_CLIENT_ID`, `GOOGLE_CHAT_CLIENT_SECRET`.
+5. User: Settings → Assistant → Connect Google Chat.
+
+### Notifications
+
+Google Chat incoming webhook in a space of the user's own ("Time24 Assistant"):
+space → Apps & integrations → Webhooks → Add webhook → paste the URL in
+Settings → Assistant. Time24 sends a test message before saving. `notify_user`
+allows 30 messages a day; the skill uses it for the morning digest, the weekly
+review and urgent items only.
+
+### Schedule
+
+Claude scheduled task (cloud), working days, Europe/Warsaw time:
+
+- hourly 08:00–17:00 — `gtd-triage` capture (08:00 run is the morning mode: capture,
+  follow-ups, approved Jira actions, digest);
+- Friday 16:30 — weekly review.
+
+Needs the Time24, Gmail, Bluedot and Atlassian connectors in the same Claude account.
+
+### Tests
+
+- `npx vitest run lib/mcp lib/assistant app/api/google-chat --no-file-parallelism`
+- `node scripts/test-pm-assistant-migration.mjs /path/to/@electric-sql/pglite/dist/index.js`
+
+### Local alternative
+
+`agent/google-chat-mcp/` is a local stdio MCP server with the same Chat tools,
+for Claude Code on a laptop before the server-side source is deployed.

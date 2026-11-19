@@ -1,28 +1,18 @@
 import 'server-only'
 import { createHash } from 'node:crypto'
 import { z } from 'zod'
-import type { SupabaseClient, User } from '@supabase/supabase-js'
-import { PROPOSED_TYPES, TASK_SOURCES } from '@/lib/types'
+import { PROPOSED_TYPES } from '@/lib/types'
 import { dateString, title } from '@/lib/validation/schemas'
+import { audit, source, tool, type Tool, type ToolContext } from './tool-kit'
+import { ASSISTANT_TOOLS, markProcessed } from './assistant-tools'
 
-export type ToolContext = { supabase: SupabaseClient; user: User; clientId: string }
+export type { ToolContext }
 
-type ToolAnnotations = { title: string; readOnlyHint: boolean; destructiveHint?: boolean; idempotentHint?: boolean; openWorldHint: boolean }
-type Tool<S extends z.ZodType> = {
-  name: string
-  description: string
-  input: S
-  annotations: ToolAnnotations
-  run: (args: z.infer<S>, ctx: ToolContext) => Promise<unknown>
-}
-const tool = <S extends z.ZodType>(t: Tool<S>) => t
-
-const source = z.enum(TASK_SOURCES)
 const limit = z.number().int().min(1).max(100).default(50)
   .describe('Maximum number of tasks to return (1-100, default 50).')
 
 // Fields returned to the agent. The quote is only returned by get_task.
-const LIST_COLUMNS = 'id, title, status, created_at, due_date, scheduled_at, delegated_to, contexts, source, source_url'
+const LIST_COLUMNS = 'id, title, status, created_at, due_date, scheduled_at, delegated_to, is_delegation_communicated, contexts, source, source_url'
 const DETAIL_COLUMNS = `${LIST_COLUMNS}, project_id, completed_at, source_ref, source_quote, agent_proposal, captured_by`
 
 /**
@@ -32,15 +22,6 @@ const DETAIL_COLUMNS = `${LIST_COLUMNS}, project_id, completed_at, source_ref, s
 export function dedupeKey(src: string, sourceRef: string, itemKey: string) {
   const digest = createHash('sha256').update(`${src}\u0000${sourceRef}\u0000${itemKey.trim().toLowerCase()}`).digest('base64url')
   return `${src}:${digest.slice(0, 43)}`
-}
-
-async function audit(ctx: ToolContext, toolName: string, ok: boolean, taskId: string | null, detail?: string) {
-  // Best effort: an audit failure must not turn a successful capture into an error
-  // the agent would retry, but it is reported in server logs.
-  const { error } = await ctx.supabase.from('agent_events').insert({
-    user_id: ctx.user.id, client_id: ctx.clientId.slice(0, 200), tool: toolName, task_id: taskId, ok, detail: detail?.slice(0, 500) ?? null,
-  })
-  if (error) console.error('agent_events insert failed', error.code)
 }
 
 async function listByStatus(ctx: ToolContext, status: string, max: number, context?: string) {
@@ -92,11 +73,13 @@ export const TOOLS = [
       if (error) { await audit(ctx, 'capture_inbox_item', false, null, error.code); throw new Error('Could not capture the item.') }
       if (data) {
         await audit(ctx, 'capture_inbox_item', true, data.id, 'created')
+        await markProcessed(ctx, args.source, [{ source_ref: args.source_ref, outcome: 'captured', task_id: data.id }])
         return { created: true, task_id: data.id, status: data.status }
       }
       const existing = await ctx.supabase.from('tasks').select('id, status')
         .eq('user_id', ctx.user.id).eq('dedupe_key', key).single()
       if (existing.error) throw new Error('Could not capture the item.')
+      await markProcessed(ctx, args.source, [{ source_ref: args.source_ref, outcome: 'captured', task_id: existing.data.id }])
       return { created: false, duplicate: true, task_id: existing.data.id, status: existing.data.status }
     },
   }),
@@ -163,6 +146,7 @@ export const TOOLS = [
       return { source: args.source, cursor: args.cursor }
     },
   }),
+  ...ASSISTANT_TOOLS,
 ] as const
 
 export function listTools() {

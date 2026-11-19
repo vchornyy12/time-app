@@ -68,6 +68,25 @@ export interface AgentProposal {
   notes?: string
 }
 
+export const SUGGESTION_KINDS = ['close', 'follow_up', 'jira_issue'] as const
+export type SuggestionKind = (typeof SUGGESTION_KINDS)[number]
+
+/** An agent's proposed change to an existing task. The human accepts or dismisses it. */
+export interface AgentSuggestion {
+  id: string
+  task_id: string
+  kind: SuggestionKind
+  reason: string
+  evidence_url: string | null
+  evidence_quote: string | null
+  draft_message: string | null
+  payload: { project_key?: string; summary?: string; description?: string; assignee?: string; due?: string } | null
+  status: 'pending' | 'accepted' | 'dismissed' | 'executed' | 'failed'
+  external_ref: string | null
+  created_at: string
+  task: { title: string; status: string; delegated_to: string | null; due_date: string | null } | null
+}
+
 export interface Project {
   id: string
   title: string
