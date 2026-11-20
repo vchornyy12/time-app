@@ -50,8 +50,10 @@ export function AssistantCard(props: AssistantCardProps) {
       const result = await fn()
       if (result) setMessage(result)
       router.refresh()
-    } catch {
-      setMessage({ ok: false, text: 'Something went wrong. Please try again.' })
+    } catch (e) {
+      // After a deploy, an open page still calls the previous build's server actions.
+      const stale = e instanceof Error && /Server Action .* was not found/i.test(e.message)
+      setMessage({ ok: false, text: stale ? 'Time24 was updated. Reload the page and try again.' : 'Something went wrong. Please try again.' })
     }
   })
 
@@ -120,16 +122,16 @@ export function AssistantCard(props: AssistantCardProps) {
         <form className="flex flex-col gap-2" onSubmit={(e) => {
           e.preventDefault()
           run(async () => {
-            await saveAgentProfile({ instructions, muted: muted.split('\n') })
+            await saveAgentProfile({ instructions, muted: muted.split(/[\n,]/) })
             return { ok: true, text: 'Instructions saved.' }
           })
         }}>
           <label className="text-xs" style={{ color: 'var(--text-tertiary)' }} htmlFor="assistant-instructions">Instructions</label>
           <textarea id="assistant-instructions" value={instructions} onChange={(e) => setInstructions(e.target.value)} maxLength={4000} rows={6}
-            className="glass-input text-sm" placeholder={'Projects: WrangleWorks (client), Binariks site (Jira N30), Finance tool…\nAlways capture requests from Eric Hills.\nIgnore INVOICES check.'} />
-          <label className="text-xs" style={{ color: 'var(--text-tertiary)' }} htmlFor="assistant-muted">Muted conversations (one per line, part of the name is enough)</label>
+            className="glass-input text-sm" placeholder={'Projects: Acme Portal (client, Jira ACME), Company website (Jira WEB)…\nAlways capture requests from my clients and my manager.\nIgnore automated billing reports.'} />
+          <label className="text-xs" style={{ color: 'var(--text-tertiary)' }} htmlFor="assistant-muted">Muted conversations (one per line or comma-separated; part of the name is enough)</label>
           <textarea id="assistant-muted" value={muted} onChange={(e) => setMuted(e.target.value)} rows={4}
-            className="glass-input text-sm" placeholder={'Celebrating Together\nKudos Hub\nBinariks site monitoring'} />
+            className="glass-input text-sm" placeholder={'Company announcements\nBirthdays\nSite monitoring alerts'} />
           <button type="submit" disabled={pending} className="btn-glass !w-auto shrink-0 !px-3 !py-2 text-sm self-start">Save instructions</button>
         </form>
       </Row>

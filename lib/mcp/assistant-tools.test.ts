@@ -73,7 +73,7 @@ describe('propose_task_update', () => {
     const db = fakeDb()
     db.queue({ data: { id: task, status: 'waiting_for' }, error: null }, { data: { id: 's1' }, error: null })
     const res = out(await handleMessage(call('propose_task_update', {
-      task_id: task, kind: 'close', reason: 'Oleh said the build is shared', evidence_url: 'https://chat.google.com/dm/x',
+      task_id: task, kind: 'close', reason: 'Alex said the build is shared', evidence_url: 'https://chat.google.com/dm/x',
     }), ctx(db)))
     expect(res.structuredContent).toEqual({ created: true, suggestion_id: 's1' })
     const insert = db.calls.find((c) => c.method === 'insert')!
@@ -97,9 +97,9 @@ describe('approved actions', () => {
   it('records results through the guarded database function', async () => {
     const db = fakeDb()
     const id = '22222222-2222-4222-8222-222222222222'
-    const res = out(await handleMessage(call('complete_approved_action', { suggestion_id: id, ok: true, external_ref: 'N30-200' }), ctx(db)))
-    expect(res.structuredContent).toMatchObject({ status: 'executed', external_ref: 'N30-200' })
-    expect(db.calls.find((c) => c.method === 'rpc')?.args).toEqual(['complete_agent_suggestion', { p_suggestion_id: id, p_ok: true, p_external_ref: 'N30-200' }])
+    const res = out(await handleMessage(call('complete_approved_action', { suggestion_id: id, ok: true, external_ref: 'PROJ-200' }), ctx(db)))
+    expect(res.structuredContent).toMatchObject({ status: 'executed', external_ref: 'PROJ-200' })
+    expect(db.calls.find((c) => c.method === 'rpc')?.args).toEqual(['complete_agent_suggestion', { p_suggestion_id: id, p_ok: true, p_external_ref: 'PROJ-200' }])
     const missingRef = out(await handleMessage(call('complete_approved_action', { suggestion_id: id, ok: true }), ctx(fakeDb())))
     expect(missingRef.isError).toBe(true)
   })
@@ -132,7 +132,7 @@ describe('chat_messages_since paging', () => {
     vi.mocked(ChatSession.open).mockResolvedValue({
       recentSpaces: async () => Object.keys(raw).map((s) => space(s, '2026-11-19T11:00:00.000Z')),
       rawMessages: async (s: string, o: { limit: number }) => raw[s].slice(0, o.limit),
-      describe: async (s: { name: string }) => ({ space: s.name, title: s.name === 'spaces/m' ? 'Kudos Hub' : s.name }),
+      describe: async (s: { name: string }) => ({ space: s.name, title: s.name === 'spaces/m' ? 'Kudos Board' : s.name }),
       format: async (_s: unknown, m: { name: string; text: string }) => ({ message_name: m.name, text: m.text }),
     } as never)
   }

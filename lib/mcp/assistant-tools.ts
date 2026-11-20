@@ -55,7 +55,7 @@ function chatError(e: unknown): never {
 }
 
 const jiraPayload = z.object({
-  project_key: z.string().trim().regex(/^[A-Z][A-Z0-9_]{1,19}$/).describe('Jira project key, e.g. N30.'),
+  project_key: z.string().trim().regex(/^[A-Z][A-Z0-9_]{1,19}$/).describe('Jira project key, e.g. PROJ.'),
   summary: z.string().trim().min(1).max(255),
   description: z.string().trim().max(2000).optional(),
   assignee: z.string().trim().max(200).optional().describe('Name or email of the assignee.'),
@@ -164,7 +164,7 @@ export const ASSISTANT_TOOLS = [
   }),
   tool({
     name: 'complete_approved_action',
-    description: 'Record the result of an approved action: ok=true with external_ref (e.g. the Jira key N30-123), or ok=false if it failed.',
+    description: 'Record the result of an approved action: ok=true with external_ref (e.g. the Jira key PROJ-123), or ok=false if it failed.',
     input: z.object({ suggestion_id: z.uuid(), ok: z.boolean(), external_ref: z.string().trim().min(1).max(200).optional() }).strict()
       .refine((a) => !a.ok || a.external_ref, { message: 'external_ref is required when ok is true', path: ['external_ref'] }),
     annotations: { title: 'Complete approved action', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },

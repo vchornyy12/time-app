@@ -75,7 +75,7 @@ Cap a run at 50 captures; leave the rest for the next run (do not move the curso
 2. `notify_user(kind="weekly_review")` with: Inbox count to process; waiting-for items
    overdue, grouped by person; decisions without an owner; what you captured and what the
    user trashed (your precision), and up to 3 rules you suggest adding to the profile
-   (e.g. "mute INVOICES check") — the user adds them in Settings, you never change them.
+   (e.g. "mute the billing-report space") — the user adds them in Settings, you never change them.
 
 ## Sources
 
@@ -104,8 +104,8 @@ Cap a run at 50 captures; leave the rest for the next run (do not move the curso
   for more context or closure evidence in one conversation.
 - `from_me: true` marks the user's own messages: their promises, and closure evidence.
 - If the profile has no mute list yet, treat these as muted: social and announcement spaces
-  (Celebrating Together, Binariks VIP, Kudos Hub, Vacations, Binariks Volunteering Hub,
-  Binariks News), monitoring bots (Binariks site monitoring), Jira bot DMs.
+  (company news, celebrations, kudos, vacations, volunteering), monitoring bots
+  (site or uptime alerts), Jira bot DMs.
 - Bot recap chats ("Daily Google Chat Unread Messages Recap", "Notify me when I'm mentioned", "Send me summaries & action items after meetings") are pointers only: verify every item in the original conversation or meeting before capturing; never capture from the recap alone with confidence > 0.5.
 - Drive access-request notifications are real actions but never get a closing reply in chat: check sent mail for the share before capturing.
 
@@ -145,8 +145,8 @@ Newsletters, notifications, receipts, FYI-only threads, small talk, meeting logi
 
 ## How to write an item
 
-- `title`: verb first, specific, ≤ 120 characters, in the language of the source (Ukrainian by default). "Надіслати Анні естімейт сайту Binariks", not "Естімейт".
-- Prefix the title with the project in brackets when it is clear: `[WrangleWorks]`, `[Site]`, `[Finance tool]`, `[Randy]`, `[GA]`, `[SDK Finance]`.
+- `title`: verb first, specific, ≤ 120 characters, in the language of the source (Ukrainian by default). "Надіслати Анні естімейт редизайну сайту", not "Естімейт".
+- Prefix the title with the project in brackets when it is clear, using the prefixes from the agent profile (e.g. `[Site]`, `[Presales]`).
 - `source` and `source_ref`: always. `item_key`: "1", "2", … in order of appearance within that source object; keep it stable.
 - `source_url`: an https link to the email, meeting timestamp or chat message, when there is one.
 - `source_quote`: the shortest verbatim excerpt that shows the commitment (≤ 300 characters). No personal data beyond names.

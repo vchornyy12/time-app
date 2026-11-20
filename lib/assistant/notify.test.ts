@@ -27,9 +27,9 @@ describe('notification webhook URL', () => {
 
 describe('muted conversations', () => {
   it('matches part of a title, case-insensitively, or the exact space name', () => {
-    expect(isMuted(['kudos'], 'Kudos Hub', 'spaces/1')).toBe(true)
+    expect(isMuted(['kudos'], 'Kudos Board', 'spaces/1')).toBe(true)
     expect(isMuted(['spaces/abc'], 'Team', 'spaces/abc')).toBe(true)
     expect(isMuted(['', '  '], 'Anything', 'spaces/1')).toBe(false)
-    expect(isMuted(['Celebrating'], 'Binariks site', 'spaces/1')).toBe(false)
+    expect(isMuted(['Birthdays'], 'Company site', 'spaces/1')).toBe(false)
   })
 })
