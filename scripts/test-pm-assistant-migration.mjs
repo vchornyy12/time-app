@@ -45,7 +45,7 @@ try {
   await db.exec(migration)
   await db.exec(migration) // idempotent re-run
 
-  const aliceTask = (await one(`INSERT INTO tasks(user_id,title,status) VALUES ('${alice}','Get build from Oleh','waiting_for') RETURNING id`)).id
+  const aliceTask = (await one(`INSERT INTO tasks(user_id,title,status) VALUES ('${alice}','Get build from Alex','waiting_for') RETURNING id`)).id
   const bobTask = (await one(`INSERT INTO tasks(user_id,title,status) VALUES ('${bob}','Bob task','waiting_for') RETURNING id`)).id
 
   // ── Ledger: agent can record and update its own items, not delete or touch others.
@@ -63,7 +63,7 @@ try {
   let suggestion
   await agent(async () => {
     suggestion = (await one(`INSERT INTO agent_suggestions(user_id,task_id,kind,reason,payload)
-      VALUES ('${alice}','${aliceTask}','jira_issue','Track in Jira','{"project_key":"N30","summary":"Get build"}') RETURNING id`)).id
+      VALUES ('${alice}','${aliceTask}','jira_issue','Track in Jira','{"project_key":"PROJ","summary":"Get build"}') RETURNING id`)).id
     await assert.rejects(db.exec(`INSERT INTO agent_suggestions(user_id,task_id,kind,reason) VALUES ('${alice}','${aliceTask}','jira_issue','again')`), /agent_suggestions_one_pending_idx/)
     await assert.rejects(db.exec(`INSERT INTO agent_suggestions(user_id,task_id,kind,reason) VALUES ('${alice}','${bobTask}','close','not mine')`), /row-level security/)
     await assert.rejects(db.exec(`INSERT INTO agent_suggestions(user_id,task_id,kind,reason,status,decided_at) VALUES ('${alice}','${aliceTask}','close','pre-approved','accepted',now())`), /row-level security/)
@@ -71,7 +71,7 @@ try {
     assert.equal((await db.query(`UPDATE agent_suggestions SET status='accepted', decided_at=now() RETURNING id`)).rows.length, 0, 'agent cannot accept')
     assert.equal((await db.query(`DELETE FROM agent_suggestions RETURNING id`)).rows.length, 0, 'agent cannot delete')
     // Not approved yet: the agent cannot record an execution.
-    await assert.rejects(db.exec(`SELECT public.complete_agent_suggestion('${suggestion}', true, 'N30-1')`), /No approved action/)
+    await assert.rejects(db.exec(`SELECT public.complete_agent_suggestion('${suggestion}', true, 'PROJ-1')`), /No approved action/)
   })
 
   // The human accepts in the app; then the agent records the Jira key.
@@ -79,21 +79,21 @@ try {
     assert.equal((await db.query(`UPDATE agent_suggestions SET status='accepted', decided_at=now() WHERE id='${suggestion}' RETURNING id`)).rows.length, 1)
   })
   await as(bob, { client_id: 'claude-client' }, async () => {
-    await assert.rejects(db.exec(`SELECT public.complete_agent_suggestion('${suggestion}', true, 'N30-9')`), /No approved action/)
+    await assert.rejects(db.exec(`SELECT public.complete_agent_suggestion('${suggestion}', true, 'PROJ-9')`), /No approved action/)
   })
   await agent(async () => {
-    await db.exec(`SELECT public.complete_agent_suggestion('${suggestion}', true, 'N30-200')`)
+    await db.exec(`SELECT public.complete_agent_suggestion('${suggestion}', true, 'PROJ-200')`)
     const row = await one(`SELECT status, external_ref FROM agent_suggestions WHERE id='${suggestion}'`)
-    assert.deepEqual(row, { status: 'executed', external_ref: 'N30-200' })
-    await assert.rejects(db.exec(`SELECT public.complete_agent_suggestion('${suggestion}', true, 'N30-201')`), /No approved action/)
+    assert.deepEqual(row, { status: 'executed', external_ref: 'PROJ-200' })
+    await assert.rejects(db.exec(`SELECT public.complete_agent_suggestion('${suggestion}', true, 'PROJ-201')`), /No approved action/)
   })
 
   // ── Profile: the user edits it, the agent only reads it.
   await app(async () => {
-    await db.exec(`INSERT INTO agent_profiles(user_id,instructions,muted) VALUES ('${alice}','Ignore INVOICES check','{"Kudos Hub"}')`)
+    await db.exec(`INSERT INTO agent_profiles(user_id,instructions,muted) VALUES ('${alice}','Ignore billing reports','{"Kudos Board"}')`)
   })
   await agent(async () => {
-    assert.equal((await one(`SELECT instructions FROM agent_profiles`)).instructions, 'Ignore INVOICES check')
+    assert.equal((await one(`SELECT instructions FROM agent_profiles`)).instructions, 'Ignore billing reports')
     assert.equal((await db.query(`UPDATE agent_profiles SET instructions='capture nothing' RETURNING user_id`)).rows.length, 0)
     assert.equal((await db.query(`DELETE FROM agent_profiles RETURNING user_id`)).rows.length, 0)
   })
