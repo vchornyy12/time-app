@@ -24,7 +24,7 @@ the first run of a working day (08:00 Europe/Warsaw) is **morning**; the Friday 
 
 1. `get_agent_profile` — follow its instructions; never read muted conversations.
 2. For each source (Gmail, Bluedot, Google Chat): `get_source_cursor(source)`.
-   First run (null): look back 2 working days.
+   First run (null): look back 1 working day.
 3. Fetch items newer than the cursor (see Sources). Collect their IDs and call
    `filter_unprocessed(source, ids)`. **Analyse only the IDs it returns** — everything
    else was handled in an earlier run, even if it produced no task.
@@ -37,12 +37,20 @@ the first run of a working day (08:00 Europe/Warsaw) is **morning**; the Friday 
    Record the whole conversation's message IDs, not only the ones you quoted.
 8. If an analysed message closes or advances a Waiting For task, `propose_task_update`
    (`close` with evidence). Check `list_suggestions` first to avoid repeats.
-9. `set_source_cursor(source, …)` once everything up to that point is handled. If a
-   source fails, do not move its cursor; report it.
+9. `set_source_cursor(source, …)` after **each batch** that is fully handled (captured or
+   marked), so progress survives a long or interrupted run. If a source fails, do not move
+   its cursor past what you handled; report it.
 10. **Urgent only:** if something needs the user today (deadline today or tomorrow, a
     blocker, a direct request from a client or manager), `notify_user(kind="urgent")`
     with one or two lines and the link. Otherwise send nothing — the Inbox is the place.
 11. End with the run summary.
+
+**Work in batches, oldest first.** Never pull a whole window at once: Chat in pages
+(`has_more`), Gmail ~20 messages at a time, Bluedot one meeting at a time. Read each item
+properly (full email body, meeting summary and transcript) — never decide from search
+snippets alone. Do the reading yourself rather than delegating to subagents: they lose the
+cross-source context needed for closure. When the run gets long, stop after a completed
+batch with the cursor saved; the next hourly run continues from there.
 
 Cap a run at 50 captures; leave the rest for the next run (do not move the cursor past them).
 
@@ -73,6 +81,7 @@ Cap a run at 50 captures; leave the rest for the next run (do not move the curso
 
 ### Gmail — cursor: ISO timestamp of the newest processed message
 - `source_ref` is the Gmail **message** ID (not the thread ID), so new replies in a known thread are analysed.
+- Use snippets only to drop obvious noise; open every remaining message (or its thread) before deciding.
 - Search `in:inbox after:<unix seconds> -category:promotions -category:social` **and** `in:sent after:<unix seconds>`. Sent mail is closure evidence and holds the user's own promises.
 - Read only messages inside the window; ignore quoted history below `On … wrote:` / `… пише:`.
 - Noise, skip without reading: Jira/Confluence notifications, calendar invites/RSVPs/cancellations, Drive share notices, bounces (mailer-daemon), security alerts, marketing, Gemini/Bluedot/Meet meeting-notes emails (meetings come from the meetings source).
@@ -89,8 +98,9 @@ Cap a run at 50 captures; leave the rest for the next run (do not move the curso
 
 ### Google Chat — cursor: one ISO timestamp for all spaces
 - Read with the Time24 tool `chat_messages_since(since=<cursor>)`. It already leaves out muted
-  conversations and messages in the processed ledger. Store its `newest_message_at` as the next
-  cursor. `source_ref` is the message name (`spaces/…/messages/…`). Use `chat_list_messages`
+  conversations and messages in the processed ledger, and returns one page. Handle the page,
+  `set_source_cursor("google_chat", newest_message_at)`, and while `has_more` is true call it
+  again with `since=newest_message_at`. `source_ref` is the message name (`spaces/…/messages/…`). Use `chat_list_messages`
   for more context or closure evidence in one conversation.
 - `from_me: true` marks the user's own messages: their promises, and closure evidence.
 - If the profile has no mute list yet, treat these as muted: social and announcement spaces

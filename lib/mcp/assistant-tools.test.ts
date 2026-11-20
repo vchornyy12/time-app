@@ -122,3 +122,57 @@ describe('notify_user', () => {
     expect(mocks.notifyUser).not.toHaveBeenCalled()
   })
 })
+
+describe('chat_messages_since paging', () => {
+  const space = (name: string, lastActiveTime: string) => ({ name, lastActiveTime })
+  const msg = (space: string, n: number, minute: number, text = 'hello') =>
+    ({ name: `${space}/messages/${n}`, createTime: `2026-11-19T10:${String(minute).padStart(2, '0')}:00.000Z`, text })
+  async function session(raw: Record<string, ReturnType<typeof msg>[]>) {
+    const { ChatSession } = await import('@/lib/google-chat/client')
+    vi.mocked(ChatSession.open).mockResolvedValue({
+      recentSpaces: async () => Object.keys(raw).map((s) => space(s, '2026-11-19T11:00:00.000Z')),
+      rawMessages: async (s: string, o: { limit: number }) => raw[s].slice(0, o.limit),
+      describe: async (s: { name: string }) => ({ space: s.name, title: s.name === 'spaces/m' ? 'Kudos Hub' : s.name }),
+      format: async (_s: unknown, m: { name: string; text: string }) => ({ message_name: m.name, text: m.text }),
+    } as never)
+  }
+  const page = async (args: object, ledger: string[] = []) => {
+    const db = fakeDb()
+    db.queue({ data: { instructions: '', muted: ['Kudos'] }, error: null }, { data: ledger.map((source_ref) => ({ source_ref })), error: null })
+    return out(await handleMessage(call('chat_messages_since', { since: '2026-11-19T09:00:00Z', ...args }), ctx(db))).structuredContent as {
+      newest_message_at: string; has_more: boolean; conversations: { space: string; messages: { message_name: string }[] }[]
+    }
+  }
+
+  it('returns everything and moves the cursor past muted messages when it fits', async () => {
+    await session({ 'spaces/a': [msg('spaces/a', 1, 1), msg('spaces/a', 2, 5)], 'spaces/m': [msg('spaces/m', 1, 9)] })
+    const res = await page({})
+    expect(res.has_more).toBe(false)
+    expect(res.newest_message_at).toBe('2026-11-19T10:09:00.000Z')
+    expect(res.conversations.map((c) => c.space)).toEqual(['spaces/a'])
+  })
+
+  it('stops at the text budget and sets the cursor to the last returned message', async () => {
+    const long = 'x'.repeat(1800)
+    await session({ 'spaces/a': [msg('spaces/a', 1, 1, long), msg('spaces/a', 2, 3, long)], 'spaces/b': [msg('spaces/b', 1, 2, long)] })
+    const res = await page({ max_chars: 2500 })
+    expect(res.has_more).toBe(true)
+    expect(res.newest_message_at).toBe('2026-11-19T10:01:00.000Z')
+    expect(res.conversations.flatMap((c) => c.messages.map((m) => m.message_name))).toEqual(['spaces/a/messages/1'])
+  })
+
+  it('never moves the cursor past a conversation that was cut by the per-conversation limit', async () => {
+    await session({ 'spaces/a': [msg('spaces/a', 1, 1), msg('spaces/a', 2, 2), msg('spaces/a', 3, 8)], 'spaces/b': [msg('spaces/b', 1, 5)] })
+    const res = await page({ limit_per_conversation: 2 })
+    expect(res.has_more).toBe(true)
+    expect(res.newest_message_at).toBe('2026-11-19T10:02:00.000Z')
+    expect(res.conversations.flatMap((c) => c.messages.map((m) => m.message_name))).toEqual(['spaces/a/messages/1', 'spaces/a/messages/2'])
+  })
+
+  it('skips ledger messages without spending the budget', async () => {
+    await session({ 'spaces/a': [msg('spaces/a', 1, 1), msg('spaces/a', 2, 2)] })
+    const res = await page({}, ['spaces/a/messages/1'])
+    expect(res.conversations[0].messages.map((m) => m.message_name)).toEqual(['spaces/a/messages/2'])
+    expect(res.newest_message_at).toBe('2026-11-19T10:02:00.000Z')
+  })
+})
