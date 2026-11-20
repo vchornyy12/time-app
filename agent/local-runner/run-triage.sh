@@ -43,7 +43,7 @@ else
   MODE=morning
 fi
 
-NOW="$(date '+%A %F %H:%M %Z')"
+NOW="$(date '+%A %F %H:%M %Z') (unix $(date +%s); today started at unix $(date -j -f '%F %T' "$TODAY 00:00:00" +%s))"
 PROMPT="Scheduled run of the gtd-triage skill in **$MODE** mode. Local time: $NOW.
 First read the skill at $SKILL and follow it exactly for this mode.
 - Time24 tools are on the MCP server \"time24\" (including chat_messages_since for Google Chat). Call get_agent_profile first.

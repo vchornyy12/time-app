@@ -6,12 +6,30 @@ import { getAssistantSecret } from './secrets'
  * space of their own ("Time24 Assistant"). Messages are posted by the webhook
  * app, so the user gets a normal Chat notification.
  */
-const WEBHOOK = /^https:\/\/chat\.googleapis\.com\/v1\/spaces\/[A-Za-z0-9_-]{1,100}\/messages\?(?:[A-Za-z0-9_]+=[A-Za-z0-9_%.~-]+&?){1,4}$/
+const SPACE_PATH = /^\/v1\/spaces\/[A-Za-z0-9_-]{1,100}\/messages$/
+
+/**
+ * Returns the canonical webhook URL (https://chat.googleapis.com/v1/spaces/X/messages?key=…&token=…)
+ * or null. Accepts the URL however Chat's "Copy link" encoded it (e.g. a token ending in "=" or "%3D").
+ */
+export function normalizeWebhookUrl(raw: string): string | null {
+  const input = raw.trim()
+  if (input.length > 2000) return null
+  let url: URL
+  try { url = new URL(input) } catch { return null }
+  if (url.protocol !== 'https:' || url.hostname !== 'chat.googleapis.com' || url.port || url.username || url.password) return null
+  if (!SPACE_PATH.test(url.pathname)) return null
+  const key = url.searchParams.get('key')
+  const token = url.searchParams.get('token')
+  if (!key || !token) return null
+  const out = new URL(`https://chat.googleapis.com${url.pathname}`)
+  out.searchParams.set('key', key)
+  out.searchParams.set('token', token)
+  return out.toString()
+}
 
 export function isValidWebhookUrl(url: string) {
-  if (url.length > 2000 || !WEBHOOK.test(url)) return false
-  const params = new URL(url).searchParams
-  return params.has('key') && params.has('token')
+  return normalizeWebhookUrl(url) === url.trim()
 }
 
 export class NotifyNotConnectedError extends Error {

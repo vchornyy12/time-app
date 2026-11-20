@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from 'vitest'
 vi.mock('server-only', () => ({}))
 vi.mock('./secrets', () => ({ getAssistantSecret: vi.fn() }))
-const { isValidWebhookUrl } = await import('./notify')
+const { isValidWebhookUrl, normalizeWebhookUrl } = await import('./notify')
 const { isMuted } = await import('@/lib/google-chat/client')
 
 describe('notification webhook URL', () => {
@@ -12,6 +12,16 @@ describe('notification webhook URL', () => {
     expect(isValidWebhookUrl('https://evil.example/v1/spaces/A/messages?key=a&token=b')).toBe(false)
     expect(isValidWebhookUrl('http://chat.googleapis.com/v1/spaces/A/messages?key=a&token=b')).toBe(false)
     expect(isValidWebhookUrl('https://chat.googleapis.com.evil.com/v1/spaces/A/messages?key=a&token=b')).toBe(false)
+  })
+
+  it('normalizes a webhook URL copied with an unencoded token', () => {
+    expect(normalizeWebhookUrl(' https://chat.googleapis.com/v1/spaces/AAQAT-KuJF0/messages?key=AIza-1&token=abc_d-e= '))
+      .toBe('https://chat.googleapis.com/v1/spaces/AAQAT-KuJF0/messages?key=AIza-1&token=abc_d-e%3D')
+    expect(normalizeWebhookUrl('https://chat.googleapis.com/v1/spaces/A/messages?token=t%3D&key=k&extra=1'))
+      .toBe('https://chat.googleapis.com/v1/spaces/A/messages?key=k&token=t%3D')
+    expect(normalizeWebhookUrl('https://user@chat.googleapis.com/v1/spaces/A/messages?key=a&token=b')).toBeNull()
+    expect(normalizeWebhookUrl('https://chat.googleapis.com:8443/v1/spaces/A/messages?key=a&token=b')).toBeNull()
+    expect(normalizeWebhookUrl('https://chat.googleapis.com/v1/spaces/A/members?key=a&token=b')).toBeNull()
   })
 })
 
