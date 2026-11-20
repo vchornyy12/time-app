@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { authedClient } from '@/lib/actions/authed-action'
 import { markTaskDone } from '@/lib/actions/tasks'
 import { clearAssistantSecret, setAssistantSecret } from '@/lib/assistant/secrets'
-import { isValidWebhookUrl, notifyUser, postToWebhook } from '@/lib/assistant/notify'
+import { normalizeWebhookUrl, notifyUser, postToWebhook } from '@/lib/assistant/notify'
 
 // ── Google Chat source ────────────────────────────────────────
 
@@ -18,8 +18,8 @@ export async function disconnectGoogleChat() {
 // ── Notifications (Google Chat incoming webhook) ──────────────
 
 export async function saveNotificationWebhook(url: string): Promise<{ ok: true } | { ok: false; error: string }> {
-  const trimmed = z.string().trim().max(2000).parse(url)
-  if (!isValidWebhookUrl(trimmed)) {
+  const trimmed = normalizeWebhookUrl(z.string().max(4000).parse(url))
+  if (!trimmed) {
     return { ok: false, error: 'Paste the webhook URL from Google Chat (it starts with https://chat.googleapis.com/v1/spaces/…).' }
   }
   const { user } = await authedClient()
