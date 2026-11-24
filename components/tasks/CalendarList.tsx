@@ -1,17 +1,20 @@
 'use client'
 
-import { useState, useOptimistic, useTransition } from 'react'
+import { useEffect, useRef, useState, useOptimistic, useTransition } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Inbox, Trash2, Clock, CheckCircle2, AlertTriangle, Loader2, Repeat } from 'lucide-react'
+import { Inbox, Trash2, Clock, CheckCircle2, AlertTriangle, Loader2, Repeat, CalendarPlus } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import type { Task } from '@/lib/types'
-import { EmptyState, ConfirmDeleteModal } from '@/components/ui'
+import { EmptyState, ConfirmDeleteModal, Toast } from '@/components/ui'
 import {
   removeCalendarTaskToTrash,
   moveCalendarTaskToInbox,
   rescheduleCalendarTask,
   syncNowCalendarTask,
+  syncPendingCalendarTasks,
 } from '@/lib/actions/calendar'
+import { syncNotice, type CalendarSyncStatus } from '@/lib/google/sync-status'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -32,6 +35,40 @@ export function CalendarList({ tasks, isGoogleConnected }: CalendarListProps) {
   const router = useRouter()
   const [, startTransition] = useTransition()
   const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [isAutoSyncing, setIsAutoSyncing] = useState(false)
+  const autoSyncStarted = useRef(false)
+
+  const unsyncedCount = isGoogleConnected
+    ? tasks.filter((t) => t.scheduled_at && !t.google_calendar_event_id).length
+    : 0
+
+  // Push items that are not in Google yet (scheduled offline, from mobile,
+  // or before connecting). Runs once per visit; the page refresh re-renders.
+  useEffect(() => {
+    if (!unsyncedCount || autoSyncStarted.current) return
+    autoSyncStarted.current = true
+    setIsAutoSyncing(true)
+    syncPendingCalendarTasks()
+      .then((result) => {
+        const message = syncNotice(result.status)
+        if (message) setNotice(message)
+        if (result.synced || result.status === 'reconnect') router.refresh()
+      })
+      .catch(() => setNotice(syncNotice('failed')))
+      .finally(() => setIsAutoSyncing(false))
+  }, [unsyncedCount, router])
+
+  /** Runs a calendar action; failures become a notice instead of crashing the page. */
+  async function run(action: () => Promise<CalendarSyncStatus>) {
+    try {
+      const message = syncNotice(await action())
+      if (message) setNotice(message)
+    } catch {
+      setNotice('Something went wrong. Please retry.')
+    }
+    router.refresh()
+  }
 
   const [optimisticTasks, applyOptimistic] = useOptimistic(
     tasks,
@@ -44,26 +81,47 @@ export function CalendarList({ tasks, isGoogleConnected }: CalendarListProps) {
     setPendingDelete(null)
     startTransition(async () => {
       applyOptimistic(id)
-      await removeCalendarTaskToTrash(id)
-      router.refresh()
+      await run(() => removeCalendarTaskToTrash(id))
     })
   }
 
   function handleMoveToInbox(taskId: string) {
     startTransition(async () => {
       applyOptimistic(taskId)
-      await moveCalendarTaskToInbox(taskId)
-      router.refresh()
+      await run(() => moveCalendarTaskToInbox(taskId))
     })
   }
 
+  const connectBanner = !isGoogleConnected && (
+    <div
+      className="flex items-center justify-between gap-3 px-4 py-3 mb-5 rounded-xl border text-sm"
+      style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}
+    >
+      <span>Connect Google Calendar to add these items there automatically.</span>
+      <Link
+        href="/api/google/auth?next=/calendar"
+        prefetch={false}
+        className="flex items-center gap-1.5 flex-shrink-0 text-xs px-2.5 py-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/20 text-indigo-300 hover:bg-indigo-500/25 transition-all"
+      >
+        <CalendarPlus className="w-3.5 h-3.5" aria-hidden="true" />
+        Connect
+      </Link>
+    </div>
+  )
+
+  const toast = notice && <Toast message={notice} onDismiss={() => setNotice(null)} duration={8000} />
+
   if (optimisticTasks.length === 0) {
     return (
-      <EmptyState
-        icon="📅"
-        title="Nothing scheduled yet."
-        description="Items you schedule during processing will appear here."
-      />
+      <>
+        {connectBanner}
+        <EmptyState
+          icon="📅"
+          title="Nothing scheduled yet."
+          description="Items you schedule during processing will appear here."
+        />
+        {toast}
+      </>
     )
   }
 
@@ -71,6 +129,7 @@ export function CalendarList({ tasks, isGoogleConnected }: CalendarListProps) {
 
   return (
     <>
+      {connectBanner}
       <div className="flex flex-col gap-7">
         {groups.map(({ label, isOverdue, items }) => (
           <section key={label}>
@@ -89,9 +148,10 @@ export function CalendarList({ tasks, isGoogleConnected }: CalendarListProps) {
                   key={task.id}
                   task={task}
                   isGoogleConnected={isGoogleConnected}
+                  isAutoSyncing={isAutoSyncing}
                   onDelete={() => setPendingDelete({ id: task.id, title: task.title })}
                   onMoveToInbox={() => handleMoveToInbox(task.id)}
-                  onRefresh={() => router.refresh()}
+                  run={run}
                 />
               ))}
             </ul>
@@ -105,6 +165,7 @@ export function CalendarList({ tasks, isGoogleConnected }: CalendarListProps) {
         onConfirm={handleConfirmDelete}
         onCancel={() => setPendingDelete(null)}
       />
+      {toast}
     </>
   )
 }
@@ -114,15 +175,17 @@ export function CalendarList({ tasks, isGoogleConnected }: CalendarListProps) {
 function CalendarCard({
   task,
   isGoogleConnected,
+  isAutoSyncing,
   onDelete,
   onMoveToInbox,
-  onRefresh,
+  run,
 }: {
   task: Task
   isGoogleConnected: boolean
+  isAutoSyncing: boolean
   onDelete: () => void
   onMoveToInbox: () => void
-  onRefresh: () => void
+  run: (action: () => Promise<CalendarSyncStatus>) => Promise<void>
 }) {
   const [isRescheduling, setIsRescheduling] = useState(false)
   const [newDate, setNewDate] = useState(
@@ -144,15 +207,13 @@ function CalendarCard({
     if (!newDate) return
     setIsRescheduling(false)
     startRescheduleTransition(async () => {
-      await rescheduleCalendarTask(task.id, new Date(newDate).toISOString())
-      onRefresh()
+      await run(() => rescheduleCalendarTask(task.id, new Date(newDate).toISOString()))
     })
   }
 
   function handleSyncNow() {
     startSyncTransition(async () => {
-      await syncNowCalendarTask(task.id)
-      onRefresh()
+      await run(() => syncNowCalendarTask(task.id))
     })
   }
 
@@ -194,7 +255,7 @@ function CalendarCard({
               <span className="flex items-center gap-1 text-xs text-amber-400/60">
                 <AlertTriangle className="w-3 h-3" />
                 Not synced
-                {!isSyncing ? (
+                {!isSyncing && !isAutoSyncing ? (
                   <button
                     onClick={handleSyncNow}
                     className="ml-1 text-xs text-amber-300/80 hover:text-amber-200 underline underline-offset-2 transition-colors"

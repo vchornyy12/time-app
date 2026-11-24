@@ -23,13 +23,14 @@ export default async function CalendarPage() {
       .order('scheduled_at', { ascending: true, nullsFirst: false }),
     supabase
       .from('user_integrations')
-      .select('google_connected')
+      .select('google_connected, calendar_connected')
       .eq('user_id', user.id)
       .maybeSingle(),
   ])
 
   const tasks = tasksResult.data ?? []
-  const isGoogleConnected = !!integrationResult.data?.google_connected
+  // Both flags: a stored grant AND the calendar scope actually granted
+  const isGoogleConnected = !!integrationResult.data?.google_connected && !!integrationResult.data?.calendar_connected
 
   const unsyncedCount = isGoogleConnected
     ? tasks.filter((t) => !t.google_calendar_event_id).length

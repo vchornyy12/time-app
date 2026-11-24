@@ -16,13 +16,13 @@ test.describe('Login page', () => {
   test('shows welcome heading and form fields', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible()
     await expect(page.getByLabel('Email address')).toBeVisible()
-    await expect(page.getByLabel('Password')).toBeVisible()
+    await expect(page.getByLabel('Password', { exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
   })
 
   test('redirects to /inbox on valid credentials', async ({ page }) => {
     await page.getByLabel('Email address').fill(TEST_EMAIL)
-    await page.getByLabel('Password').fill(TEST_PASSWORD)
+    await page.getByLabel('Password', { exact: true }).fill(TEST_PASSWORD)
     await page.getByRole('button', { name: 'Sign in' }).click()
 
     await expect(page).toHaveURL(/\/inbox/, { timeout: 15_000 })
@@ -30,7 +30,7 @@ test.describe('Login page', () => {
 
   test('shows error message on invalid credentials', async ({ page }) => {
     await page.getByLabel('Email address').fill('wrong@example.com')
-    await page.getByLabel('Password').fill('wrongpassword')
+    await page.getByLabel('Password', { exact: true }).fill('wrongpassword')
     await page.getByRole('button', { name: 'Sign in' }).click()
 
     // The error div appears with the Supabase error message
