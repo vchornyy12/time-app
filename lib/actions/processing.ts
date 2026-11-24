@@ -83,14 +83,6 @@ export async function processToCalendar(
   const parsed = processToCalendarSchema.parse({ taskId, scheduledAt, recurrenceRule })
   const { supabase, user, inboxVersion } = await authedClient()
 
-  // Fetch title before updating status (needed for Google Calendar event)
-  const { data: task } = await supabase
-    .from('tasks')
-    .select('title')
-    .eq('id', parsed.taskId)
-    .eq('user_id', user.id)
-    .single()
-
   const { error } = await supabase
     .from('tasks')
     .update({
@@ -105,14 +97,10 @@ export async function processToCalendar(
   revalidateInbox()
   revalidatePath('/calendar')
 
-  // Auto-sync to Google Calendar — non-fatal if it fails
-  if (task?.title) {
-    try {
-      await syncCreateCalendarEvent(parsed.taskId, task.title, parsed.scheduledAt)
-    } catch {
-      // Sync failure is non-fatal: task is still in calendar status
-    }
-  }
+  // Auto-sync to Google Calendar. Non-fatal: failures are logged, the task
+  // stays unsynced and the Calendar page retries it on the next visit.
+  await syncCreateCalendarEvent(parsed.taskId).catch((error) =>
+    console.error('[calendar-sync] after processing:', error instanceof Error ? error.message : error))
 }
 
 export async function processToSomedayMaybe(taskId: string, reviewDate?: string) {

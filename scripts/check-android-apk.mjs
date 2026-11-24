@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 // Usage: node scripts/check-android-apk.mjs path.apk [--allow-debug-signature]
 // The explicit override is for internal testing; the default rejects debug signing.
@@ -19,6 +20,9 @@ const certificate = run(path.join(tools, 'apksigner'), ['verify', '--print-certs
 const bundle = run('unzip', ['-p', apk, 'assets/index.android.bundle'])
 const permissions = [...badging.matchAll(/^uses-permission: name='([^']+)'/gm)].map(match => match[1])
 const debugSigning = /certificate DN:.*CN=Android Debug/.test(certificate)
+const certificateSha256 = certificate.match(/certificate SHA-256 digest: (\w+)/)?.[1]
+const pinFile = fileURLToPath(new URL('../mobile/release-signing.json', import.meta.url))
+const expectedCertificate = existsSync(pinFile) ? JSON.parse(readFileSync(pinFile, 'utf8')).certificateSha256 : null
 const falseAttribute = name => new RegExp(`android:${name}\\([^\\n]+\\)=\\(type 0x12\\)0x0(?:\\s|$)`).test(manifest)
 const trueAttribute = name => new RegExp(`android:${name}\\([^\\n]+\\)=\\(type 0x12\\)0xffffffff`).test(manifest)
 const privilegedJwt = [...bundle.matchAll(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{20,}/g)].some(([token]) => {
@@ -33,13 +37,14 @@ const checks = {
   encryptedSessionAdapter: bundle.includes('secure-index'),
   noRecognizedPrivateCredentials: !privilegedJwt && !/GOCSPX-[\w-]{20,}|sb_secret_[\w-]{20,}/.test(bundle),
   releaseCertificate: !debugSigning || process.argv.includes('--allow-debug-signature'),
+  expectedReleaseIdentity: !expectedCertificate || certificateSha256 === expectedCertificate || (debugSigning && process.argv.includes('--allow-debug-signature')),
 }
 const report = {
   apk: path.resolve(apk), bytes: statSync(apk).size,
   sha256: createHash('sha256').update(readFileSync(apk)).digest('hex'),
   version: badging.match(/versionName='([^']+)'/)?.[1],
   versionCode: Number(badging.match(/versionCode='([^']+)'/)?.[1]),
-  certificateSha256: certificate.match(/certificate SHA-256 digest: (\w+)/)?.[1],
+  certificateSha256,
   debugSigning, permissions, checks, passed: Object.values(checks).every(Boolean),
 }
 console.log(JSON.stringify(report, null, 2))

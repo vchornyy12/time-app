@@ -14,7 +14,8 @@
       "android": {
         "buildType": "app-bundle"
       },
-      "autoIncrement": true
+      "autoIncrement": true,
+      "credentialsSource": "local"
     },
     "release-apk": {
       "extends": "production",

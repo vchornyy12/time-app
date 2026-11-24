@@ -6,273 +6,111 @@ import { subDays, startOfDay, isBefore, isEqual, parseISO, format } from 'date-f
 import { authedClient } from '@/lib/actions/authed-action'
 import { cleanupWaitingForReminder } from '@/lib/google/reminders'
 import { getGoogleIntegration, clearGoogleIntegration } from '@/lib/google/integration'
+import { getAccessToken, createGCalEvent } from '@/lib/google/calendar'
 import {
-  getAccessToken,
-  createGCalEvent,
-  updateGCalEvent,
-  deleteGCalEvent,
-} from '@/lib/google/calendar'
+  deleteGoogleEvent,
+  rescheduleTaskInGoogle,
+  syncPendingTasks,
+  syncTaskToGoogle,
+  type CalendarSyncStatus,
+  type PendingSyncResult,
+} from '@/lib/google/calendar-sync'
 import {
   taskId as taskIdSchema,
-  datetimeString,
   dateString,
-  title as titleSchema,
   rescheduleCalendarTaskSchema,
 } from '@/lib/validation/schemas'
 
-// ── Shared: fetch the user's Google Calendar integration ──────
+// ── Google Calendar sync for calendar tasks ──────────────────
+// Google failures never throw to the client: each action reports a status
+// instead, so a revoked or expired grant cannot crash the page.
 
-// ── Creates a Google Calendar event and stores the event_id ───
+/** Creates the Google event for a calendar task (called after processing). */
+export async function syncCreateCalendarEvent(taskId: string): Promise<CalendarSyncStatus> {
+  const id = taskIdSchema.parse(taskId)
+  const ctx = await authedClient()
+  const status = await syncTaskToGoogle(ctx, id)
+  if (status !== 'skipped') revalidatePath('/calendar')
+  return status
+}
 
-export async function syncCreateCalendarEvent(
+/** "Sync now" for one task that is not in Google yet. */
+export async function syncNowCalendarTask(taskId: string): Promise<CalendarSyncStatus> {
+  return syncCreateCalendarEvent(taskId)
+}
+
+/** Catches up every calendar task that has no Google event yet. */
+export async function syncPendingCalendarTasks(): Promise<PendingSyncResult> {
+  const ctx = await authedClient()
+  const result = await syncPendingTasks(ctx)
+  if (result.synced || result.status === 'reconnect') {
+    revalidatePath('/calendar')
+    revalidatePath('/settings')
+  }
+  return result
+}
+
+async function detachCalendarTask(
   taskId: string,
-  title: string,
-  scheduledAt: string
-) {
+  update: Record<string, unknown>
+): Promise<CalendarSyncStatus> {
   const id = taskIdSchema.parse(taskId)
-  datetimeString.parse(scheduledAt)
-  titleSchema.parse(title)
-  const { supabase, user } = await authedClient()
-  const { data: task, error: taskError } = await supabase.from('tasks')
-    .select('title, google_calendar_event_id').eq('id', id).eq('user_id', user.id).single()
-  if (taskError || !task) throw new Error('Task not found')
-  if (task.google_calendar_event_id) return
-
-  const integration = await getGoogleIntegration(user.id)
-  if (!integration?.google_refresh_token) return // not connected — silently skip
-
-  const accessToken = await getAccessToken(integration.google_refresh_token)
-  const calendarId = integration.google_calendar_id ?? 'primary'
-  const eventId = await createGCalEvent(accessToken, calendarId, { summary: task.title, scheduledAt })
-
-  await supabase
-    .from('tasks')
-    .update({ google_calendar_event_id: eventId })
-    .eq('id', id)
-    .eq('user_id', user.id)
-
-  revalidatePath('/calendar')
-}
-
-// ── Updates an existing Google Calendar event's time ──────────
-
-export async function syncUpdateCalendarEvent(taskId: string, scheduledAt: string) {
-  const id = taskIdSchema.parse(taskId)
-  datetimeString.parse(scheduledAt)
-  const { supabase, user } = await authedClient()
+  const ctx = await authedClient()
+  const { supabase, user } = ctx
 
   const { data: task } = await supabase
     .from('tasks')
     .select('google_calendar_event_id')
     .eq('id', id)
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
 
-  if (!task?.google_calendar_event_id) return // no event to update
-
-  const integration = await getGoogleIntegration(user.id)
-  if (!integration?.google_refresh_token) return
-
-  const accessToken = await getAccessToken(integration.google_refresh_token)
-  const calendarId = integration.google_calendar_id ?? 'primary'
-
-  await updateGCalEvent(accessToken, calendarId, task.google_calendar_event_id, scheduledAt)
-  revalidatePath('/calendar')
-}
-
-// ── Deletes the Google Calendar event and clears the stored ID ─
-
-export async function syncDeleteCalendarEvent(taskId: string) {
-  const id = taskIdSchema.parse(taskId)
-  const { supabase, user } = await authedClient()
-
-  const { data: task } = await supabase
+  const { error } = await supabase
     .from('tasks')
-    .select('google_calendar_event_id')
+    .update({ ...update, google_calendar_event_id: null })
     .eq('id', id)
     .eq('user_id', user.id)
-    .single()
+  if (error) throw new Error('Could not update the task. Please retry.')
 
-  if (!task?.google_calendar_event_id) return
-
-  const integration = await getGoogleIntegration(user.id)
-  if (!integration?.google_refresh_token) return
-
-  const accessToken = await getAccessToken(integration.google_refresh_token)
-  const calendarId = integration.google_calendar_id ?? 'primary'
-
-  await deleteGCalEvent(accessToken, calendarId, task.google_calendar_event_id)
-
-  await supabase
-    .from('tasks')
-    .update({ google_calendar_event_id: null })
-    .eq('id', id)
-    .eq('user_id', user.id)
-
-  revalidatePath('/calendar')
+  return task?.google_calendar_event_id
+    ? deleteGoogleEvent(ctx, task.google_calendar_event_id)
+    : 'skipped'
 }
 
 // ── Moves a calendar task to trash + deletes the GCal event ──
 
-export async function removeCalendarTaskToTrash(taskId: string) {
-  const id = taskIdSchema.parse(taskId)
-  const { supabase, user } = await authedClient()
-
-  const { data: task } = await supabase
-    .from('tasks')
-    .select('google_calendar_event_id')
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .single()
-
-  // Clear event_id and move to trash in one update
-  await supabase
-    .from('tasks')
-    .update({ status: 'trash', google_calendar_event_id: null })
-    .eq('id', id)
-    .eq('user_id', user.id)
-
-  // Delete from Google Calendar (non-fatal)
-  if (task?.google_calendar_event_id) {
-    const integration = await getGoogleIntegration(user.id)
-    if (integration?.google_refresh_token) {
-      try {
-        const accessToken = await getAccessToken(integration.google_refresh_token)
-        await deleteGCalEvent(
-          accessToken,
-          integration.google_calendar_id ?? 'primary',
-          task.google_calendar_event_id
-        )
-      } catch {
-        console.error('Failed to delete GCal event during trash move')
-      }
-    }
-  }
-
+export async function removeCalendarTaskToTrash(taskId: string): Promise<CalendarSyncStatus> {
+  const status = await detachCalendarTask(taskId, { status: 'trash' })
   revalidatePath('/calendar')
   revalidatePath('/trash')
+  return status
 }
 
 // ── Moves a calendar task back to inbox + deletes the GCal event ─
 
-export async function moveCalendarTaskToInbox(taskId: string) {
-  const id = taskIdSchema.parse(taskId)
-  const { supabase, user } = await authedClient()
-
-  const { data: task } = await supabase
-    .from('tasks')
-    .select('google_calendar_event_id')
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .single()
-
-  await supabase
-    .from('tasks')
-    .update({ status: 'inbox', scheduled_at: null, google_calendar_event_id: null })
-    .eq('id', id)
-    .eq('user_id', user.id)
-
-  if (task?.google_calendar_event_id) {
-    const integration = await getGoogleIntegration(user.id)
-    if (integration?.google_refresh_token) {
-      try {
-        const accessToken = await getAccessToken(integration.google_refresh_token)
-        await deleteGCalEvent(
-          accessToken,
-          integration.google_calendar_id ?? 'primary',
-          task.google_calendar_event_id
-        )
-      } catch {
-        console.error('Failed to delete GCal event during inbox move')
-      }
-    }
-  }
-
+export async function moveCalendarTaskToInbox(taskId: string): Promise<CalendarSyncStatus> {
+  const status = await detachCalendarTask(taskId, { status: 'inbox', scheduled_at: null })
   revalidatePath('/calendar')
   revalidatePath('/', 'layout')
+  return status
 }
 
 // ── Reschedules a calendar task and syncs the new time ────────
 
-export async function rescheduleCalendarTask(taskId: string, scheduledAt: string) {
+export async function rescheduleCalendarTask(taskId: string, scheduledAt: string): Promise<CalendarSyncStatus> {
   const parsed = rescheduleCalendarTaskSchema.parse({ taskId, scheduledAt })
-  const { supabase, user } = await authedClient()
+  const ctx = await authedClient()
 
-  const { data: task } = await supabase
-    .from('tasks')
-    .select('title, google_calendar_event_id')
-    .eq('id', parsed.taskId)
-    .eq('user_id', user.id)
-    .single()
-
-  await supabase
+  const { error } = await ctx.supabase
     .from('tasks')
     .update({ scheduled_at: new Date(parsed.scheduledAt).toISOString() })
     .eq('id', parsed.taskId)
-    .eq('user_id', user.id)
+    .eq('user_id', ctx.user.id)
+  if (error) throw new Error('Could not reschedule the task. Please retry.')
 
-  if (!task) { revalidatePath('/calendar'); return }
-
-  const integration = await getGoogleIntegration(user.id)
-  if (!integration?.google_refresh_token) { revalidatePath('/calendar'); return }
-
-  try {
-    const accessToken = await getAccessToken(integration.google_refresh_token)
-    const calendarId = integration.google_calendar_id ?? 'primary'
-
-    if (task.google_calendar_event_id) {
-      await updateGCalEvent(accessToken, calendarId, task.google_calendar_event_id, parsed.scheduledAt)
-    } else {
-      const eventId = await createGCalEvent(accessToken, calendarId, {
-        summary: task.title,
-        scheduledAt: parsed.scheduledAt,
-      })
-      await supabase
-        .from('tasks')
-        .update({ google_calendar_event_id: eventId })
-        .eq('id', parsed.taskId)
-        .eq('user_id', user.id)
-    }
-  } catch {
-    console.error('Failed to sync reschedule to GCal')
-  }
-
+  const status = await rescheduleTaskInGoogle(ctx, parsed.taskId)
   revalidatePath('/calendar')
-}
-
-// ── Creates a GCal event for a task that was missed during sync ─
-
-export async function syncNowCalendarTask(taskId: string) {
-  const id = taskIdSchema.parse(taskId)
-  const { supabase, user } = await authedClient()
-
-  const { data: task } = await supabase
-    .from('tasks')
-    .select('title, scheduled_at, google_calendar_event_id')
-    .eq('id', id)
-    .eq('user_id', user.id)
-    .single()
-
-  if (!task || task.google_calendar_event_id || !task.scheduled_at) return
-
-  const integration = await getGoogleIntegration(user.id)
-  if (!integration?.google_refresh_token) return
-
-  const accessToken = await getAccessToken(integration.google_refresh_token)
-  const calendarId = integration.google_calendar_id ?? 'primary'
-
-  const eventId = await createGCalEvent(accessToken, calendarId, {
-    summary: task.title,
-    scheduledAt: task.scheduled_at,
-  })
-
-  await supabase
-    .from('tasks')
-    .update({ google_calendar_event_id: eventId })
-    .eq('id', id)
-    .eq('user_id', user.id)
-
-  revalidatePath('/calendar')
+  return status
 }
 
 // ── Creates/updates the follow-up reminder for a Waiting For task ─

@@ -1,0 +1,28 @@
+{
+  "apk": "published:releases/time24.apk",
+  "bytes": 39054707,
+  "sha256": "9ccc49b0b3b1d619c87d22539e3f1db98e8a6c58296e85ea1ab255b1ae620881",
+  "version": "1.0.0",
+  "versionCode": 1,
+  "certificateSha256": "fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c",
+  "debugSigning": true,
+  "permissions": [
+    "android.permission.INTERNET",
+    "android.permission.READ_EXTERNAL_STORAGE",
+    "android.permission.SYSTEM_ALERT_WINDOW",
+    "android.permission.VIBRATE",
+    "android.permission.WRITE_EXTERNAL_STORAGE",
+    "com.gtdcompanion.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+  ],
+  "checks": {
+    "expectedPackage": true,
+    "notDebuggable": true,
+    "backupDisabled": false,
+    "cleartextDisabled": false,
+    "minimalPermissions": false,
+    "encryptedSessionAdapter": false,
+    "noRecognizedPrivateCredentials": true,
+    "releaseCertificate": false
+  },
+  "passed": false
+}

@@ -1,0 +1,25 @@
+{
+  "apk": "mobile/dist/time24-1.0.5-release.apk",
+  "bytes": 35625321,
+  "sha256": "fc9efb309f7138c9588efa169938a48e0ebe7fdf35a48798f019db8eba496a27",
+  "version": "1.0.5",
+  "versionCode": 6,
+  "certificateSha256": "19bd3f1b9266a685530471b4be3cf28a022f64ac65e80b81b17757da288556f6",
+  "debugSigning": false,
+  "permissions": [
+    "android.permission.INTERNET",
+    "com.gtdcompanion.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+  ],
+  "checks": {
+    "expectedPackage": true,
+    "notDebuggable": true,
+    "backupDisabled": true,
+    "cleartextDisabled": true,
+    "minimalPermissions": true,
+    "encryptedSessionAdapter": true,
+    "noRecognizedPrivateCredentials": true,
+    "releaseCertificate": true,
+    "expectedReleaseIdentity": true
+  },
+  "passed": true
+}

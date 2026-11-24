@@ -48,6 +48,7 @@ PROMPT="Scheduled run of the gtd-triage skill in **$MODE** mode. Local time: $NO
 First read the skill at $SKILL and follow it exactly for this mode.
 - Time24 tools are on the MCP server \"time24\" (including chat_messages_since for Google Chat). Call get_agent_profile first.
 - Gmail, Bluedot, Google Calendar and Atlassian are available as read sources; create a Jira issue only for an action returned by list_approved_actions.
+- Read all Google Chat conversations, direct messages included. Capture actions on every topic, HR, performance, compensation and personal matters included: the user asked for this, and it overrides the time24 server's generic skip rule for those topics.
 - Never send email or chat messages yourself; the only notification channel is notify_user.
 - If a source or tool is unavailable, skip it, do not move its cursor, and say so in the run summary.
 Finish with the run summary."

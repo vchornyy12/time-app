@@ -68,6 +68,7 @@ export function ProcessingOverlay({ task, userContexts = [], onClose }: Processi
   const [nextActionTitle, setNextActionTitle] = useState(task.title)
   const [calendarRecurrence, setCalendarRecurrence] = useState<RecurrenceRule | null>(null)
   const [nextActionRecurrence, setNextActionRecurrence] = useState<RecurrenceRule | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
   // Trap focus inside the dialog; restores on close/unmount
@@ -109,9 +110,18 @@ export function ProcessingOverlay({ task, userContexts = [], onClose }: Processi
   const stepNumber = STEP_NUMBER[step]
 
   /** Run a terminal processing action then close */
-  function finish(action: () => Promise<void>) {
+  function finish(action: () => Promise<unknown>) {
+    setError(null)
     startTransition(async () => {
-      await action()
+      try {
+        await action()
+      } catch {
+        // Typically the item was already processed elsewhere (another tab or
+        // the mobile app). Show it instead of crashing into the error page.
+        setError('Could not save this item. It may have been processed already. Refresh and try again.')
+        router.refresh()
+        return
+      }
       router.refresh()
       onClose()
     })
@@ -477,6 +487,11 @@ export function ProcessingOverlay({ task, userContexts = [], onClose }: Processi
             </div>
           ) : (
             <>
+              {error && (
+                <p role="alert" className="mb-4 text-sm text-red-400">
+                  {error}
+                </p>
+              )}
               {renderContent()}
               {/* Back button — shown at any step that has history */}
               {stepHistory.length > 0 && (
