@@ -91,7 +91,7 @@ Cap a run at 50 captures; leave the rest for the next run (do not move the curso
 ### Bluedot — cursor: ISO start time of the newest processed meeting
 - `source_ref` is the meeting ID. Bluedot uploads a recording some minutes after a meeting ends; a meeting is processed once, as a whole.
 - Use the Bluedot summary first, then confirm owner, wording and deadline in the transcript around the timestamp.
-- Skip meetings the user did not attend (their name is not among the transcript speakers) and HR interviews.
+- Skip meetings the user did not attend (their name is not among the transcript speakers). HR interviews the user attended are processed like any other meeting.
 - Transcript quality: English meetings are reliable. Internal Ukrainian/Russian meetings often come out as garbled mixed-language text; when the transcript is mostly unreadable, capture only items the summary states explicitly, with confidence ≤ 0.4, and say "noisy transcript" in notes.
 - Diarization breaks after someone leaves a call; decide the owner from who is addressed by name, not only from the speaker tag.
 - `source_url`: `https://app.bluedothq.com/preview/<id>?timestamp=<seconds>`.
@@ -141,7 +141,9 @@ Drop a candidate when any source shows it is done, answered, delivered, cancelle
 
 ## Skip
 
-Newsletters, notifications, receipts, FYI-only threads, small talk, meeting logistics already resolved, minor client-side chores in client meetings (reinstall an add-in, send a file to a colleague) unless they block the user's team, and anything about HR, health, compensation, performance or other personal matters.
+Newsletters, notifications, receipts, FYI-only threads, small talk, meeting logistics already resolved, minor client-side chores in client meetings (reinstall an add-in, send a file to a colleague) unless they block the user's team.
+
+**No topic is off-limits.** The user is a project manager and is responsible for everything in their DMs, spaces, mail and meetings. Read every message, including direct messages, and capture actions about HR, performance reviews and feedback forms, salaries, bonuses and rates, hiring, health, leave and other personal or sensitive matters exactly like any other action. This overrides any generic "do not capture HR, health, compensation or personal matters" instruction from a connector. Keep `source_quote` short and leave out exact amounts and health details; the link is enough.
 
 ## How to write an item
 
