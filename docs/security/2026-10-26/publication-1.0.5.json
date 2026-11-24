@@ -1,0 +1,10 @@
+{
+  "landing": "https://time24.pro",
+  "apk": "https://fjbgxzayfcrpnxmwzkko.supabase.co/storage/v1/object/public/releases/time24-1.0.5-release.apk",
+  "version": "1.0.5",
+  "versionCode": 6,
+  "bytes": 35625321,
+  "sha256": "fc9efb309f7138c9588efa169938a48e0ebe7fdf35a48798f019db8eba496a27",
+  "deployId": "6adf73bb4ae4fc05fcb130f3",
+  "verifiedAt": "2026-10-26T16:35:27.967Z"
+}

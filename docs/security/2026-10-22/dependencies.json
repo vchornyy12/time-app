@@ -1,0 +1,253 @@
+{
+  "date": "2026-10-22",
+  "before": {
+    "info": 0,
+    "low": 0,
+    "moderate": 11,
+    "high": 23,
+    "critical": 0,
+    "total": 34
+  },
+  "after": {
+    "info": 0,
+    "low": 0,
+    "moderate": 8,
+    "high": 23,
+    "critical": 0,
+    "total": 31
+  },
+  "packages": [
+    {
+      "name": "@expo/cli",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "@expo/code-signing-certificates",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "@expo/metro",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "@expo/metro-config",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "@istanbuljs/load-nyc-config",
+      "severity": "moderate",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "@jest/environment",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "@jest/fake-timers",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "@jest/transform",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "@react-native/community-cli-plugin",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "argparse",
+      "severity": "moderate",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "babel-jest",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "babel-plugin-istanbul",
+      "severity": "moderate",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "braces",
+      "severity": "high",
+      "direct": false,
+      "advisories": [
+        {
+          "title": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+          "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm"
+        }
+      ]
+    },
+    {
+      "name": "decode-uri-component",
+      "severity": "moderate",
+      "direct": false,
+      "advisories": [
+        {
+          "title": "decode-uri-component: Denial of service via exponential decoding of malformed percent-encoded input",
+          "url": "https://github.com/advisories/GHSA-vcc3-ghjq-m6fr"
+        }
+      ]
+    },
+    {
+      "name": "expo",
+      "severity": "high",
+      "direct": true,
+      "advisories": []
+    },
+    {
+      "name": "expo-router",
+      "severity": "moderate",
+      "direct": true,
+      "advisories": []
+    },
+    {
+      "name": "image-size",
+      "severity": "high",
+      "direct": false,
+      "advisories": [
+        {
+          "title": "image-size: JXL and HEIF parsers allow denial of service through infinite loops",
+          "url": "https://github.com/advisories/GHSA-5p2g-fcmc-qvqq"
+        },
+        {
+          "title": "image-size: ICNS parser allows denial of service through an infinite loop",
+          "url": "https://github.com/advisories/GHSA-w3rx-r6r6-pgpr"
+        }
+      ]
+    },
+    {
+      "name": "jest-environment-node",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "jest-haste-map",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "jest-message-util",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "js-yaml",
+      "severity": "moderate",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "metro",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "metro-config",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "metro-file-map",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "metro-transform-worker",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "micromatch",
+      "severity": "high",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "node-forge",
+      "severity": "high",
+      "direct": false,
+      "advisories": [
+        {
+          "title": "node-forge RSA PKCS#1 v1.5 signature verification accepts extra nested DigestAlgorithm elements",
+          "url": "https://github.com/advisories/GHSA-86w9-cpqp-85rv"
+        }
+      ]
+    },
+    {
+      "name": "postcss",
+      "severity": "high",
+      "direct": false,
+      "advisories": [
+        {
+          "title": "PostCSS has XSS via Unescaped </style> in its CSS Stringify Output",
+          "url": "https://github.com/advisories/GHSA-qx2v-qp2m-jg93"
+        },
+        {
+          "title": "PostCSS: Arbitrary file read and information disclosure via attacker-controlled sourceMappingURL in CSS comments",
+          "url": "https://github.com/advisories/GHSA-6g55-p6wh-862q"
+        },
+        {
+          "title": "PostCSS: incomplete fix of GHSA-6g55-p6wh-862q — attacker-controlled sourceMappingURL reads arbitrary .map files when `from` is unset",
+          "url": "https://github.com/advisories/GHSA-fxqj-rqcc-2cmp"
+        },
+        {
+          "title": "PostCSS: Path Traversal in Previous Source Map Auto-Loading (sourceMappingURL) leads to Arbitrary .map File Disclosure",
+          "url": "https://github.com/advisories/GHSA-r28c-9q8g-f849"
+        }
+      ]
+    },
+    {
+      "name": "query-string",
+      "severity": "moderate",
+      "direct": false,
+      "advisories": []
+    },
+    {
+      "name": "react-native",
+      "severity": "high",
+      "direct": true,
+      "advisories": []
+    },
+    {
+      "name": "sprintf-js",
+      "severity": "moderate",
+      "direct": false,
+      "advisories": [
+        {
+          "title": "sprintf-js vulnerable to denial of service through unbounded precision specifiers",
+          "url": "https://github.com/advisories/GHSA-hp3w-g68c-fv3c"
+        }
+      ]
+    }
+  ]
+}

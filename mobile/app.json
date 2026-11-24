@@ -2,7 +2,7 @@
   "expo": {
     "name": "GTD Companion",
     "slug": "gtd-companion",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "scheme": "timeapp",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -16,7 +16,7 @@
         "backgroundColor": "#0f0f13"
       },
       "package": "com.gtdcompanion.app",
-      "versionCode": 5,
+      "versionCode": 6,
       "allowBackup": false,
       "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
@@ -43,7 +43,8 @@
             ]
           }
         }
-      ]
+      ],
+      "./plugins/with-release-signing.cjs"
     ],
     "experiments": {
       "typedRoutes": true
