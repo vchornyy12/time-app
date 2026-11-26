@@ -13,7 +13,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#0f0f13"
+        "backgroundColor": "#1c1c1c"
       },
       "package": "com.gtdcompanion.app",
       "versionCode": 6,
