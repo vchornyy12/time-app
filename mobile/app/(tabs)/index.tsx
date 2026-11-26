@@ -58,6 +58,7 @@ export default function TodayScreen() {
             synced={section.title === 'TODAY' ? !!item.google_calendar_event_id : undefined}
             context={item.contexts?.[0] ?? null}
             isRecurring={!!item.recurrence_rule}
+            source={item.source}
             onComplete={() => handleCompleteTask(item.id, section.remove)}
           />
         )}

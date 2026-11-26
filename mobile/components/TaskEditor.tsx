@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Linking, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { DEFAULT_CONTEXTS } from '../../lib/constants/contexts'
 import { contexts as contextsSchema, title as titleSchema } from '../../lib/validation/schemas'
 import { fetchTaskDetail, fetchUserContexts, saveTaskDetail, type TaskDetail } from '../lib/tasks'
 import { InboxProcessing } from './InboxProcessing'
+import { proposalSummary, sourceLabel } from '../../lib/task-source'
 
 interface Props { taskId: string | null; userId: string; onClose: () => void; onSaved: () => void; startProcessing?: boolean }
 export function TaskEditor(props: Props) {
@@ -109,6 +110,7 @@ function Editor({ taskId, userId, onClose, onSaved, startProcessing = false }: P
             {task.due_date && <Text style={styles.hint}>Due: {task.due_date}</Text>}
             {task.delegated_to && <Text style={styles.hint}>Waiting for: {task.delegated_to}</Text>}
             {task.recurrence_rule && <Text style={styles.hint}>Repeats: {task.recurrence_rule}</Text>}
+            <SourceDetails task={task} />
             <TouchableOpacity accessibilityRole="button" onPress={() => { void save(false) }} disabled={saving} style={[styles.button, styles.secondary, saving && styles.disabled]}><Text style={styles.text}>Save changes</Text></TouchableOpacity>
             {task.status === 'inbox' && <TouchableOpacity accessibilityRole="button" onPress={() => { if (dirty) { setError('Save your changes before processing this item.'); return } setProcessing(true) }} disabled={saving} style={[styles.button, saving && styles.disabled]}><Text style={styles.primaryText}>Process Inbox item</Text></TouchableOpacity>}
             {saving && <ActivityIndicator color="#3ECF8E" />}
@@ -117,6 +119,19 @@ function Editor({ taskId, userId, onClose, onSaved, startProcessing = false }: P
       </KeyboardAvoidingView>
     </SafeAreaView>
   </Modal>
+}
+/** Where an AI assistant captured the item from, its quote and its suggestion. */
+function SourceDetails({ task }: { task: TaskDetail }) {
+  if (!task.source) return null
+  const suggestion = proposalSummary(task.agent_proposal)
+  const url = task.source_url?.startsWith('https://') ? task.source_url : null
+  return <View style={styles.source}>
+    <Text style={styles.label}>CAPTURED FROM {sourceLabel(task.source).toUpperCase()}</Text>
+    {task.source_quote && <Text style={styles.quote}>{task.source_quote}</Text>}
+    {suggestion ? <Text style={styles.hint}>Suggested: {suggestion}</Text> : null}
+    {task.agent_proposal?.notes ? <Text style={styles.hint}>{task.agent_proposal.notes}</Text> : null}
+    {url && <TouchableOpacity accessibilityRole="link" onPress={() => { void Linking.openURL(url).catch(() => Alert.alert('Unable to open the source link.')) }}><Text style={styles.link}>Open source</Text></TouchableOpacity>}
+  </View>
 }
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#181818' },
@@ -138,4 +153,6 @@ const styles = StyleSheet.create({
   secondary: { backgroundColor: '#333' },
   disabled: { opacity: 0.5 },
   error: { color: '#fca5a5', lineHeight: 21 },
+  source: { gap: 8, paddingTop: 14, borderTopWidth: 1, borderTopColor: '#333' },
+  quote: { color: '#ccc', fontSize: 14, lineHeight: 21, borderLeftWidth: 2, borderLeftColor: '#444', paddingLeft: 10 },
 })

@@ -6,6 +6,7 @@ import { EmptyState } from '../../components/EmptyState'
 import { CaptureModal } from '../../components/CaptureModal'
 import { TaskEditor } from '../../components/TaskEditor'
 import { useTaskList } from '../../lib/use-task-list'
+import { SuggestionsPanel } from '../../components/SuggestionsPanel'
 
 export default function InboxScreen() {
   const { tasks, userId, loading, error, reload, loadMore } = useTaskList('inbox')
@@ -23,9 +24,10 @@ export default function InboxScreen() {
         onEndReachedThreshold={0.3}
         initialNumToRender={12}
         windowSize={7}
+        ListHeaderComponent={userId ? <SuggestionsPanel userId={userId} /> : null}
         ListEmptyComponent={loading ? null : <EmptyState message="Inbox clear." />}
         ListFooterComponent={loading ? <ActivityIndicator color="#3ECF8E" /> : null}
-        renderItem={({ item }) => <TaskRow title={item.title} onOpen={() => setSelected(item.id)} />}
+        renderItem={({ item }) => <TaskRow title={item.title} source={item.source} onOpen={() => setSelected(item.id)} />}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
       <TouchableOpacity style={styles.fab} accessibilityRole="button" accessibilityLabel="Capture a task" disabled={!userId} onPress={() => setCaptureOpen(true)}>

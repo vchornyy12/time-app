@@ -1,20 +1,11 @@
 import { ExternalLink, Sparkles } from 'lucide-react'
-import type { Task, TaskSource as Source, ProposedType } from '@/lib/types'
-
-export const SOURCE_LABELS: Record<Source, string> = {
-  gmail: 'Gmail', bluedot: 'Bluedot', google_chat: 'Google Chat', slack: 'Slack',
-  jira: 'Jira', calendar: 'Calendar', meeting: 'Meeting', other: 'Other',
-}
-
-const PROPOSED_LABELS: Record<ProposedType, string> = {
-  next_action: 'Next action', waiting_for: 'Waiting for', calendar: 'Calendar',
-  project: 'Project', someday_maybe: 'Someday / Maybe', reference: 'Reference',
-}
+import type { Task } from '@/lib/types'
+import { proposalSummary, sourceLabel } from '@/lib/task-source'
 
 /** Small "via Gmail" badge for agent-captured Inbox items. */
 export function SourceBadge({ task }: { task: Task }) {
   if (!task.source) return null
-  const label = SOURCE_LABELS[task.source] ?? task.source
+  const label = sourceLabel(task.source)
   return (
     <span
       className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-md"
@@ -31,18 +22,13 @@ export function SourceBadge({ task }: { task: Task }) {
 export function SourceDetails({ task }: { task: Task }) {
   if (!task.source) return null
   const proposal = task.agent_proposal
-  const suggestion = [
-    proposal?.type && PROPOSED_LABELS[proposal.type],
-    proposal?.owner && `owner: ${proposal.owner}`,
-    proposal?.due && `due ${proposal.due}`,
-    proposal?.contexts?.length ? proposal.contexts.join(', ') : null,
-  ].filter(Boolean).join(' · ')
+  const suggestion = proposalSummary(proposal)
 
   return (
     <section aria-label="Source" className="pt-3 border-t flex flex-col gap-2" style={{ borderColor: 'var(--border-subtle)' }}>
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-          Captured from {SOURCE_LABELS[task.source] ?? task.source}
+          Captured from {sourceLabel(task.source)}
         </p>
         {task.source_url && (
           <a
@@ -64,7 +50,6 @@ export function SourceDetails({ task }: { task: Task }) {
       {suggestion && (
         <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
           Suggested: {suggestion}
-          {typeof proposal?.confidence === 'number' && ` (${Math.round(proposal.confidence * 100)}% sure)`}
         </p>
       )}
       {proposal?.notes && (

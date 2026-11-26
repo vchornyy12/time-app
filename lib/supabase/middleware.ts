@@ -5,11 +5,12 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest, requestHeaders = new Headers(request.headers)) {
   let supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } })
-  // This exact endpoint verifies a mobile bearer token itself and returns JSON
+  // These exact endpoints verify a mobile bearer token themselves and return JSON
   // errors. Cookie-only redirects would otherwise prevent native authentication.
   // The MCP endpoint and its OAuth discovery document authenticate AI connectors
   // with bearer tokens (or are public), so they must not get the login redirect.
   const bearerRoutes = request.nextUrl.pathname === '/api/mobile/process-inbox'
+    || request.nextUrl.pathname === '/api/mobile/task-action'
     || request.nextUrl.pathname === '/api/mcp'
     || request.nextUrl.pathname.startsWith('/.well-known/oauth-protected-resource')
   if (bearerRoutes) return supabaseResponse

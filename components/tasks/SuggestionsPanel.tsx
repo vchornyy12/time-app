@@ -3,14 +3,9 @@
 import { useOptimistic, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, Copy, ExternalLink, Sparkles, X } from 'lucide-react'
-import type { AgentSuggestion, SuggestionKind } from '@/lib/types'
+import type { AgentSuggestion } from '@/lib/types'
+import { SUGGESTION_LABELS as KIND } from '@/lib/task-source'
 import { decideSuggestion } from '@/lib/actions/assistant'
-
-const KIND: Record<SuggestionKind, { label: string; accept: string }> = {
-  close: { label: 'Looks done', accept: 'Mark done' },
-  follow_up: { label: 'Follow up', accept: 'Copy draft' },
-  jira_issue: { label: 'Track in Jira', accept: 'Create issue' },
-}
 
 /**
  * Agent suggestions on existing tasks, shown at the top of the Inbox so every

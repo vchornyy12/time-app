@@ -2,12 +2,13 @@
 
 import { useState, useOptimistic, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Inbox, Trash2, Check, Calendar } from 'lucide-react'
+import { Inbox, Trash2, Check, CheckCircle2, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import type { Task } from '@/lib/types'
 import {
   moveToInbox,
   deleteTask,
+  markTaskDone,
   toggleDelegationCommunicated,
   updateWaitingForDueDate,
 } from '@/lib/actions/tasks'
@@ -33,6 +34,15 @@ export function WaitingForList({ tasks }: WaitingForListProps) {
     startTransition(async () => {
       applyOptimistic(taskId)
       await moveToInbox(taskId)
+      router.refresh()
+    })
+  }
+
+  // GTD: when the other person delivers, the Waiting For item is complete.
+  function handleDone(taskId: string) {
+    startTransition(async () => {
+      applyOptimistic(taskId)
+      await markTaskDone(taskId)
       router.refresh()
     })
   }
@@ -65,6 +75,7 @@ export function WaitingForList({ tasks }: WaitingForListProps) {
           <WaitingForCard
             key={task.id}
             task={task}
+            onDone={() => handleDone(task.id)}
             onMoveToInbox={() => handleMoveToInbox(task.id)}
             onDelete={() => setPendingDelete({ id: task.id, title: task.title })}
           />
@@ -85,10 +96,12 @@ export function WaitingForList({ tasks }: WaitingForListProps) {
 
 function WaitingForCard({
   task,
+  onDone,
   onMoveToInbox,
   onDelete,
 }: {
   task: Task
+  onDone: () => void
   onMoveToInbox: () => void
   onDelete: () => void
 }) {
@@ -235,6 +248,15 @@ function WaitingForCard({
       {/* Hover / focus-within actions */}
       {!isEditingDate && (
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-150 flex-shrink-0 mt-0.5">
+          <button
+            onClick={onDone}
+            className="p-1.5 rounded-lg hover:text-green-300 hover:bg-green-500/10 transition-all duration-150"
+            style={{ color: 'var(--text-muted)' }}
+            aria-label={`Mark "${task.title}" as done`}
+            title="Done: they delivered"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+          </button>
           <button
             onClick={() => { setEditDate(task.due_date ?? ''); setIsEditingDate(true) }}
             className="p-1.5 rounded-lg transition-all duration-150"

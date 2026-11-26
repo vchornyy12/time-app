@@ -1,8 +1,8 @@
 import { supabase } from './supabase'
-import type { Task } from '@shared/types'
+import type { AgentSuggestion, Task } from '@shared/types'
 import { contexts as contextsSchema, taskId as taskIdSchema, title as titleSchema } from '../../lib/validation/schemas'
 
-export type TaskSummary = Pick<Task, 'id' | 'title' | 'created_at' | 'scheduled_at' | 'google_calendar_event_id' | 'contexts' | 'recurrence_rule' | 'due_date' | 'delegated_to' | 'project_id'>
+export type TaskSummary = Pick<Task, 'id' | 'title' | 'created_at' | 'scheduled_at' | 'google_calendar_event_id' | 'contexts' | 'recurrence_rule' | 'due_date' | 'delegated_to' | 'project_id' | 'source'>
 export type TaskStatus = Task['status']
 export type TaskCursor = { value: string; id: string }
 export const TASK_PAGE_SIZE = 50
@@ -15,7 +15,7 @@ export async function fetchTaskPage(userId: string, status: TaskStatus, after: T
   const column = status === 'calendar' ? 'scheduled_at' : 'created_at'
   const ascending = status === 'calendar'
   let query = supabase.from('tasks')
-    .select('id, title, created_at, scheduled_at, google_calendar_event_id, contexts, recurrence_rule, due_date, delegated_to, project_id')
+    .select('id, title, created_at, scheduled_at, google_calendar_event_id, contexts, recurrence_rule, due_date, delegated_to, project_id, source')
     .eq('user_id', userId).eq('status', status)
   if (context) query = query.contains('contexts', [context])
   if (status === 'calendar' && !allDates) {
@@ -38,8 +38,8 @@ export async function fetchTaskPage(userId: string, status: TaskStatus, after: T
   return (data ?? []) as TaskSummary[]
 }
 
-export type TaskDetail = Pick<Task, 'id' | 'title' | 'status' | 'contexts' | 'updated_at' | 'scheduled_at' | 'due_date' | 'delegated_to' | 'project_id' | 'recurrence_rule'>
-const DETAIL_COLUMNS = 'id, title, status, contexts, updated_at, scheduled_at, due_date, delegated_to, project_id, recurrence_rule'
+export type TaskDetail = Pick<Task, 'id' | 'title' | 'status' | 'contexts' | 'updated_at' | 'scheduled_at' | 'due_date' | 'delegated_to' | 'project_id' | 'recurrence_rule' | 'source' | 'source_url' | 'source_quote' | 'agent_proposal' | 'captured_by'>
+const DETAIL_COLUMNS = 'id, title, status, contexts, updated_at, scheduled_at, due_date, delegated_to, project_id, recurrence_rule, source, source_url, source_quote, agent_proposal, captured_by'
 
 export async function fetchTaskDetail(userId: string, taskId: string, signal: AbortSignal): Promise<TaskDetail> {
   taskIdSchema.parse(taskId)
@@ -113,20 +113,55 @@ export async function saveCapture(draft: { id: string; title: string; userId: st
   if (error) throw error
 }
 
-export async function processInbox(command: import('../../lib/validation/inbox-command').InboxCommand) {
-  const { inboxCommandSchema } = await import('../../lib/validation/inbox-command')
-  const payload = inboxCommandSchema.parse(command)
+const API_BASE = 'https://time24.pro/api/mobile'
+
+/** Calls a web API route as the signed-in user. Server routes run the same actions as the web app. */
+async function postToServer<T>(path: string, body: unknown, fallbackError: string): Promise<T> {
   const { data, error } = await supabase.auth.getSession()
-  if (error || !data.session) throw new Error('Sign in again before processing.')
+  if (error || !data.session) throw new Error('Sign in again before continuing.')
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 30000)
   try {
-    const response = await fetch('https://time24.pro/api/mobile/process-inbox', {
+    const response = await fetch(`${API_BASE}/${path}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session.access_token}` },
-      body: JSON.stringify(payload), signal: controller.signal,
+      body: JSON.stringify(body), signal: controller.signal,
     })
     const result = await response.json()
-    if (!response.ok || !result.ok) throw new Error(typeof result.error === 'string' ? result.error : 'Unable to process task.')
-    return result.result
+    if (!response.ok || !result.ok) throw new Error(typeof result.error === 'string' ? result.error : fallbackError)
+    return result.result as T
   } finally { clearTimeout(timer) }
+}
+
+export async function processInbox(command: import('../../lib/validation/inbox-command').InboxCommand) {
+  const { inboxCommandSchema } = await import('../../lib/validation/inbox-command')
+  const payload = inboxCommandSchema.parse(command)
+  return postToServer<unknown>('process-inbox', payload, 'Unable to process task.')
+}
+
+/** GTD: the other person delivered. Runs on the server so the Google reminder is removed too. */
+export async function completeWaitingFor(taskId: string) {
+  taskIdSchema.parse(taskId)
+  await postToServer<null>('task-action', { action: 'complete_waiting_for', taskId }, 'Unable to mark this item done.')
+}
+
+export type CalendarSyncResult = { synced: number; failed: number; remaining: number; status: 'synced' | 'skipped' | 'not_connected' | 'reconnect' | 'failed' }
+
+/** Pushes calendar items that are not in Google Calendar yet. */
+export function syncCalendar() {
+  return postToServer<CalendarSyncResult>('task-action', { action: 'sync_calendar' }, 'Unable to sync with Google Calendar.')
+}
+
+export async function fetchSuggestions(userId: string, signal: AbortSignal) {
+  if (!userId) return []
+  const { data, error } = await supabase.from('agent_suggestions')
+    .select('id, task_id, kind, reason, evidence_url, evidence_quote, draft_message, payload, status, external_ref, created_at, task:tasks(title, status, delegated_to, due_date)')
+    .eq('user_id', userId).eq('status', 'pending')
+    .order('created_at', { ascending: false }).limit(50).abortSignal(signal)
+  if (error) throw error
+  return (data ?? []) as unknown as AgentSuggestion[]
+}
+
+export async function decideSuggestion(suggestionId: string, decision: 'accept' | 'dismiss') {
+  taskIdSchema.parse(suggestionId)
+  await postToServer<unknown>('task-action', { action: 'decide_suggestion', suggestionId, decision }, 'Unable to save your decision.')
 }

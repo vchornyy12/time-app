@@ -1,11 +1,11 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, Alert, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import type { Project } from '../../../lib/types'
 import { useSession } from '../../lib/session'
 import { supabase } from '../../lib/supabase'
-import { type TaskStatus } from '../../lib/tasks'
+import { completeWaitingFor, syncCalendar, type CalendarSyncResult, type TaskStatus } from '../../lib/tasks'
 import { useTaskList } from '../../lib/use-task-list'
 import { TaskRow } from '../../components/TaskRow'
 import { TaskEditor } from '../../components/TaskEditor'
@@ -32,19 +32,63 @@ function Tasks({ status }: { status: TaskStatus }) {
     } catch { Alert.alert('Unable to restore', 'Reload the list and try again.') }
     finally { pending.current = false }
   }
+  // GTD: when the other person delivers, the Waiting For item is complete.
+  async function markDone(id: string) {
+    if (pending.current) return
+    pending.current = true
+    try {
+      await completeWaitingFor(id)
+      list.remove(id)
+    } catch (failure) { Alert.alert('Unable to mark done', failure instanceof Error ? failure.message : 'Reload the list and try again.') }
+    finally { pending.current = false }
+  }
   return <View style={styles.container}>
     {list.error && <Text accessibilityRole="alert" style={styles.error}>{list.error}</Text>}
+    {status === 'calendar' && <CalendarSync unsynced={list.tasks.filter(task => task.scheduled_at && !task.google_calendar_event_id).length} onSynced={() => { void list.reload() }} />}
     <FlatList data={list.tasks} keyExtractor={task => task.id} contentContainerStyle={styles.body} initialNumToRender={12} windowSize={7}
       refreshControl={<RefreshControl refreshing={list.loading} onRefresh={list.reload} tintColor="#3ECF8E" />} onEndReached={() => { void list.loadMore() }} onEndReachedThreshold={0.3}
       ListEmptyComponent={list.loading ? null : <EmptyState message="Nothing here yet." />} ListFooterComponent={list.loading ? <ActivityIndicator color="#3ECF8E" /> : null}
       renderItem={({ item }) => <View style={styles.card}>
-        <TaskRow title={item.title} context={item.contexts?.join(' · ')} isRecurring={!!item.recurrence_rule} onOpen={() => setSelected(item.id)} />
+        <TaskRow title={item.title} context={item.contexts?.join(' · ')} isRecurring={!!item.recurrence_rule} source={item.source} onOpen={() => setSelected(item.id)} />
         {item.scheduled_at && <Text style={styles.meta}>Scheduled: {new Date(item.scheduled_at).toLocaleString()}</Text>}
         {item.delegated_to && <Text style={styles.meta}>Waiting for: {item.delegated_to}</Text>}
         {item.due_date && <Text style={styles.meta}>{status === 'someday_maybe' ? 'Review' : 'Expected'}: {item.due_date}</Text>}
+        {status === 'waiting_for' && <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Mark ${item.title} as done`} onPress={() => { void markDone(item.id) }}><Text style={styles.link}>Mark done: they delivered</Text></TouchableOpacity>}
         {status === 'trash' && <TouchableOpacity accessibilityRole="button" onPress={() => { void restore(item.id) }}><Text style={styles.link}>Restore to Inbox</Text></TouchableOpacity>}
       </View>} />
     <TaskEditor taskId={selected} userId={list.userId} onClose={() => setSelected(null)} onSaved={() => { setSelected(null); void list.reload() }} />
+  </View>
+}
+function syncMessage(result: CalendarSyncResult): string | null {
+  if (result.status === 'not_connected') return 'Connect Google Calendar in the web app settings to sync these items.'
+  if (result.status === 'reconnect') return 'Google Calendar access expired. Reconnect it in the web app settings.'
+  if (result.status === 'failed' || result.failed > 0) return 'Could not reach Google Calendar. Try again later.'
+  return null
+}
+/** Pushes calendar items that are not in Google yet: once automatically per visit, then on request. */
+function CalendarSync({ unsynced, onSynced }: { unsynced: number; onSynced: () => void }) {
+  const [busy, setBusy] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
+  const attempted = useRef(false)
+  const run = useCallback(async () => {
+    setBusy(true); setNotice(null)
+    try {
+      const result = await syncCalendar()
+      setNotice(syncMessage(result))
+      if (result.synced) onSynced()
+    } catch (failure) { setNotice(failure instanceof Error ? failure.message : 'Unable to sync with Google Calendar.') }
+    finally { setBusy(false) }
+  }, [onSynced])
+  useEffect(() => {
+    if (!unsynced || attempted.current) return
+    attempted.current = true
+    void run()
+  }, [unsynced, run])
+  if (!unsynced && !notice) return null
+  return <View style={styles.sync}>
+    {unsynced > 0 && <Text style={styles.meta}>{unsynced} {unsynced === 1 ? 'item is' : 'items are'} not in Google Calendar yet.</Text>}
+    {notice && <Text accessibilityRole="alert" style={styles.error}>{notice}</Text>}
+    {busy ? <ActivityIndicator color="#3ECF8E" /> : unsynced > 0 && <TouchableOpacity accessibilityRole="button" onPress={() => { void run() }}><Text style={styles.link}>Sync to Google Calendar</Text></TouchableOpacity>}
   </View>
 }
 function Projects({ userId }: { userId: string }) {
@@ -82,4 +126,4 @@ function Projects({ userId }: { userId: string }) {
     <TaskEditor taskId={selected} userId={userId} onClose={() => setSelected(null)} onSaved={() => { setSelected(null); void load(true) }} />
   </View>
 }
-const styles = StyleSheet.create({ container: { flex: 1, backgroundColor: '#181818' }, filters: { padding: 16, gap: 8 }, chip: { padding: 12, borderRadius: 20, borderWidth: 1, borderColor: '#444' }, active: { borderColor: '#3ECF8E', backgroundColor: '#16412d' }, text: { color: '#fff', fontSize: 15 }, body: { padding: 16, gap: 12, paddingBottom: 40, flexGrow: 1 }, card: { marginBottom: 12, gap: 8 }, meta: { color: '#bbb', fontSize: 14, paddingHorizontal: 12 }, link: { color: '#3ECF8E', padding: 12, fontSize: 15 }, error: { color: '#fca5a5', padding: 12 }, project: { padding: 16, borderWidth: 1, borderColor: '#444', borderRadius: 12 }, projectTitle: { color: '#fff', fontSize: 20, fontWeight: '600' } })
+const styles = StyleSheet.create({ container: { flex: 1, backgroundColor: '#181818' }, filters: { padding: 16, gap: 8 }, chip: { padding: 12, borderRadius: 20, borderWidth: 1, borderColor: '#444' }, active: { borderColor: '#3ECF8E', backgroundColor: '#16412d' }, text: { color: '#fff', fontSize: 15 }, body: { padding: 16, gap: 12, paddingBottom: 40, flexGrow: 1 }, card: { marginBottom: 12, gap: 8 }, meta: { color: '#bbb', fontSize: 14, paddingHorizontal: 12 }, link: { color: '#3ECF8E', padding: 12, fontSize: 15 }, error: { color: '#fca5a5', padding: 12 }, project: { padding: 16, borderWidth: 1, borderColor: '#444', borderRadius: 12 }, projectTitle: { color: '#fff', fontSize: 20, fontWeight: '600' }, sync: { paddingHorizontal: 16, paddingTop: 4 } })
