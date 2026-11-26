@@ -25,7 +25,7 @@ export function InboxItem({ task, onDelete, onProcess, onTitleClick, isNew }: In
   const [editTitle, setEditTitle] = useState(task.title)
   const [isPending, startTransition] = useTransition()
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const { ref: titleRef, isOverflowing } = useOverflowing<HTMLButtonElement>()
+  const { ref: titleRef, isOverflowing } = useOverflowing<HTMLSpanElement>()
 
   function startEdit() {
     setEditTitle(task.title)
@@ -94,14 +94,13 @@ export function InboxItem({ task, onDelete, onProcess, onTitleClick, isNew }: In
           />
         ) : (
           <button
-            ref={titleRef}
             type="button"
             onClick={handleTitleClick}
-            className="text-base leading-snug text-left hover:text-indigo-300 transition-colors duration-150 cursor-pointer w-full truncate"
+            className="text-base leading-snug text-left hover:text-indigo-300 transition-colors duration-150 cursor-pointer w-full"
             style={{ color: 'var(--text-primary)' }}
             title={isOverflowing ? task.title : undefined}
           >
-            {task.title}
+            <span ref={titleRef} className="block line-clamp-3 break-words">{task.title}</span>
           </button>
         )}
         <p className="text-sm mt-0.5 flex items-center gap-2 flex-wrap" style={{ color: 'var(--text-secondary)' }}>

@@ -7,7 +7,7 @@ export function useOverflowing<T extends HTMLElement>() {
   useEffect(() => {
     function check() {
       const el = ref.current
-      if (el) setIsOverflowing(el.scrollWidth > el.clientWidth)
+      if (el) setIsOverflowing(el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight)
     }
     check()
     const observer = new ResizeObserver(check)

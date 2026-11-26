@@ -25,7 +25,7 @@ export function TaskCard({ task, projectTitle, userContexts = [], onComplete, is
   const [isDelegating, setIsDelegating] = useState(false)
   const [editContexts, setEditContexts] = useState<string[]>(task.contexts)
   const [, startTransition] = useTransition()
-  const { ref: titleRef, isOverflowing } = useOverflowing<HTMLButtonElement>()
+  const { ref: titleRef, isOverflowing } = useOverflowing<HTMLSpanElement>()
 
   function handleSaveContexts() {
     startTransition(async () => {
@@ -87,14 +87,13 @@ export function TaskCard({ task, projectTitle, userContexts = [], onComplete, is
       {/* Content */}
       <div className="flex-1 min-w-0">
         <button
-          ref={titleRef}
           type="button"
           onClick={onTitleClick}
-          className="text-base leading-snug text-left hover:text-[var(--accent)] transition-colors duration-150 cursor-pointer w-full truncate"
+          className="text-base leading-snug text-left hover:text-[var(--accent)] transition-colors duration-150 cursor-pointer w-full"
           style={{ color: 'var(--text-primary)' }}
           title={isOverflowing ? task.title : undefined}
         >
-          {task.title}
+          <span ref={titleRef} className="block line-clamp-3 break-words">{task.title}</span>
         </button>
 
         {/* Metadata chips */}
