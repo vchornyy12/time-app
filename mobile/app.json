@@ -44,7 +44,8 @@
           }
         }
       ],
-      "./plugins/with-release-signing.cjs"
+      "./plugins/with-release-signing.cjs",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

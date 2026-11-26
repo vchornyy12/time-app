@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-const auth = vi.hoisted(() => ({ exchangeCodeForSession: vi.fn(), setSession: vi.fn(), verifyOtp: vi.fn(), signInWithOtp: vi.fn(), signInWithPassword: vi.fn(), signOut: vi.fn() }))
+const auth = vi.hoisted(() => ({ exchangeCodeForSession: vi.fn(), setSession: vi.fn(), verifyOtp: vi.fn(), signInWithOtp: vi.fn(), signInWithPassword: vi.fn(), signOut: vi.fn(), signInWithOAuth: vi.fn() }))
+const browser = vi.hoisted(() => ({ openAuthSessionAsync: vi.fn() }))
 vi.mock('./supabase', () => ({ supabase: { auth } }))
-import { verifyMagicLink, sendMagicLink, signOut, signInWithPassword } from './auth'
+vi.mock('expo-web-browser', () => browser)
+import { verifyMagicLink, sendMagicLink, signOut, signInWithPassword, signInWithGoogle } from './auth'
 beforeEach(() => { vi.clearAllMocks(); auth.exchangeCodeForSession.mockResolvedValue({ error: null }) })
 describe('mobile PKCE callback', () => {
   it('exchanges a code through the stored PKCE verifier', async () => {
@@ -42,5 +44,32 @@ describe('mobile auth failures', () => {
     auth.signOut.mockResolvedValueOnce({ error })
     await expect(signOut()).rejects.toBe(error)
     expect(auth.signOut).toHaveBeenCalledWith({ scope: 'local' })
+  })
+})
+describe('Google sign-in', () => {
+  it('exchanges a code only once when the redirect arrives twice', async () => {
+    const url = 'timeapp://auth?code=once'
+    const [a, b] = await Promise.all([verifyMagicLink(url), verifyMagicLink(url)])
+    expect(a).toBeNull(); expect(b).toBeNull()
+    expect(auth.exchangeCodeForSession).toHaveBeenCalledTimes(1)
+  })
+  it('opens Google through Supabase and exchanges the returned code', async () => {
+    auth.signInWithOAuth.mockResolvedValueOnce({ data: { url: 'https://example.supabase.co/auth/v1/authorize?provider=google' }, error: null })
+    browser.openAuthSessionAsync.mockResolvedValueOnce({ type: 'success', url: 'timeapp://auth?code=google-code' })
+    expect(await signInWithGoogle()).toBeNull()
+    expect(auth.signInWithOAuth).toHaveBeenCalledWith({ provider: 'google', options: { redirectTo: 'timeapp://auth', skipBrowserRedirect: true } })
+    expect(browser.openAuthSessionAsync).toHaveBeenCalledWith('https://example.supabase.co/auth/v1/authorize?provider=google', 'timeapp://auth')
+    expect(auth.exchangeCodeForSession).toHaveBeenCalledWith('google-code')
+  })
+  it('treats closing the browser as no error and signs nobody in', async () => {
+    auth.signInWithOAuth.mockResolvedValueOnce({ data: { url: 'https://example.supabase.co/auth' }, error: null })
+    browser.openAuthSessionAsync.mockResolvedValueOnce({ type: 'cancel' })
+    expect(await signInWithGoogle()).toBeNull()
+    expect(auth.exchangeCodeForSession).not.toHaveBeenCalled()
+  })
+  it('reports a Google error redirect', async () => {
+    auth.signInWithOAuth.mockResolvedValueOnce({ data: { url: 'https://example.supabase.co/auth' }, error: null })
+    browser.openAuthSessionAsync.mockResolvedValueOnce({ type: 'success', url: 'timeapp://auth?error=access_denied' })
+    expect(await signInWithGoogle()).toMatch(/did not finish/)
   })
 })

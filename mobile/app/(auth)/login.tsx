@@ -9,7 +9,7 @@ import {
   Platform,
   StyleSheet,
 } from 'react-native'
-import { sendMagicLink, signInWithPassword } from '../../lib/auth'
+import { sendMagicLink, signInWithGoogle, signInWithPassword } from '../../lib/auth'
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('')
@@ -36,6 +36,17 @@ export default function LoginScreen() {
     } else setPassword('')
   }
 
+  async function handleGoogle() {
+    if (sending.current) return
+    sending.current = true
+    setLoading(true)
+    setError(null)
+    const err = await signInWithGoogle()
+    sending.current = false
+    setLoading(false)
+    if (err) setError(err)
+  }
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -43,7 +54,7 @@ export default function LoginScreen() {
     >
       <View style={styles.inner}>
         <Text style={styles.title}>GTD Companion</Text>
-        <Text style={styles.subtitle}>Sign in with your email</Text>
+        <Text style={styles.subtitle}>Sign in to continue</Text>
 
         {sent ? (
           <View style={styles.sentBox}>
@@ -57,6 +68,21 @@ export default function LoginScreen() {
           </View>
         ) : (
           <>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Continue with Google"
+              style={[styles.googleButton, loading && styles.buttonDisabled]}
+              onPress={handleGoogle}
+              disabled={loading}
+            >
+              <Text style={styles.googleG}>G</Text>
+              <Text style={styles.googleText}>Continue with Google</Text>
+            </TouchableOpacity>
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or use email</Text>
+              <View style={styles.dividerLine} />
+            </View>
             <TextInput
               style={styles.input}
               accessibilityLabel="Email"
@@ -123,4 +149,18 @@ const styles = StyleSheet.create({
   sentText: { color: 'rgba(255,255,255,0.60)', fontSize: 15, lineHeight: 22 },
   sentEmail: { color: '#ffffff', fontWeight: '600' },
   link: { color: '#3ECF8E', fontSize: 15 },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    paddingVertical: 14,
+  },
+  googleG: { color: '#4285F4', fontSize: 18, fontWeight: '700' },
+  googleText: { color: '#1f1f1f', fontSize: 16, fontWeight: '600' },
+  divider: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 20 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.12)' },
+  dividerText: { color: 'rgba(255,255,255,0.45)', fontSize: 13 },
 })

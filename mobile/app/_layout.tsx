@@ -45,7 +45,7 @@ export default function RootLayout() {
       if (!active || !url.startsWith('timeapp://auth') || url.length > 2048 || lastUrl === url) return
       lastUrl = url
       const error = await verifyMagicLink(url)
-      if (error && active) Alert.alert('Sign-in failed', 'Request a new magic link on this device and try again.')
+      if (error && active) Alert.alert('Sign-in failed', 'Please try signing in again on this device.')
       // onAuthStateChange above will update session and trigger redirect
     }
 

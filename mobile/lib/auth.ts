@@ -1,3 +1,4 @@
+import * as WebBrowser from 'expo-web-browser'
 import { supabase } from './supabase'
 import { magicLinkCode } from './incoming-link'
 
@@ -38,18 +39,45 @@ export async function sendMagicLink(email: string): Promise<string | null> {
  * Call this when the app opens via the timeapp://auth deep link.
  * Returns null on success, error message string on failure.
  */
+// A code can arrive twice (the Google browser session and the app's link
+// handler both see the redirect on Android); exchange each one only once.
+const exchanges = new Map<string, Promise<string | null>>()
+
 export async function verifyMagicLink(url: string): Promise<string | null> {
   try {
     // PKCE codes only: unsolicited bearer tokens cannot replace the session.
     const code = magicLinkCode(url)
-    if (code) {
-      const { error } = await supabase.auth.exchangeCodeForSession(code)
-      return error ? error.message : null
+    if (!code) return 'No token found in magic link URL'
+    let exchange = exchanges.get(code)
+    if (!exchange) {
+      exchange = supabase.auth.exchangeCodeForSession(code)
+        .then(({ error }) => error ? error.message : null)
+        .catch(() => 'Invalid magic link URL')
+      exchanges.set(code, exchange)
     }
-
-    return 'No token found in magic link URL'
+    return await exchange
   } catch {
     return 'Invalid magic link URL'
+  }
+}
+
+/**
+ * Signs in with Google through Supabase, like the web app: Google opens in a
+ * secure browser session and returns to timeapp://auth with a PKCE code.
+ * Returns null on success or when the user closes the browser.
+ */
+export async function signInWithGoogle(): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: MAGIC_LINK_REDIRECT, skipBrowserRedirect: true },
+    })
+    if (error || !data.url) return 'Unable to start Google sign-in. Please try again.'
+    const result = await WebBrowser.openAuthSessionAsync(data.url, MAGIC_LINK_REDIRECT)
+    if (result.type !== 'success') return null
+    return (await verifyMagicLink(result.url)) ? 'Google sign-in did not finish. Please try again.' : null
+  } catch {
+    return 'Unable to connect. Please try again.'
   }
 }
 
